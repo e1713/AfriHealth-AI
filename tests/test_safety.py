@@ -7,6 +7,7 @@ import wave
 from unittest.mock import AsyncMock, Mock, patch
 from urllib.parse import parse_qs, urlsplit
 
+import config
 from fastapi import HTTPException, UploadFile
 from starlette.responses import PlainTextResponse
 from starlette.requests import Request
@@ -15,6 +16,14 @@ import main
 
 
 class SafetyTests(unittest.TestCase):
+    def test_intron_sahara_key_is_supported_as_an_alias(self):
+        with patch.dict("os.environ", {"INTRON_API_KEY": "", "INTRON_SAHARA_API_KEY": "sahara-key"}):
+            self.assertEqual(config.get_intron_api_key(), "sahara-key")
+
+    def test_intron_api_key_takes_precedence_over_alias(self):
+        with patch.dict("os.environ", {"INTRON_API_KEY": "primary-key", "INTRON_SAHARA_API_KEY": "alias-key"}):
+            self.assertEqual(config.get_intron_api_key(), "primary-key")
+
     def test_negated_maternal_symptom_does_not_escalate(self):
         result = main._classify_maternal_acuity("The patient reports no heavy bleeding.")
         self.assertEqual(result["level"], 5)

@@ -22,7 +22,11 @@ def get_allowed_origins() -> list[str]:
     return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
 
-INTRON_API_KEY = get_optional_env("INTRON_API_KEY")
+def get_intron_api_key() -> Optional[str]:
+    return get_optional_env("INTRON_API_KEY") or get_optional_env("INTRON_SAHARA_API_KEY")
+
+
+INTRON_API_KEY = get_intron_api_key()
 OPENAI_API_KEY = get_optional_env("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = get_optional_env("ANTHROPIC_API_KEY")
 ALLOWED_ORIGINS = get_allowed_origins()

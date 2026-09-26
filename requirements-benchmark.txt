@@ -1,0 +1,5 @@
+datasets[audio]>=3.0,<5
+jiwer>=3.0,<4
+soundfile>=0.12,<1
+torch
+transformers>=4.45,<5

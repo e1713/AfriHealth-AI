@@ -177,6 +177,10 @@ backend; never add them to `index.html`.
 python -m pip install -r requirements.txt
 ```
 
+This installs only the lightweight API runtime. For the optional local AfriSwitch
+audio import and ASR benchmark tools, install `requirements-benchmark.txt` as
+well; that set includes large machine-learning dependencies.
+
 ### 4. Start the FastAPI backend
 
 ```bash

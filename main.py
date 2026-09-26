@@ -905,6 +905,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from config import get_intron_api_key
 from edge_persistence import persistence
 
 # Initialize logger
@@ -1009,7 +1010,7 @@ app.add_middleware(
 )
 
 # Configuration & Keys
-INTRON_API_KEY = os.getenv("INTRON_API_KEY") or ""
+INTRON_API_KEY = get_intron_api_key() or ""
 EHR_FHIR_ENDPOINT = os.getenv("EHR_FHIR_ENDPOINT") or ""
 EHR_API_KEY = os.getenv("EHR_API_KEY") or ""
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or ""

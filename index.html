@@ -956,9 +956,12 @@
 
   function getApiOrigin() {
     const configuredOrigin = window.SAHARA_API_ORIGIN;
+    const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
     const defaultOrigin = window.location.port === '8000'
-      ? window.location.origin
-      : `${window.location.protocol === 'https:' ? 'https:' : 'http:'}//${window.location.hostname}:8000`;
+        ? window.location.origin
+        : isLocalhost
+            ? `${window.location.protocol}//${window.location.hostname}:8000`
+            : 'https://sahara-healthcare-suite-production.up.railway.app';
     const apiUrl = new URL(configuredOrigin || defaultOrigin, window.location.origin);
     if (!['http:', 'https:'].includes(apiUrl.protocol)) {
       throw new Error('The configured API origin must use HTTP or HTTPS.');

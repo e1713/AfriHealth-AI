@@ -802,7 +802,7 @@
     const hostname = window.location.hostname;
     const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(hostname);
     const forwardedApiHostname = hostname.replace(/-3000(?=\.)/, "-8000");
-    const productionApiOrigin = "https://sahara-healthcare-suite-production-e636.up.railway.app";
+    const productionApiOrigin = "https://sahara-healthcare-suite-production.up.railway.app";
 
     if (isLocalhost) {
       window.SAHARA_API_ORIGIN = `${window.location.protocol}//${hostname}:8000`;

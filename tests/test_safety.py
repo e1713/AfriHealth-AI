@@ -87,6 +87,57 @@ class SafetyTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             main._build_intron_stt_stream_url({"sample_rate": "48000"})
 
+    def test_stt_websocket_logs_disallowed_origin(self):
+        async def exercise():
+            browser = Mock()
+            browser.headers = {"origin": "https://unexpected.example"}
+            browser.query_params = {}
+            browser.close = AsyncMock()
+            with (
+                patch.object(main, "ALLOWED_ORIGINS", ["https://sahara-healthcare-suite.pages.dev"]),
+                patch.object(main.logger, "warning") as warning,
+            ):
+                await main.websocket_stream(browser)
+            browser.close.assert_awaited_once_with(code=1008)
+            warning.assert_called_once_with("Rejecting STT WebSocket: origin is not allowed")
+
+        asyncio.run(exercise())
+
+    def test_stt_websocket_logs_missing_proxy_identity(self):
+        async def exercise():
+            browser = Mock()
+            browser.headers = {"origin": "https://sahara-healthcare-suite.pages.dev"}
+            browser.query_params = {}
+            browser.close = AsyncMock()
+            with (
+                patch.object(main, "ALLOWED_ORIGINS", ["https://sahara-healthcare-suite.pages.dev"]),
+                patch.object(main, "REQUIRE_PROXY_AUTH", True),
+                patch.object(main.logger, "warning") as warning,
+            ):
+                await main.websocket_stream(browser)
+            browser.close.assert_awaited_once_with(code=1008)
+            warning.assert_called_once_with("Rejecting STT WebSocket: proxy identity is missing")
+
+        asyncio.run(exercise())
+
+    def test_stt_websocket_logs_missing_intron_key(self):
+        async def exercise():
+            browser = Mock()
+            browser.headers = {"origin": "https://sahara-healthcare-suite.pages.dev"}
+            browser.query_params = {}
+            browser.close = AsyncMock()
+            with (
+                patch.object(main, "ALLOWED_ORIGINS", ["https://sahara-healthcare-suite.pages.dev"]),
+                patch.object(main, "REQUIRE_PROXY_AUTH", False),
+                patch.object(main, "INTRON_API_KEY", ""),
+                patch.object(main.logger, "error") as error,
+            ):
+                await main.websocket_stream(browser)
+            browser.close.assert_awaited_once_with(code=1011)
+            error.assert_called_once_with("Rejecting STT WebSocket: INTRON_API_KEY is not configured")
+
+        asyncio.run(exercise())
+
     def test_stt_audio_chunks_meet_provider_size_limits(self):
         small_audio = bytearray(b"\x01\x00" * 300)
         self.assertIsNone(main._take_stt_audio_chunk(small_audio))

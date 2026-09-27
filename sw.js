@@ -1,4 +1,4 @@
-const CACHE_NAME = 'afrihealth-v1.1';
+const CACHE_NAME = 'afrihealth-v1.2';
 const ASSETS = [
 './',
 './index.html',

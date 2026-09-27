@@ -1993,21 +1993,26 @@ async def websocket_stream(websocket: WebSocket):
     global _active_websockets
     origin = websocket.headers.get("origin")
     if origin not in ALLOWED_ORIGINS:
+        logger.warning("Rejecting STT WebSocket: origin is not allowed")
         await websocket.close(code=1008)
         return
     if REQUIRE_PROXY_AUTH and not _has_proxy_identity(websocket.headers):
+        logger.warning("Rejecting STT WebSocket: proxy identity is missing")
         await websocket.close(code=1008)
         return
     if not INTRON_API_KEY:
+        logger.error("Rejecting STT WebSocket: INTRON_API_KEY is not configured")
         await websocket.close(code=1011)
         return
     if _active_websockets >= MAX_ACTIVE_WEBSOCKETS:
+        logger.warning("Rejecting STT WebSocket: concurrent session limit reached")
         await websocket.close(code=1013)
         return
 
     try:
         intron_url = _build_intron_stt_stream_url(websocket.query_params)
     except ValueError as error:
+        logger.warning("Rejecting STT WebSocket: invalid stream configuration: %s", error)
         await websocket.close(code=1008, reason=str(error))
         return
 

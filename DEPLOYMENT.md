@@ -41,6 +41,7 @@ Configure these only on the API host:
 
 ```text
 INTRON_API_KEY=...
+DATABASE_URL=${{Postgres.DATABASE_URL}}
 ALLOWED_ORIGINS=https://your-project.pages.dev
 REQUIRE_PROXY_AUTH=true
 INTRON_TTS_VOICE_LANGUAGE=am
@@ -50,6 +51,11 @@ INTRON_TTS_VOICE_GENDER=female
 
 Use a comma-separated list for multiple exact origins. Do not use `*` for
 production CORS when credentials or protected clinical workflows are involved.
+In Railway, add a PostgreSQL service and link its `DATABASE_URL` reference to
+the FastAPI service. The backend converts Railway's `postgresql://` URL to the
+asyncpg SQLAlchemy driver automatically. Keep the Cloudflare Pages frontend and
+its API-origin configuration unchanged. Set the Railway start command to
+`uvicorn main:app --host 0.0.0.0 --port $PORT` in the service settings.
 Do not commit `.env` files, API keys, patient recordings, full transcripts, or
 provider response IDs.
 

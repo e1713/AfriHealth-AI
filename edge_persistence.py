@@ -1,93 +1,105 @@
-"""Small persistence adapter for local SQLite and Cloudflare D1."""
+"""Async SQLAlchemy persistence for clinical stream metadata."""
 
 from __future__ import annotations
 
 import os
-import sqlite3
 import uuid
 from datetime import datetime, timezone
-from typing import Any
 
-import httpx
-
-
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS clinic_sessions (
-    session_id TEXT PRIMARY KEY,
-    clinic_id TEXT NOT NULL,
-    language_code TEXT NOT NULL,
-    started_at TEXT NOT NULL,
-    ended_at TEXT,
-    last_transcript TEXT NOT NULL DEFAULT ''
-);
-CREATE TABLE IF NOT EXISTS transcript_events (
-    event_id TEXT PRIMARY KEY,
-    session_id TEXT NOT NULL,
-    clinic_id TEXT NOT NULL,
-    event_type TEXT NOT NULL,
-    transcript TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    FOREIGN KEY (session_id) REFERENCES clinic_sessions(session_id)
-);
-CREATE INDEX IF NOT EXISTS idx_transcript_events_session
-    ON transcript_events(session_id, created_at);
-"""
+from sqlalchemy import DateTime, ForeignKey, Index, String, Text, update
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
-def utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+def _database_url(value: str) -> str:
+    value = value.strip()
+    if value.startswith("postgres://"):
+        return value.replace("postgres://", "postgresql+asyncpg://", 1)
+    if value.startswith("postgresql://"):
+        return value.replace("postgresql://", "postgresql+asyncpg://", 1)
+    if value.startswith("sqlite://"):
+        return value.replace("sqlite://", "sqlite+aiosqlite://", 1)
+    return value
+
+
+def get_database_url() -> str:
+    configured_url = os.getenv("DATABASE_URL", "").strip()
+    is_railway = os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RAILWAY_ENVIRONMENT_NAME")
+    if not configured_url and is_railway:
+        raise RuntimeError("DATABASE_URL is required in Railway environments")
+    return _database_url(configured_url or "sqlite+aiosqlite:///./edge_sync.sqlite3")
+
+
+DATABASE_URL = get_database_url()
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class ClinicSession(Base):
+    __tablename__ = "clinic_sessions"
+
+    session_id: Mapped[str] = mapped_column(String, primary_key=True)
+    clinic_id: Mapped[str] = mapped_column(String, nullable=False)
+    language_code: Mapped[str] = mapped_column(String, nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_transcript: Mapped[str] = mapped_column(Text, nullable=False, default="")
+
+
+class TranscriptEvent(Base):
+    __tablename__ = "transcript_events"
+    __table_args__ = (Index("idx_transcript_events_session", "session_id", "created_at"),)
+
+    event_id: Mapped[str] = mapped_column(String, primary_key=True)
+    session_id: Mapped[str] = mapped_column(
+        ForeignKey("clinic_sessions.session_id"), nullable=False
+    )
+    clinic_id: Mapped[str] = mapped_column(String, nullable=False)
+    event_type: Mapped[str] = mapped_column(String, nullable=False)
+    transcript: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class EdgePersistence:
-    """Persist clinical stream metadata without storing raw audio."""
+    """Persist stream transcripts without storing raw audio."""
 
-    def __init__(self, sqlite_path: str | None = None) -> None:
-        self.sqlite_path = sqlite_path or os.getenv("EDGE_SQLITE_PATH", "edge_sync.sqlite3")
-        self.d1_url = os.getenv("CLOUDFLARE_D1_API_URL", "")
-        self.d1_token = os.getenv("CLOUDFLARE_D1_API_TOKEN", "")
-
-    @property
-    def backend(self) -> str:
-        return "d1" if self.d1_url and self.d1_token else "sqlite"
-
-    def _sqlite(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.sqlite_path)
-        connection.executescript(SCHEMA)
-        return connection
-
-    async def _d1_execute(self, sql: str, params: list[Any]) -> None:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.post(
-                self.d1_url,
-                headers={"Authorization": f"Bearer {self.d1_token}"},
-                json={"sql": sql, "params": params},
-            )
-            response.raise_for_status()
+    def __init__(self, database_url: str | None = None) -> None:
+        self.database_url = _database_url(database_url or DATABASE_URL)
+        self.backend = "postgresql" if self.database_url.startswith("postgresql+") else "sqlite"
+        options = {"pool_pre_ping": True}
+        if self.backend == "postgresql":
+            options.update(pool_size=5, max_overflow=5)
+        self.engine = create_async_engine(self.database_url, **options)
+        self.session_factory = async_sessionmaker(
+            bind=self.engine,
+            class_=AsyncSession,
+            expire_on_commit=False,
+        )
 
     async def initialize(self) -> None:
-        if self.backend == "d1":
-            for statement in filter(None, (part.strip() for part in SCHEMA.split(";"))):
-                await self._d1_execute(statement, [])
-            return
-        connection = self._sqlite()
-        connection.commit()
-        connection.close()
+        async with self.engine.begin() as connection:
+            await connection.run_sync(Base.metadata.create_all)
+
+    async def close(self) -> None:
+        await self.engine.dispose()
 
     async def start_session(self, *, clinic_id: str, language_code: str) -> str:
         session_id = str(uuid.uuid4())
-        started_at = utc_now()
-        sql = (
-            "INSERT INTO clinic_sessions "
-            "(session_id, clinic_id, language_code, started_at) VALUES (?, ?, ?, ?)"
-        )
-        params = [session_id, clinic_id, language_code, started_at]
-        if self.backend == "d1":
-            await self._d1_execute(sql, params)
-        else:
-            connection = self._sqlite()
-            connection.execute(sql, params)
-            connection.commit()
-            connection.close()
+        async with self.session_factory.begin() as session:
+            session.add(
+                ClinicSession(
+                    session_id=session_id,
+                    clinic_id=clinic_id,
+                    language_code=language_code,
+                    started_at=utc_now(),
+                )
+            )
         return session_id
 
     async def record_transcript(
@@ -99,26 +111,25 @@ class EdgePersistence:
         event_type: str,
     ) -> None:
         created_at = utc_now()
-        event_sql = (
-            "INSERT INTO transcript_events "
-            "(event_id, session_id, clinic_id, event_type, transcript, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?)"
-        )
-        event_params = [str(uuid.uuid4()), session_id, clinic_id, event_type, transcript, created_at]
-        update_sql = (
-            "UPDATE clinic_sessions SET last_transcript = ?, ended_at = "
-            "CASE WHEN ? = 'final' THEN ? ELSE ended_at END WHERE session_id = ?"
-        )
-        update_params = [transcript, event_type, created_at, session_id]
-        if self.backend == "d1":
-            await self._d1_execute(event_sql, event_params)
-            await self._d1_execute(update_sql, update_params)
-            return
-        connection = self._sqlite()
-        connection.execute(event_sql, event_params)
-        connection.execute(update_sql, update_params)
-        connection.commit()
-        connection.close()
+        async with self.session_factory.begin() as session:
+            session.add(
+                TranscriptEvent(
+                    event_id=str(uuid.uuid4()),
+                    session_id=session_id,
+                    clinic_id=clinic_id,
+                    event_type=event_type,
+                    transcript=transcript,
+                    created_at=created_at,
+                )
+            )
+            await session.execute(
+                update(ClinicSession)
+                .where(ClinicSession.session_id == session_id)
+                .values(
+                    last_transcript=transcript,
+                    ended_at=created_at if event_type == "final" else ClinicSession.ended_at,
+                )
+            )
 
 
 persistence = EdgePersistence()

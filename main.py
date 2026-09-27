@@ -1685,6 +1685,7 @@ async def health_check():
     return {
         "status": "online",
         "service": "AfriHealth AI Gateway",
+        "database": persistence.backend,
         "intron_configured": bool(INTRON_API_KEY),
         "ehr_configured": bool(EHR_FHIR_ENDPOINT),
         "boost_phrases_loaded": len(ETHIOPIAN_MEDICAL_VOCABULARY)

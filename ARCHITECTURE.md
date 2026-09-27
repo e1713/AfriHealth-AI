@@ -26,7 +26,7 @@ Browser (index.html)
           |-- server-side FHIR export and optional EHR commit
           |-- synchronous TTS generation and status bridges
           |-- clinical artifact and medication safety gate
-          |-- edge persistence adapter (Cloudflare D1 or local SQLite fallback)
+          |-- async SQLAlchemy persistence adapter (PostgreSQL in production; SQLite locally)
           |
           +--> Intron Sahara STT/TTS APIs
           +--> Configured FHIR/EHR endpoint (optional)
@@ -95,9 +95,8 @@ support autonomous clinical decisions.
 ### Durable stream sync
 
 Each live stream receives a session ID and clinic ID. Partial and committed
-transcripts are stored as metadata in Cloudflare D1 when
-`CLOUDFLARE_D1_API_URL` and `CLOUDFLARE_D1_API_TOKEN` are configured; local
-development falls back to `EDGE_SQLITE_PATH`. Raw audio is never stored by
+transcripts are stored in PostgreSQL using Railway's `DATABASE_URL`; local
+development defaults to an async SQLite database. Raw audio is never stored by
 this layer. The schema is created automatically at service startup.
 
 ### Live benchmark comparison

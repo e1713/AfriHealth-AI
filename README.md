@@ -49,7 +49,7 @@ The system is built around a static frontend and a secure FastAPI gateway that k
 - FHIR-ready export generation for interoperability
 - Optional EHR submission when configured by deployment
 - Intron-focused live audio benchmark with transcript-only or reference-scored WER/CER
-- Local SQLite fallback or Cloudflare D1 persistence for stream metadata
+- PostgreSQL stream persistence in production with a local SQLite development fallback
 - Safety-oriented design with physician verification requirements
 
 ---
@@ -107,7 +107,7 @@ Typical flow:
 ├── .env.example             # Example environment configuration
 ├── config.py                # Configuration helpers
 ├── benchmark_suite.py       # Fixture benchmark and model comparison utilities
-├── edge_persistence.py      # SQLite/D1 stream metadata persistence adapter
+├── edge_persistence.py      # Async PostgreSQL/SQLite stream metadata adapter
 ├── clinical_validation_*    # Validation and reporting scripts
 ├── tests/                   # Safety and validation tests
 ├── README.md                # Project documentation
@@ -158,9 +158,7 @@ ALLOWED_ORIGINS=https://your-project.pages.dev
 REQUIRE_PROXY_AUTH=false
 EHR_FHIR_ENDPOINT=
 EHR_API_KEY=
-EDGE_SQLITE_PATH=edge_sync.sqlite3
-CLOUDFLARE_D1_API_URL=
-CLOUDFLARE_D1_API_TOKEN=
+DATABASE_URL=sqlite+aiosqlite:///./edge_sync.sqlite3
 OPENAI_API_KEY=
 OPENAI_TRANSCRIBE_MODEL=gpt-4o-mini-transcribe
 GEMINI_API_KEY=

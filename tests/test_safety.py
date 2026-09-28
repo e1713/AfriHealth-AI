@@ -46,6 +46,119 @@ class SafetyTests(unittest.TestCase):
         finally:
             main.INTRON_API_KEY = original_key
 
+    def test_gemini_api_key_is_sent_in_header_not_url(self):
+        captured = {}
+
+        class FakeResponse:
+            status_code = 200
+
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return {"candidates": [{"content": {"parts": [{"text": "transcript"}]}}]}
+
+        class FakeAsyncClient:
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, exc_type, exc, traceback):
+                return None
+
+            async def post(self, url, *, headers=None, json=None):
+                captured.update({"url": url, "headers": headers, "body": json})
+                return FakeResponse()
+
+        original_keys = (main.GEMINI_API_KEY, main.GEMINI_API_KEY_1, main.GEMINI_API_KEY_2)
+        try:
+            main.GEMINI_API_KEY = "test-gemini-key"
+            main.GEMINI_API_KEY_1 = ""
+            main.GEMINI_API_KEY_2 = ""
+            with patch("main.httpx.AsyncClient", return_value=FakeAsyncClient()):
+                transcript = asyncio.run(main._benchmark_gemini(b"audio", "audio/wav"))
+        finally:
+            main.GEMINI_API_KEY, main.GEMINI_API_KEY_1, main.GEMINI_API_KEY_2 = original_keys
+
+        self.assertEqual(transcript, "transcript")
+        self.assertNotIn("test-gemini-key", captured["url"])
+        self.assertEqual(captured["headers"]["x-goog-api-key"], "test-gemini-key")
+
+    def test_gemini_rotates_to_next_key_after_429(self):
+        used_keys = []
+
+        class FakeResponse:
+            def __init__(self, status_code, transcript=""):
+                self.status_code = status_code
+                self.transcript = transcript
+
+            def raise_for_status(self):
+                if self.status_code >= 400:
+                    request = main.httpx.Request("POST", "https://generativelanguage.googleapis.com")
+                    response = main.httpx.Response(self.status_code, request=request)
+                    raise main.httpx.HTTPStatusError("rate limited", request=request, response=response)
+
+            def json(self):
+                return {"candidates": [{"content": {"parts": [{"text": self.transcript}]}}]}
+
+        class FakeAsyncClient:
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, exc_type, exc, traceback):
+                return None
+
+            async def post(self, url, *, headers=None, json=None):
+                used_keys.append(headers["x-goog-api-key"])
+                if len(used_keys) == 1:
+                    return FakeResponse(429)
+                return FakeResponse(200, "fallback transcript")
+
+        original_keys = (main.GEMINI_API_KEY, main.GEMINI_API_KEY_1, main.GEMINI_API_KEY_2)
+        try:
+            main.GEMINI_API_KEY = "key-slot-one"
+            main.GEMINI_API_KEY_1 = "key-slot-two"
+            main.GEMINI_API_KEY_2 = ""
+            with patch("main.httpx.AsyncClient", return_value=FakeAsyncClient()):
+                transcript = asyncio.run(main._benchmark_gemini(b"audio", "audio/wav"))
+        finally:
+            main.GEMINI_API_KEY, main.GEMINI_API_KEY_1, main.GEMINI_API_KEY_2 = original_keys
+
+        self.assertEqual(transcript, "fallback transcript")
+        self.assertEqual(used_keys, ["key-slot-one", "key-slot-two"])
+
+    def test_gemini_exhausted_key_pool_marks_429_non_retryable(self):
+        class FakeResponse:
+            status_code = 429
+
+            def raise_for_status(self):
+                request = main.httpx.Request("POST", "https://generativelanguage.googleapis.com")
+                response = main.httpx.Response(429, request=request)
+                raise main.httpx.HTTPStatusError("rate limited", request=request, response=response)
+
+        class FakeAsyncClient:
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, exc_type, exc, traceback):
+                return None
+
+            async def post(self, url, *, headers=None, json=None):
+                return FakeResponse()
+
+        original_keys = (main.GEMINI_API_KEY, main.GEMINI_API_KEY_1, main.GEMINI_API_KEY_2)
+        try:
+            main.GEMINI_API_KEY = "key-slot-one"
+            main.GEMINI_API_KEY_1 = "key-slot-two"
+            main.GEMINI_API_KEY_2 = ""
+            with patch("main.httpx.AsyncClient", return_value=FakeAsyncClient()):
+                with self.assertRaises(main.GeminiKeysRateLimitedError) as context:
+                    asyncio.run(main._benchmark_gemini(b"audio", "audio/wav"))
+        finally:
+            main.GEMINI_API_KEY, main.GEMINI_API_KEY_1, main.GEMINI_API_KEY_2 = original_keys
+
+        self.assertEqual(context.exception.response.status_code, 429)
+        self.assertTrue(context.exception.stop_retries)
+
     def test_upload_limit_is_enforced(self):
         upload = UploadFile(
             file=io.BytesIO(b"x" * (main.MAX_AUDIO_BYTES + 1)),
@@ -226,7 +339,8 @@ class SafetyTests(unittest.TestCase):
                 patch.object(main, "REQUIRE_PROXY_AUTH", False),
                 patch.object(main, "INTRON_API_KEY", "test-key"),
                 patch.object(main.persistence, "start_session", new_callable=AsyncMock, return_value="local-session"),
-                patch.object(main.persistence, "record_transcript", new_callable=AsyncMock),
+                patch.object(main.persistence, "record_transcript", new_callable=AsyncMock) as record_transcript,
+                  patch.object(main.persistence, "end_session", new_callable=AsyncMock) as end_session,
                 patch.object(main.websockets, "connect", return_value=intron),
             ):
                 await main.websocket_stream(browser)
@@ -244,6 +358,8 @@ class SafetyTests(unittest.TestCase):
                 {"transcript": "test transcript", "session_id": "local-session"},
                 browser.outgoing,
             )
+            record_transcript.assert_not_awaited()
+            end_session.assert_awaited_once_with("local-session")
 
         asyncio.run(exercise())
 

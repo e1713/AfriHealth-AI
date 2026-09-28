@@ -3,7 +3,8 @@
 ## Submission statement
 
 AfriHealth AI is a clinician-reviewed voice documentation and decision-support
-prototype for code-switched English, Amharic, and Afaan Oromoo workflows. It
+prototype for English-Amharic code-switched workflows. Other language pairs,
+including Afaan Oromoo, are future work. It
 helps frontline workers capture speech, review a transcript, structure a
 clinical intake, and prepare follow-up documentation. It does not diagnose,
 prescribe, or replace clinical judgment.
@@ -99,7 +100,7 @@ or record an unlisted video separately if the submission portal requires one.
 - [x] Working prototype source included.
 - [x] Local setup and API contracts documented.
 - [x] Architecture and data-flow documentation included.
-- [x] Responsible AI, privacy, and medication safety controls documented.
+- [x] Responsible AI, privacy, and medication safety limitations documented.
 - [x] Benchmark limitations explicitly documented.
 - [x] Clinical baseline aggregate report included without private audio.
 - [x] No API key or raw clinical recordings committed.

@@ -5,6 +5,11 @@ __pycache__/
 !.env.example
 edge_sync.sqlite3
 
+# Local clinical benchmark recordings and source workbooks
+benchmark_data/samples/*.m4a
+benchmark_data/samples/*.xlsx
+benchmark_data/wav/
+
 # Local gated benchmark downloads and generated evaluation outputs
 clinical_validation/afriswitch/audio/
 clinical_validation/afriswitch/manifests/

@@ -18,8 +18,11 @@ The challenge brief requests:
 | Solution description | Product UI and workflow modules in `index.html` | Covered |
 | Working prototype | Browser app served by `npm start` | Covered; record a final demo |
 | Technical documentation | `README.md`, `main.py`, `server.js`, `benchmark_suite.py` | Covered |
+| Primary speech model | Intron Sahara v2.5 | Implemented for live STT and default live benchmark; other providers are optional comparisons |
 | Three-model benchmark | `benchmark_suite.py`, `benchmark_report.json`, `BENCHMARK_RESULTS.md` | Fixture covered; real comparison still required |
+| Agentic clinical text generation | `/api/v1/clinical/process-text` | **Not implemented end to end: endpoint is not called by the frontend and parses structured JSON or returns a manual-review fallback** |
 | Ethics and inclusion | `RESPONSIBLE_AI.md` | Covered; obtain consent evidence |
+| Patient-data production controls | Transcript persistence, optional proxy-header check | **Not ready for identifiable patient data: no transcript expiry/deletion or built-in clinician RBAC** |
 | Demo video link | External submission artifact | **Still required** |
 | Benchmark audio metadata | `BENCHMARK_METADATA_TEMPLATE.csv` | Fill with real consented data |
 | Recording and audit handoff | `CLINICAL_RECORDING_PROTOCOL.md`, `TEAM_HANDOFF_CHECKLIST.md` | Ready for team use |
@@ -35,6 +38,10 @@ The fixture currently contains transcript hypotheses embedded in
 `benchmark_suite.py`; it does not contain audio files. Do not describe those
 hypotheses as independently rerun model outputs unless you attach the audio,
 model versions, and inference logs.
+
+The fixture's aggregate FAAS formula is not a demographic or subgroup fairness
+evaluation. No demographic-group performance breakdown is produced by this
+fixture.
 
 `evaluation_report_summary.json` contains a separate evaluation summary with
 different metrics and model names. It should not be presented beside the
@@ -78,8 +85,11 @@ Record a 2–3 minute unlisted video showing:
 - [ ] Verify all model names, versions, and metrics against the actual runs.
 - [ ] Deploy with `INTRON_API_KEY` server-side and set `ALLOWED_ORIGINS` to
       the exact production origins.
+- [ ] Before any identifiable patient data is used, implement and verify
+      transcript retention/deletion controls and clinician authentication with
+      role-based access.
 - [ ] Have a clinician review generated SOAP, ICD-10, triage, and medication
       outputs before showing them as clinical artifacts.
-- [x] Medication suggestions are blocked by default until clinician
-      confirmation; viral and penicillin-allergy safety cases produce alerts.
+- [ ] Implement and validate a backend-enforced medication safety gate before
+      claiming automated viral/allergy checks or blocked medication suggestions.
 - [ ] Remove local secrets and temporary challenge downloads before commit.

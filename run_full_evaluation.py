@@ -120,7 +120,7 @@ def mixed_error_rate(reference: str, hypothesis: str) -> float:
     return rows[-1] / max(1, len(ref_tokens))
 
 
-def clinical_entity_accuracy(reference: str, hypothesis: str) -> float:
+def clinical_entity_recall(reference: str, hypothesis: str) -> float:
     entities = {
         "fever",
         "cough",
@@ -151,7 +151,7 @@ def clinical_entity_accuracy(reference: str, hypothesis: str) -> float:
     return hits / len(ref_matches)
 
 
-def calculate_faas_ms(first_frame_sent_ms: float | int, first_partial_token_ms: float | int) -> float:
+def calculate_first_partial_latency_ms(first_frame_sent_ms: float | int, first_partial_token_ms: float | int) -> float:
     """Return the elapsed time in milliseconds between the first audio frame and the first partial transcript token."""
     start_ms = float(first_frame_sent_ms)
     end_ms = float(first_partial_token_ms)
@@ -162,10 +162,10 @@ def calculate_partial_token_delay_ms(last_partial_token_ms: float | int, current
     return max(0.0, float(current_partial_token_ms) - float(last_partial_token_ms))
 
 
-def faas_sla_met(faas_ms: float | int | None, target_ms: float = 250.0) -> bool:
-    if faas_ms is None:
+def first_partial_latency_sla_met(latency_ms: float | int | None, target_ms: float = 250.0) -> bool:
+    if latency_ms is None:
         return False
-    return float(faas_ms) <= float(target_ms)
+    return float(latency_ms) <= float(target_ms)
 
 
 def evaluate_case(reference: str, hypothesis: str, *, first_frame_sent_ms: float | int | None = None, first_partial_token_ms: float | int | None = None, prose_completed_ms: float | int | None = None) -> dict:
@@ -182,9 +182,9 @@ def evaluate_case(reference: str, hypothesis: str, *, first_frame_sent_ms: float
 
     translit_mer = mixed_error_rate(reference, hypothesis)
 
-    faas_ms = None
+    first_partial_latency_ms = None
     if first_frame_sent_ms is not None and first_partial_token_ms is not None:
-        faas_ms = calculate_faas_ms(first_frame_sent_ms, first_partial_token_ms)
+        first_partial_latency_ms = calculate_first_partial_latency_ms(first_frame_sent_ms, first_partial_token_ms)
 
     soap_latency_ms = None
     if first_partial_token_ms is not None and prose_completed_ms is not None:
@@ -195,9 +195,9 @@ def evaluate_case(reference: str, hypothesis: str, *, first_frame_sent_ms: float
         "english_wer": english_wer,
         "amharic_geez_cer": ethiopic_cer,
         "transliteration_mer": translit_mer,
-        "clinical_entity_accuracy": clinical_entity_accuracy(reference, hypothesis),
-        "faas_ms": faas_ms,
-        "faas_sla_met": faas_sla_met(faas_ms),
+        "clinical_entity_recall": clinical_entity_recall(reference, hypothesis),
+        "first_partial_latency_ms": first_partial_latency_ms,
+        "first_partial_latency_sla_met": first_partial_latency_sla_met(first_partial_latency_ms),
         "soap_generation_latency_ms": soap_latency_ms,
     }
 
@@ -248,7 +248,7 @@ def summarize(results: Iterable[dict]) -> dict:
         "english_wer": mean("english_wer"),
         "amharic_geez_cer": mean("amharic_geez_cer"),
         "transliteration_mer": mean("transliteration_mer"),
-        "clinical_entity_accuracy": mean("clinical_entity_accuracy"),
+        "clinical_entity_recall": mean("clinical_entity_recall"),
         "by_case": scores,
     }
 
@@ -291,11 +291,11 @@ def main() -> None:
         evaluated.append(result)
 
     summary = summarize(evaluated)
-    latency_values = [case.get("faas_ms") for case in evaluated if case.get("faas_ms") is not None]
-    mean_faas = sum(latency_values) / len(latency_values) if latency_values else None
-    faas_sla_pass_rate = None
+    latency_values = [case.get("first_partial_latency_ms") for case in evaluated if case.get("first_partial_latency_ms") is not None]
+    mean_first_partial_latency = sum(latency_values) / len(latency_values) if latency_values else None
+    latency_sla_pass_rate = None
     if latency_values:
-        faas_sla_pass_rate = sum(1 for value in latency_values if faas_sla_met(value)) / len(latency_values)
+        latency_sla_pass_rate = sum(1 for value in latency_values if first_partial_latency_sla_met(value)) / len(latency_values)
     report = {
         "dataset": input_path.name,
         "evaluation_type": "language_aware_clinical_asr",
@@ -304,10 +304,10 @@ def main() -> None:
             "english_wer": round(summary["english_wer"], 4),
             "amharic_geez_cer": round(summary["amharic_geez_cer"], 4),
             "transliteration_mer": round(summary["transliteration_mer"], 4),
-            "clinical_entity_accuracy": round(summary["clinical_entity_accuracy"], 4),
-            "mean_faas_ms": round(mean_faas, 2) if mean_faas is not None else None,
-            "faas_sla_target_ms": 250,
-            "faas_sla_pass_rate": round(faas_sla_pass_rate, 4) if faas_sla_pass_rate is not None else None,
+            "clinical_entity_recall": round(summary["clinical_entity_recall"], 4),
+            "mean_first_partial_latency_ms": round(mean_first_partial_latency, 2) if mean_first_partial_latency is not None else None,
+            "first_partial_latency_sla_target_ms": 250,
+            "first_partial_latency_sla_pass_rate": round(latency_sla_pass_rate, 4) if latency_sla_pass_rate is not None else None,
         },
         "cases_evaluated": summary["cases_evaluated"],
         "by_case": evaluated,

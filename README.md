@@ -203,7 +203,9 @@ This uses the static server configuration defined in `package.json` and serves t
 ## Important security and privacy notes
 
 - Never expose `INTRON_API_KEY` in the browser or source code.
-- Keep patient recordings and clinical transcripts protected.
+- Live partial and final transcripts are persisted in PostgreSQL/SQLite. The repository does not currently implement transcript expiry or deletion; do not use identifiable patient data until approved retention and access controls are in place.
+- The clinical text endpoint redacts common email addresses and Ethiopian-format phone numbers, but this is not comprehensive de-identification and is not applied to live-stream persistence.
+- The backend has an optional trusted-proxy identity-header check, not built-in clinician accounts or role-based access control.
 - Use HTTPS and WSS in production.
 - Configure CORS restrictions carefully for deployment.
 - Do not commit `.env` files or sensitive deployment values.

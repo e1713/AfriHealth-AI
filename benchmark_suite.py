@@ -46,7 +46,7 @@ def calculate_wer(reference: str, hypothesis: str) -> float:
         distances = next_distances
     return distances[-1] / len(ref_words)
 
-def calculate_entity_accuracy(reference: str, hypothesis: str) -> float:
+def calculate_entity_recall(reference: str, hypothesis: str) -> float:
     ref_words = set(reference.lower().split())
     hyp_words = set(hypothesis.lower().split())
     target_entities = [e for e in CLINICAL_ENTITIES if e in ref_words or any(e in w for w in ref_words)]
@@ -55,14 +55,14 @@ def calculate_entity_accuracy(reference: str, hypothesis: str) -> float:
     matches = sum(1 for entity in target_entities if any(entity in w for w in hyp_words))
     return matches / len(target_entities)
 
-def calculate_faas(overall_score: float, wer: float) -> float:
+def calculate_faas(entity_recall: float, wer: float) -> float:
     if wer <= 0.0001:
         wer = 0.0001
-    if overall_score <= 0.0:
-        overall_score = 0.001
-    return float(10.0 * math.log10(overall_score / wer))
+    if entity_recall <= 0.0:
+        entity_recall = 0.001
+    return float(10.0 * math.log10(entity_recall / wer))
 
-BENCHMARK_SAMPLES = [
+DEFAULT_BENCHMARK_SAMPLES = [
     {
         "id": "sample_001",
         "audio_path": "./samples/sample_001.wav",
@@ -70,8 +70,8 @@ BENCHMARK_SAMPLES = [
         "language_pair": "English-Amharic Code-Switch",
         "hypotheses": {
             "Intron Sahara v2.5": "patient unique identification. patient presents with severe headache and fever spanning 3 days. prescribed paracetamol 500mg twice daily.",
-            "OpenAI Whisper (Medium)": "patient unique identification patient present with severe headache and high fever 3 days prescribed paracetamol 500 daily",
-            "Meta Wav2Vec2 (XLS-R)": "patient unique identification patient severe headache fever 3 days prescribed paracetamol"
+            "OpenAI Whisper Tiny": "patient unique identification patient present with severe headache and high fever 3 days prescribed paracetamol 500 daily",
+            "Meta Wav2Vec2 Base 960h (English)": "patient unique identification patient severe headache fever 3 days prescribed paracetamol"
         }
     },
     {
@@ -81,8 +81,8 @@ BENCHMARK_SAMPLES = [
         "language_pair": "English-Amharic Code-Switch",
         "hypotheses": {
             "Intron Sahara v2.5": "የጤና ተቋም። chief complaint is chest pain with short breath. clinical assessment shows blood pressure 140 over 90.",
-            "OpenAI Whisper (Medium)": "የጤና ተቋም chief complaint chest pain short breath blood pressure 140 over 90",
-            "Meta Wav2Vec2 (XLS-R)": "chief complaint chest pain short breath blood pressure 140 90"
+            "OpenAI Whisper Tiny": "የጤና ተቋም chief complaint chest pain short breath blood pressure 140 over 90",
+            "Meta Wav2Vec2 Base 960h (English)": "chief complaint chest pain short breath blood pressure 140 90"
         }
     },
     {
@@ -92,11 +92,157 @@ BENCHMARK_SAMPLES = [
         "language_pair": "English Clinical Standard",
         "hypotheses": {
             "Intron Sahara v2.5": "patient has suspected malaria and pneumonia. recommended amoxicillin 500mg and urgent lab workup.",
-            "OpenAI Whisper (Medium)": "patient suspected malaria and pneumonia recommended amoxicillin 500mg urgent lab workup",
-            "Meta Wav2Vec2 (XLS-R)": "patient suspect malaria pneumonia recommended amoxicillin lab workup"
+            "OpenAI Whisper Tiny": "patient suspected malaria and pneumonia recommended amoxicillin 500mg urgent lab workup",
+            "Meta Wav2Vec2 Base 960h (English)": "patient suspect malaria pneumonia recommended amoxicillin lab workup"
+        }
+    },
+    {
+        "id": "sample_004",
+        "audio_path": "./samples/sample_004.wav",
+        "reference": "patient reports fever and cough for 2 days. oxygen saturation is low and there is wheezing in the lungs.",
+        "language_pair": "English Clinical Standard",
+        "hypotheses": {
+            "Intron Sahara v2.5": "patient reports fever and cough for 2 days. oxygen saturation is low and there is wheezing in the lungs.",
+            "OpenAI Whisper Tiny": "patient reports fever cough for 2 days oxygen saturation low wheezing in lungs",
+            "Meta Wav2Vec2 Base 960h (English)": "patient fever cough 2 days low oxygen saturation wheezing lungs"
+        }
+    },
+    {
+        "id": "sample_005",
+        "audio_path": "./samples/sample_005.wav",
+        "reference": "የህሙም በሽታ አብዛኛውን ጊዜ በእግር ህመም እና በቫይታሚን እጥረት ተገኝቷል። doctor advised metformin 500mg once daily and hydration.",
+        "language_pair": "English-Amharic Code-Switch",
+        "hypotheses": {
+            "Intron Sahara v2.5": "የህሙም በሽታ አብዛኛውን ጊዜ በእግር ህመም እና በቫይታሚን እጥረት ተገኝቷል። doctor advised metformin 500mg once daily and hydration.",
+            "OpenAI Whisper Tiny": "ህመም በእግር ህመም እና ቫይታሚን እጥረት ተገኝቷል doctor advised metformin 500 once daily hydration",
+            "Meta Wav2Vec2 Base 960h (English)": "ህመም በእግር ህመም እና ቫይታሚን እጥረት doctor advised metformin once daily"
+        }
+    },
+    {
+        "id": "sample_006",
+        "audio_path": "./samples/sample_006.wav",
+        "reference": "patient reports abdominal pain and diarrhea for 4 days. blood pressure is 110 over 70 and pulse is elevated.",
+        "language_pair": "English Clinical Standard",
+        "hypotheses": {
+            "Intron Sahara v2.5": "patient reports abdominal pain and diarrhea for 4 days. blood pressure is 110 over 70 and pulse is elevated.",
+            "OpenAI Whisper Tiny": "patient reports abdominal pain diarrhea 4 days blood pressure 110 over 70 pulse elevated",
+            "Meta Wav2Vec2 Base 960h (English)": "patient abdominal pain diarrhea 4 days blood pressure 110 70 pulse elevated"
         }
     }
 ]
+
+
+def load_benchmark_samples() -> list[dict]:
+    dataset_dir = Path(os.getenv("BENCHMARK_DATASET_DIR", "./benchmark_data"))
+    manifest_path = dataset_dir / "manifest.csv"
+    if manifest_path.exists():
+        with manifest_path.open(encoding="utf-8", newline="") as manifest_file:
+            rows = list(csv.DictReader(manifest_file))
+        inference_metadata_path = dataset_dir / "inference_metadata.json"
+        inference_models = {}
+        if inference_metadata_path.is_file():
+            inference_models = json.loads(inference_metadata_path.read_text(encoding="utf-8")).get("models", {})
+        openai_model_id = inference_models.get("openai", {}).get("model_id", "gpt-4o-mini-transcribe")
+        gemini_model_id = inference_models.get("gemini", {}).get("model_id", "gemini-flash-latest")
+        items = []
+        model_columns = {
+            "Intron Sahara v2.5": "intron_hypothesis",
+            "OpenAI Whisper Tiny": "whisper_hypothesis",
+            "Meta Wav2Vec2 Base 960h (English)": "wav2vec2_hypothesis",
+            f"OpenAI {openai_model_id}": "openai_hypothesis",
+            f"Google Gemini {gemini_model_id}": "gemini_hypothesis",
+        }
+        for row in rows:
+            sample_id = (row.get("sample_id") or row.get("id") or "").strip()
+            audio_file = (row.get("audio_file") or row.get("audio_path") or "").strip()
+            if not sample_id or not audio_file:
+                continue
+            audio_path = (dataset_dir / audio_file).as_posix() if not audio_file.startswith("/") else audio_file
+            items.append({
+                "id": sample_id,
+                "case_id": (row.get("case_id") or sample_id).strip(),
+                "audio_path": audio_path,
+                "source_audio_file": (row.get("source_audio_file") or "").strip(),
+                "reference": (row.get("reference") or row.get("gold_standard") or "").strip(),
+                "target_terms": (row.get("target_terms") or "").strip(),
+                "language_pair": (row.get("language_pair") or "Not provided").strip(),
+                "reference_source": (row.get("reference_source") or "").strip(),
+                "consent_obtained": (row.get("consent_obtained") or "").strip(),
+                "de_identified": (row.get("de_identified") or "").strip(),
+                "annotator_count": (row.get("annotator_count") or "").strip(),
+                "reference_verified": (row.get("reference_verified") or "").strip().lower() in {"true", "1", "yes"},
+                "verified_gold_standard": (row.get("verified_gold_standard") or "").strip().lower() in {"true", "1", "yes"},
+                "duplicate_of": (row.get("duplicate_of") or "").strip(),
+                "hypotheses": {
+                    model: row[column].strip()
+                    for model, column in model_columns.items()
+                    if row.get(column, "").strip()
+                },
+            })
+        return items
+
+    json_manifest = dataset_dir / "manifest.json"
+    if json_manifest.exists():
+        payload = json.loads(json_manifest.read_text(encoding="utf-8"))
+        if isinstance(payload, list) and payload:
+            return payload
+
+    return DEFAULT_BENCHMARK_SAMPLES
+
+
+BENCHMARK_SAMPLES = load_benchmark_samples()
+
+
+def unique_benchmark_samples(samples: list[dict]) -> list[dict]:
+    return [sample for sample in samples if not sample.get("duplicate_of")]
+
+
+def available_optional_models(samples: list[dict]) -> list[str]:
+    base_models = {
+        "Intron Sahara v2.5",
+        "OpenAI Whisper Tiny",
+        "Meta Wav2Vec2 Base 960h (English)",
+    }
+    optional_models = []
+    for sample in samples:
+        for model in sample.get("hypotheses", {}):
+            if (
+                model not in base_models
+                and model.startswith(("OpenAI ", "Google Gemini "))
+                and model not in optional_models
+            ):
+                optional_models.append(model)
+    available = []
+    for model in optional_models:
+        counts = [bool(sample.get("hypotheses", {}).get(model)) for sample in samples]
+        if any(counts) and not all(counts):
+            raise ValueError(f"Partial hypotheses exist for {model}; complete all samples or clear that provider column.")
+        if counts and all(counts):
+            available.append(model)
+    return available
+
+
+def validate_benchmark_samples(samples: list[dict], models: list[str]) -> None:
+    if not samples:
+        raise ValueError("No benchmark samples are available.")
+    incomplete = [
+        item["id"]
+        for item in samples
+        if not item.get("reference")
+        or (
+            "reference_verified" in item
+            and not item["reference_verified"]
+            and not item.get("verified_gold_standard")
+        )
+        or any(not item.get("hypotheses", {}).get(model) for model in models)
+    ]
+    if incomplete:
+        sample_ids = ", ".join(incomplete[:5])
+        suffix = "..." if len(incomplete) > 5 else ""
+        raise ValueError(
+            f"Cannot calculate benchmark metrics: {len(incomplete)} sample(s) lack "
+            f"a verified reference transcript or model hypothesis ({sample_ids}{suffix})."
+        )
 
 def run_afriswitch_pilot(root: Path) -> None:
     """Validate the imported pilot and report reference coverage only."""
@@ -144,22 +290,26 @@ def run_afriswitch_pilot(root: Path) -> None:
     print(f"Pilot report exported to {output_path}")
 
 async def run_benchmark():
+    models = ["Intron Sahara v2.5", "OpenAI Whisper Tiny", "Meta Wav2Vec2 Base 960h (English)"]
+    scoring_samples = unique_benchmark_samples(BENCHMARK_SAMPLES)
+    models.extend(available_optional_models(scoring_samples))
+    validate_benchmark_samples(scoring_samples, models)
+
     print("============================================================")
     print("Starting Multi-Model Speech Recognition Benchmark...")
-    print("Models: Intron Sahara v2.5 | OpenAI Whisper | Meta Wav2Vec2")
+    print("Models: Intron Sahara v2.5 | OpenAI Whisper Tiny | Meta Wav2Vec2 Base 960h (English)")
     print("============================================================")
 
-    models = ["Intron Sahara v2.5", "OpenAI Whisper (Medium)", "Meta Wav2Vec2 (XLS-R)"]
-    results = {m: {"wers": [], "entity_accuracies": []} for m in models}
+    results = {m: {"wers": [], "entity_recalls": []} for m in models}
 
-    for item in BENCHMARK_SAMPLES:
+    for item in scoring_samples:
         ref = item["reference"]
         for model_name in models:
             hyp = item["hypotheses"][model_name]
             wer = calculate_wer(ref, hyp)
-            ea = calculate_entity_accuracy(ref, hyp)
+            entity_recall = calculate_entity_recall(ref, hyp)
             results[model_name]["wers"].append(wer)
-            results[model_name]["entity_accuracies"].append(ea)
+            results[model_name]["entity_recalls"].append(entity_recall)
 
     summary = {}
     print("\n============================================================")
@@ -168,52 +318,69 @@ async def run_benchmark():
 
     for m in models:
         mean_wer = fmean(results[m]["wers"])
-        mean_ea = fmean(results[m]["entity_accuracies"])
-        faas = calculate_faas(overall_score=mean_ea, wer=mean_wer)
+        mean_entity_recall = fmean(results[m]["entity_recalls"])
+        faas = calculate_faas(entity_recall=mean_entity_recall, wer=mean_wer)
         
         summary[m] = {
             "mean_wer": round(mean_wer, 4),
-            "clinical_entity_accuracy": round(mean_ea, 4),
+            "clinical_entity_recall": round(mean_entity_recall, 4),
             "faas_score": round(faas, 2)
         }
         print(f"Model: {m}")
         print(f"  - Mean WER: {summary[m]['mean_wer'] * 100:.2f}%")
-        print(f"  - Clinical Entity Accuracy: {summary[m]['clinical_entity_accuracy'] * 100:.2f}%")
+        print(f"  - Clinical Entity Recall: {summary[m]['clinical_entity_recall'] * 100:.2f}%")
         print(f"  - FAAS Score: {summary[m]['faas_score']} dB\n")
 
     with open(OUTPUT_REPORT_PATH, "w") as f:
         json.dump(summary, f, indent=2)
 
-    intron_wer = f"{summary['Intron Sahara v2.5']['mean_wer']*100:.2f}%"
-    intron_ea = f"{summary['Intron Sahara v2.5']['clinical_entity_accuracy']*100:.2f}%"
-    intron_faas = summary['Intron Sahara v2.5']['faas_score']
+    manifest_path = Path(os.getenv("BENCHMARK_DATASET_DIR", "./benchmark_data")) / "manifest.csv"
+    if manifest_path.is_file():
+        report_title = "# Clinical Audio Dataset Benchmark Report"
+        evidence_note = (
+            f"Results were scored from {len(scoring_samples)} manifest-selected recordings against verified references. "
+            "Model checkpoints and inference settings are recorded in `benchmark_data/inference_metadata.json`."
+        )
+        intron_status = "Measured hosted ASR"
+        whisper_status = "Measured local ASR"
+        wav2vec_status = "English-only local baseline; checkpoint in inference metadata"
+    else:
+        report_title = "# Fixture Speech Recognition Benchmark Report"
+        evidence_note = (
+            "This is a reproducible software fixture, not an independent audio benchmark. "
+            "Hypotheses are embedded in `benchmark_suite.py`; do not present these values as production performance."
+        )
+        intron_status = "Fixture reference"
+        whisper_status = "Fixture baseline"
+        wav2vec_status = "Fixture baseline"
 
-    whisper_wer = f"{summary['OpenAI Whisper (Medium)']['mean_wer']*100:.2f}%"
-    whisper_ea = f"{summary['OpenAI Whisper (Medium)']['clinical_entity_accuracy']*100:.2f}%"
-    whisper_faas = summary['OpenAI Whisper (Medium)']['faas_score']
+    model_status = {
+        "Intron Sahara v2.5": intron_status,
+        "OpenAI Whisper Tiny": whisper_status,
+        "Meta Wav2Vec2 Base 960h (English)": wav2vec_status,
+    }
+    report_rows = []
+    for model in models:
+        values = summary[model]
+        report_rows.append(
+            f"| {model} | {values['mean_wer'] * 100:.2f}% | "
+            f"{values['clinical_entity_recall'] * 100:.2f}% | {values['faas_score']:.2f} | "
+            f"{model_status.get(model, 'Measured ASR')} |"
+        )
+    model_table_rows = "\n".join(report_rows)
 
-    w2v_wer = f"{summary['Meta Wav2Vec2 (XLS-R)']['mean_wer']*100:.2f}%"
-    w2v_ea = f"{summary['Meta Wav2Vec2 (XLS-R)']['clinical_entity_accuracy']*100:.2f}%"
-    w2v_faas = summary['Meta Wav2Vec2 (XLS-R)']['faas_score']
+    md_content = f"""{report_title}
 
-    md_content = f"""# Fixture Speech Recognition Benchmark Report
+> **Evidence status:** {evidence_note}
 
-> **Evidence limitation:** This is a reproducible software fixture, not an
-> independent audio benchmark. The hypotheses are embedded in
-> `benchmark_suite.py`, and the referenced sample audio is not included.
-> Do not present these values as production performance or a real model
-> ranking.
-
-| Model | Average WER ↓ | Clinical Entity Accuracy ↑ | FAAS Score (dB) ↑ | Status |
+| Model | Average WER ↓ | Clinical Entity Recall ↑ | FAAS Score (dB) ↑ | Status |
 | :--- | :---: | :---: | :---: | :---: |
-| **Intron Sahara v2.5** | **{intron_wer}** | **{intron_ea}** | **{intron_faas}** | Fixture reference |
-| OpenAI Whisper (Medium) | {whisper_wer} | {whisper_ea} | {whisper_faas} | Baseline |
-| Meta Wav2Vec2 (XLS-R) | {w2v_wer} | {w2v_ea} | {w2v_faas} | Baseline |
+{model_table_rows}
 
 ### Evaluation Methodology
 1. **Word Error Rate (WER)**: Normalized string distance metric (S + D + I) / N.
-2. **Clinical Entity Accuracy**: Recall rate of medical terms (symptoms, dosages, diagnoses).
-3. **Fairness-Adjusted ASR Score (FAAS)**: Calculated as 10 * log10(Clinical Entity Accuracy / WER).
+2. **Clinical Entity Recall**: Recall rate of reference clinical terms (symptoms, dosages, diagnoses).
+3. **FAAS composite**: Calculated as 10 * log10(Clinical Entity Recall / WER); this aggregate score is not a demographic fairness metric.
 
 The separate 15-case clinical validation baseline reported 56.38% mean WER,
 44.33% target-term recall, and critical-term misses in 6 cases. That result is

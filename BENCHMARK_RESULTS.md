@@ -1,21 +1,18 @@
-# Fixture Speech Recognition Benchmark Report
+# Clinical Audio Dataset Benchmark Report
 
-> **Evidence limitation:** This is a reproducible software fixture, not an
-> independent audio benchmark. The hypotheses are embedded in
-> `benchmark_suite.py`, and the referenced sample audio is not included.
-> Do not present these values as production performance or a real model
-> ranking.
+> **Evidence status:** Results were scored from 15 manifest-selected recordings against verified references. Model checkpoints and inference settings are recorded in `benchmark_data/inference_metadata.json`.
 
-| Model | Average WER ↓ | Clinical Entity Accuracy ↑ | FAAS Score (dB) ↑ | Status |
+| Model | Average WER ↓ | Clinical Entity Recall ↑ | FAAS Score (dB) ↑ | Status |
 | :--- | :---: | :---: | :---: | :---: |
-| **Intron Sahara v2.5** | **0.00%** | **100.00%** | **40.0** | Fixture reference |
-| OpenAI Whisper (Medium) | 41.74% | 91.67% | 3.42 | Baseline |
-| Meta Wav2Vec2 (XLS-R) | 55.70% | 83.33% | 1.75 | Baseline |
+| Intron Sahara v2.5 | 47.82% | 90.00% | 2.75 | Measured hosted ASR |
+| OpenAI Whisper Tiny | 106.41% | 63.33% | -2.25 | Measured local ASR |
+| Meta Wav2Vec2 Base 960h (English) | 118.77% | 46.67% | -4.06 | English-only local baseline; checkpoint in inference metadata |
+| Google Gemini gemini-flash-latest | 29.20% | 96.67% | 5.20 | Measured ASR |
 
 ### Evaluation Methodology
 1. **Word Error Rate (WER)**: Normalized string distance metric (S + D + I) / N.
-2. **Clinical Entity Accuracy**: Recall rate of medical terms (symptoms, dosages, diagnoses).
-3. **Fairness-Adjusted ASR Score (FAAS)**: Calculated as 10 * log10(Clinical Entity Accuracy / WER).
+2. **Clinical Entity Recall**: Recall rate of reference clinical terms (symptoms, dosages, diagnoses).
+3. **FAAS composite**: Calculated as 10 * log10(Clinical Entity Recall / WER); this aggregate score is not a demographic fairness metric.
 
 The separate 15-case clinical validation baseline reported 56.38% mean WER,
 44.33% target-term recall, and critical-term misses in 6 cases. That result is

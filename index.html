@@ -196,6 +196,27 @@
                   </div>
                   <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
                 </button>
+                <button onclick="loadTriagePreset(4)" class="w-full text-left p-3 rounded-lg border border-slate-800 hover:border-emerald-500/50 bg-slate-900 transition flex items-center justify-between group">
+                  <div>
+                    <div class="text-xs font-semibold text-indigo-400 group-hover:text-indigo-300">GOLD-ETH-004: Post-Op Wound Infection</div>
+                    <div class="text-xs text-slate-400 italic mt-0.5">"Operasion-u site red and pus discharge ale, fever felt very high..."</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
+                </button>
+                <button onclick="loadTriagePreset(5)" class="w-full text-left p-3 rounded-lg border border-slate-800 hover:border-emerald-500/50 bg-slate-900 transition flex items-center justify-between group">
+                  <div>
+                    <div class="text-xs font-semibold text-cyan-400 group-hover:text-cyan-300">GOLD-ETH-005: Diabetes Follow-Up & Foot Pain</div>
+                    <div class="text-xs text-slate-400 italic mt-0.5">"የህመም በሽታ ... የእግር ህመም and metformin prescribed once daily..."</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
+                </button>
+                <button onclick="loadTriagePreset(6)" class="w-full text-left p-3 rounded-lg border border-slate-800 hover:border-emerald-500/50 bg-slate-900 transition flex items-center justify-between group">
+                  <div>
+                    <div class="text-xs font-semibold text-violet-400 group-hover:text-violet-300">GOLD-ETH-006: GI Distress & BP Check</div>
+                    <div class="text-xs text-slate-400 italic mt-0.5">"Patient reports abdominal pain and diarrhea for 4 days..."</div>
+                  </div>
+                  <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
+                </button>
               </div>
             </div>
             <div class="p-4 bg-slate-900 rounded-lg border border-slate-800 text-center">
@@ -599,7 +620,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-xs text-amber-100">
             <h3 class="font-bold text-amber-300 mb-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Fixture benchmark limitation</h3>
-            <p>The displayed matrix uses embedded hypotheses and illustrative case values. Its 0% WER-style result is reproducible as a software fixture, but it is not independent audio inference or proof of production superiority. The "All Cases" row is calculated live as the average of the four per-case rows below, not a separately hardcoded figure.</p>
+            <p>The displayed matrix uses embedded hypotheses and illustrative case values. Its 0% WER-style result is reproducible as a software fixture, but it is not independent audio inference or proof of production superiority. The "All Cases" row is calculated live as the average of the six per-case rows below, not a separately hardcoded figure.</p>
           </div>
           <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-xs text-red-100">
             <h3 class="font-bold text-red-300 mb-2"><i class="fa-solid fa-user-doctor mr-1"></i> Measured clinical validation</h3>
@@ -610,11 +631,13 @@
           <div class="flex items-center gap-3 w-full md:w-auto">
             <label class="text-xs font-bold text-slate-400 uppercase whitespace-nowrap"><i class="fa-solid fa-database text-amber-400 mr-1"></i> Active Case Filter:</label>
             <select id="benchmark-case-select" onchange="onCaseSelectChange()" class="w-full md:w-80 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-semibold">
-              <option value="AGGREGATE">📊 ALL CASES: Aggregated Corpus Average (4 Samples)</option>
+              <option value="AGGREGATE">📊 ALL CASES: Aggregated Corpus Average (6 Samples)</option>
               <option value="GOLD-ETH-001">GOLD-ETH-001: Pediatric High Fever & Severe Cough (ESI 2)</option>
               <option value="GOLD-ETH-002">GOLD-ETH-002: Moderate Dehydration & Hypotension (ESI 3)</option>
               <option value="GOLD-ETH-003">GOLD-ETH-003: Acute Chest Tightness & Dyspnea (ESI 1)</option>
               <option value="GOLD-ETH-004">GOLD-ETH-004: Post-Op Appendectomy Wound Infection (ESI 2)</option>
+              <option value="GOLD-ETH-005">GOLD-ETH-005: Diabetes Follow-Up & Foot Pain (Monitoring)</option>
+              <option value="GOLD-ETH-006">GOLD-ETH-006: GI Distress & BP Check (Urgent)</option>
             </select>
           </div>
           <div id="case-summary-pills" class="flex items-center gap-2 flex-wrap text-xs">
@@ -777,7 +800,7 @@
           <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">2. Evidence and governance</h4>
           <p>Fixture benchmark values, AfriSwitch general-ASR results, and the 15-case clinical-review baseline are shown as separate evidence layers. The measured clinical baseline is 56.38% mean WER, 44.33% target-term recall, and six critical-term-miss cases. These results require clinician review and do not support autonomous care.</p>
           <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">3. Privacy and safety</h4>
-          <p>Provider credentials remain server-side. Recordings are reviewed before upload, private validation inputs remain outside Git, and medication suggestions are blocked until clinician confirmation and patient context are supplied.</p>
+          <p>Provider credentials remain server-side. Recordings are reviewed before upload, private validation inputs remain outside Git, and medication information must be independently verified by a clinician. Automated medication safety checks are not implemented end to end.</p>
           <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">4. Project team</h4>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div class="p-3 bg-slate-950 rounded-lg border border-slate-800"><strong class="text-white">Project owner</strong><br><span class="text-slate-400">Ermias Amare</span></div>
@@ -1049,16 +1072,13 @@
               ehrSetStatus('Live Intron Amharic-English transcript received.');
             }
             const now = performance.now();
-            if (firstAudioFrameSentAt !== null && !Number.isFinite(faasMs)) {
-              faasMs = now - firstAudioFrameSentAt;
+            if (firstAudioFrameSentAt !== null && !Number.isFinite(firstPartialLatencyMs)) {
+              firstPartialLatencyMs = now - firstAudioFrameSentAt;
             }
             if (lastPartialTranscriptAt !== null) {
               partialTokenDelayMs = now - lastPartialTranscriptAt;
             }
             lastPartialTranscriptAt = now;
-            if (!navigator.onLine) {
-              persistOfflineRecord({ type: 'transcript', transcript: payload.transcript, timestamp: Date.now() });
-            }
             const transcript = document.getElementById('triage-transcript');
             if (transcript) renderGuardedTranscript(payload.transcript, 'triage-transcript');
             renderTriageFromTranscript(payload.transcript);
@@ -1265,17 +1285,17 @@
   let isRecordingTriage = false;
   let firstAudioFrameSentAt = null;
   let lastPartialTranscriptAt = null;
-  let faasMs = null;
+  let firstPartialLatencyMs = null;
   let partialTokenDelayMs = null;
-  window.__streamingMetrics = { faas_ms: null, partial_token_delay_ms: null, first_audio_sent_at: null };
+  window.__streamingMetrics = { first_partial_latency_ms: null, partial_token_delay_ms: null, first_audio_sent_at: null };
 
   function updateStreamingLatencyUI() {
     const statusEl = document.getElementById('mic-status');
-    window.__streamingMetrics.faas_ms = Number.isFinite(faasMs) ? faasMs : null;
+    window.__streamingMetrics.first_partial_latency_ms = Number.isFinite(firstPartialLatencyMs) ? firstPartialLatencyMs : null;
     window.__streamingMetrics.partial_token_delay_ms = Number.isFinite(partialTokenDelayMs) ? partialTokenDelayMs : null;
     if (!statusEl) return;
     const parts = [];
-    if (Number.isFinite(faasMs)) parts.push(`FAAS ${faasMs.toFixed(0)}ms`);
+    if (Number.isFinite(firstPartialLatencyMs)) parts.push(`First partial ${firstPartialLatencyMs.toFixed(0)}ms`);
     if (Number.isFinite(partialTokenDelayMs)) parts.push(`Partial ${partialTokenDelayMs.toFixed(0)}ms`);
     if (!parts.length) return;
     statusEl.innerText = `${parts.join(' • ')} • ${statusEl.dataset.baseStatus || 'Streaming live'}`;
@@ -1407,6 +1427,50 @@
           { model: "Gemini 3 Flash", wer: "15.1%", cer: "6.0%", factuality: "4.3/5", safety: "4.4/5", class: "text-indigo-400" }
         ],
         comment: "Detected surgical wound infection keywords during automated voice check-in and triggered nurse alert protocol."
+      },
+      "GOLD-ETH-005": {
+        title: "Diabetes Follow-Up & Foot Pain",
+        json: {
+          case_id: "GOLD-ETH-005",
+          patient: "Adult Male (48 Years)",
+          symptoms: ["Foot Pain", "Numbness", "Medication Follow-Up"],
+          code_switched_verbatim: "የህመም በሽታ አብዛኛውን ጊዜ በእግር ህመም እና በቫይታሚን እጥረት ተገኝቷል። doctor advised metformin 500mg once daily and hydration.",
+          urgency: "ESI 3 (Monitoring)",
+          target_icd10: "E11.9"
+        },
+        chartData: {
+          labels: ['Intron Sahara v2.5', 'OpenAI Whisper v3', 'Gemini 3 Flash'],
+          wer: [10.4, 22.1, 17.6],
+          cer: [4.1, 9.8, 7.3]
+        },
+        matrix: [
+          { model: "Intron Sahara v2.5", wer: "10.4%", cer: "4.1%", factuality: "4.7/5", safety: "4.9/5", class: "text-emerald-400 font-bold" },
+          { model: "OpenAI Whisper v3", wer: "22.1%", cer: "9.8%", factuality: "3.6/5", safety: "3.8/5", class: "text-slate-300" },
+          { model: "Gemini 3 Flash", wer: "17.6%", cer: "7.3%", factuality: "4.1/5", safety: "4.3/5", class: "text-indigo-400" }
+        ],
+        comment: "Captured diabetic foot pain and medication follow-up details, preserving treatment continuity without inventing dose changes."
+      },
+      "GOLD-ETH-006": {
+        title: "GI Distress & Blood Pressure Check",
+        json: {
+          case_id: "GOLD-ETH-006",
+          patient: "Adult Female (29 Years)",
+          symptoms: ["Abdominal Pain", "Diarrhea", "Elevated Pulse"],
+          code_switched_verbatim: "Patient reports abdominal pain and diarrhea for 4 days. blood pressure is 110 over 70 and pulse is elevated.",
+          urgency: "ESI 2 (Urgent)",
+          target_icd10: "A09"
+        },
+        chartData: {
+          labels: ['Intron Sahara v2.5', 'OpenAI Whisper v3', 'Gemini 3 Flash'],
+          wer: [8.1, 18.9, 14.7],
+          cer: [3.1, 8.3, 5.8]
+        },
+        matrix: [
+          { model: "Intron Sahara v2.5", wer: "8.1%", cer: "3.1%", factuality: "4.8/5", safety: "4.9/5", class: "text-emerald-400 font-bold" },
+          { model: "OpenAI Whisper v3", wer: "18.9%", cer: "8.3%", factuality: "3.9/5", safety: "4.0/5", class: "text-slate-300" },
+          { model: "Gemini 3 Flash", wer: "14.7%", cer: "5.8%", factuality: "4.4/5", safety: "4.4/5", class: "text-indigo-400" }
+        ],
+        comment: "Maintained the GI and vitals timeline correctly and flagged an elevated pulse without drifting into a false diagnosis."
       }
     };
 
@@ -1647,8 +1711,14 @@
         recommendationText = "Action: Immediate referral to Primary Health Care Center. Administer oral rehydration and antipyretic.";
       } else if (presetNum === 2) {
         recommendationText = "Action: Clinic observation, ORS rehydration, and vitals check within 2 hours.";
-      } else {
+      } else if (presetNum === 3) {
         recommendationText = "Action: Urgent ambulance dispatch to district emergency care. High respiratory risk.";
+      } else if (presetNum === 4) {
+        recommendationText = "Action: Post-op wound review, sterile dressing change, and nurse escalation for possible surgical site infection.";
+      } else if (presetNum === 5) {
+        recommendationText = "Action: Review glucose control and medication adherence; check foot exam and hydration status during follow-up.";
+      } else {
+        recommendationText = "Action: Reassess GI hydration, vital signs, and escalation threshold; keep under close observation for dehydration.";
       }
       if (recEl) recEl.innerText = recommendationText;
       speakRecommendation(recommendationText);

@@ -49,11 +49,11 @@ module or a claim of clinical approval.
 - Audio is reviewed locally before an explicit upload.
 - Private validation audio, transcripts, and provider artifacts remain outside
   Git.
-- Medication suggestions are blocked until clinician confirmation and patient
-  context are supplied.
-- Viral features and penicillin-family allergy conflicts block Amoxicillin
-  suggestions.
-- The interface labels generated content as draft material requiring review.
+- Medication safety is not enforced end to end in the current prototype. The
+   repository does not contain a backend-enforced viral/allergy blocker; any
+   medication information must be independently reviewed by a qualified
+   clinician and must not be presented as a safe prescription recommendation.
+- The interface labels content as draft material requiring review.
 
 ## Team and ownership
 

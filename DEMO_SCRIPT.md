@@ -5,9 +5,9 @@ for which consent and de-identification have been documented.
 
 ## 0:00–0:20 — Problem and users
 
-Say: “AfriHealth AI helps community health workers and clinicians document
-code-switched consultations in English, Amharic, and Afaan Oromoo. It supports
-triage and documentation; it does not replace clinical judgment.”
+Say: “AfriHealth AI is a prototype for clinician-reviewed documentation of
+English-Amharic code-switched consultations. Other language pairs, including
+Afaan Oromoo, are future work. It does not replace clinical judgment.”
 
 Show the three care modules and the target frontline workflow.
 
@@ -23,15 +23,17 @@ against the source audio and patient context.
 
 ## 1:05–1:35 — Clinical intake and follow-up
 
-Open Module 2 to show the structured clinical/EHR intake fields, then Module 3
-to show the post-care voice workflow. Explain which steps are suggestions and
-which require clinician or staff confirmation.
+Open Module 2 to show the editable clinical/EHR intake fields, then Module 3
+to show the post-care voice workflow. Do not claim that plain transcript input
+is automatically converted into a SOAP note; the clinical text API currently
+validates structured JSON and otherwise returns a manual-review fallback.
 
 ## 1:35–2:10 — Benchmark
 
 Open the benchmark matrix. Explain that the repository includes a reproducible
-three-sample fixture comparing Intron Sahara v2.5, OpenAI Whisper Medium, and
-Meta Wav2Vec2 XLS-R using WER, clinical-entity recall, and FAAS.
+three-sample fixture with embedded hypotheses for Intron Sahara v2.5, OpenAI
+Whisper Medium, and Meta Wav2Vec2 XLS-R. The fixture's FAAS is an aggregate
+composite score, not a demographic fairness evaluation.
 
 Say: “These are fixture results, not a population-wide claim. A final
 submission should include the actual dataset version, sample count, model

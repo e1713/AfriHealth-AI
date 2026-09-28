@@ -66,11 +66,14 @@ case and keeps raw audio and provider response data outside Git.
 
 ### Clinical artifact generation
 
-`/api/v1/clinical/process-text` creates draft SOAP, ICD-10, symptom, and
-medication artifacts. Medication candidates remain blocked unless the request
-contains explicit clinician confirmation and patient context. Possible viral
-features and penicillin-family allergy conflicts produce alerts and block
-amoxicillin suggestions.
+`/api/v1/clinical/process-text` accepts transcript text, applies limited email
+and phone redaction, and attempts to validate structured SOAP JSON. Ordinary
+prose falls back to a summary marked for manual review; this endpoint does not
+invoke a generation model and is not currently called by `index.html`. The UI's
+editable clinical workflow and this API endpoint are separate paths. Do not
+describe the current endpoint as an agentic SOAP/ICD-10 generator. Any medication
+safety gate must be verified in the specific workflow before describing it as
+enforced end to end.
 
 ## 4. Evidence and evaluation layers
 
@@ -121,19 +124,31 @@ evaluation and future clinical governance.
 - Keep `INTRON_API_KEY` in a server environment variable.
 - Never place credentials in `index.html`, commits, screenshots, or demo
   recordings.
-- Keep raw recordings, consent forms, identity mappings, full transcripts, and
-  provider file IDs outside the public repository.
+- Raw audio is not stored by the stream persistence tables. Live partial and
+  final transcript text is stored in `clinic_sessions` and `transcript_events`;
+  no expiry or deletion policy is implemented in this repository.
+- The clinical text endpoint redacts common email addresses and Ethiopian
+  phone numbers only. This limited redaction is not applied to live-stream
+  persistence and is not comprehensive de-identification.
+- Do not use identifiable patient data until retention, deletion, and access
+  controls have been approved and implemented.
 - Use de-identified or simulated cases for public demonstrations.
 - Configure exact production CORS origins rather than broad wildcards.
 - Treat generated transcripts, entities, codes, triage labels, and medication
   candidates as clinician-review drafts.
 
+The persistence `session_id` is a stream-session UUID. It is not linked to the
+separate, caller-supplied FHIR `encounter_id`. The repository has no patient or
+clinician tables and no built-in clinician accounts or role-based access
+control. `REQUIRE_PROXY_AUTH` enables only a trusted identity-header check.
+
 ## 6. Known limitations
 
 - The current frontend uses a lightweight browser capture path and requires a
   compatible microphone/browser for live recording.
-- Oromo handling depends on provider support; the bundled Whisper checkpoints
-  do not accept forced `om` language decoding.
+- The current release targets English-Amharic code-switching. Oromo is not
+  established as production-supported; provider and checkpoint limitations
+  still apply.
 - Clinical validation currently reports a baseline, not a safety or efficacy
   claim.
 - No demo video is included in this repository. The written

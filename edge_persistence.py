@@ -102,6 +102,14 @@ class EdgePersistence:
             )
         return session_id
 
+    async def end_session(self, session_id: str) -> None:
+        async with self.session_factory.begin() as session:
+            await session.execute(
+                update(ClinicSession)
+                .where(ClinicSession.session_id == session_id)
+                .values(ended_at=utc_now())
+            )
+
     async def record_transcript(
         self,
         *,

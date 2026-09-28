@@ -1016,7 +1016,9 @@ EHR_API_KEY = os.getenv("EHR_API_KEY") or ""
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or ""
 OPENAI_TRANSCRIBE_MODEL = os.getenv("OPENAI_TRANSCRIBE_MODEL", "gpt-4o-mini-transcribe")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or ""
-GEMINI_TRANSCRIBE_MODEL = os.getenv("GEMINI_TRANSCRIBE_MODEL", "gemini-2.0-flash")
+GEMINI_API_KEY_1 = os.getenv("GEMINI_API_KEY_1") or ""
+GEMINI_API_KEY_2 = os.getenv("GEMINI_API_KEY_2") or ""
+GEMINI_TRANSCRIBE_MODEL = os.getenv("GEMINI_TRANSCRIBE_MODEL", "gemini-flash-latest")
 INTRON_TTS_VOICE_LANGUAGE = os.getenv("INTRON_TTS_VOICE_LANGUAGE", "am")
 INTRON_TTS_VOICE_ACCENT = os.getenv("INTRON_TTS_VOICE_ACCENT", "amharic")
 INTRON_TTS_VOICE_GENDER = os.getenv("INTRON_TTS_VOICE_GENDER", "female")
@@ -1025,6 +1027,11 @@ INTRON_TTS_VOICE_GENDER = os.getenv("INTRON_TTS_VOICE_GENDER", "female")
 def _intron_auth_header() -> str:
     key = INTRON_API_KEY.strip()
     return key if key.lower().startswith("bearer ") else f"Bearer {key}"
+
+
+def get_gemini_api_keys() -> list[str]:
+    keys = (GEMINI_API_KEY, GEMINI_API_KEY_1, GEMINI_API_KEY_2)
+    return list(dict.fromkeys(key.strip() for key in keys if key and key.strip()))
 
 
 async def _read_limited_upload(upload: UploadFile) -> bytes:
@@ -1798,15 +1805,21 @@ async def _benchmark_openai(contents: bytes, filename: str, content_type: str) -
         return str(response.json().get("text", ""))
 
 
+class GeminiKeysRateLimitedError(RuntimeError):
+    stop_retries = True
+
+    def __init__(self, response: httpx.Response):
+        self.response = response
+        super().__init__("All configured Gemini keys returned HTTP 429")
+
+
 async def _benchmark_gemini(contents: bytes, content_type: str) -> str:
-    if not GEMINI_API_KEY:
+    api_keys = get_gemini_api_keys()
+    if not api_keys:
         raise RuntimeError("GEMINI_API_KEY is not configured")
     import base64 as _base64
 
-    endpoint = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_TRANSCRIBE_MODEL}:generateContent"
-        f"?key={GEMINI_API_KEY}"
-    )
+    endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_TRANSCRIBE_MODEL}:generateContent"
     body = {
         "contents": [{"parts": [
             {"text": "Transcribe this clinical Amharic-English code-switched audio verbatim. Return only the transcript."},
@@ -1814,11 +1827,22 @@ async def _benchmark_gemini(contents: bytes, content_type: str) -> str:
         ]}]
     }
     async with httpx.AsyncClient(timeout=130.0) as client:
-        response = await client.post(endpoint, json=body)
-        response.raise_for_status()
-        candidates = response.json().get("candidates", [])
-        parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
-        return " ".join(str(part.get("text", "")) for part in parts).strip()
+        for index, api_key in enumerate(api_keys):
+            response = await client.post(endpoint, headers={"x-goog-api-key": api_key}, json=body)
+            if response.status_code == 429 and index + 1 < len(api_keys):
+                logger.warning(
+                    "Gemini key slot %s was rate-limited; trying configured key slot %s",
+                    index + 1,
+                    index + 2,
+                )
+                continue
+            if response.status_code == 429:
+                raise GeminiKeysRateLimitedError(response)
+            response.raise_for_status()
+            candidates = response.json().get("candidates", [])
+            parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
+            return " ".join(str(part.get("text", "")) for part in parts).strip()
+    raise RuntimeError("Gemini key rotation exited without a response")
 
 
 async def _run_live_benchmark_provider(name: str, provider, *args) -> dict:
@@ -2021,25 +2045,13 @@ async def websocket_stream(websocket: WebSocket):
     started_at = time.monotonic()
     _active_websockets += 1
     await websocket.accept()
+    session_id = None
     try:
         session_id = await persistence.start_session(
             clinic_id=clinic_id,
             language_code=language,
         )
         await websocket.send_json({"session_id": session_id, "persistence": persistence.backend})
-        persistence_tasks: set[asyncio.Task] = set()
-
-        def queue_persistence(transcript: str, event_type: str) -> None:
-            task = asyncio.create_task(
-                persistence.record_transcript(
-                    session_id=session_id,
-                    clinic_id=clinic_id,
-                    transcript=transcript,
-                    event_type=event_type,
-                )
-            )
-            persistence_tasks.add(task)
-            task.add_done_callback(persistence_tasks.discard)
 
         async with websockets.connect(
             intron_url,
@@ -2166,11 +2178,9 @@ async def websocket_stream(websocket: WebSocket):
                         elif msg_type == "PARTIAL_TRANSCRIPT":
                             transcript = payload.get("transcript", "")
                             if transcript:
-                                queue_persistence(transcript, "partial")
                                 await websocket.send_json({"transcript": transcript, "session_id": session_id})
                         elif msg_type == "COMMITTED_TRANSCRIPT":
                             transcript = payload.get("transcript_text", "")
-                            queue_persistence(transcript, "final")
                             await websocket.send_json({"transcript": transcript, "session_id": session_id})
                             session_finished.set()
                             return
@@ -2204,8 +2214,11 @@ async def websocket_stream(websocket: WebSocket):
         except Exception:
             pass
     finally:
-        if "persistence_tasks" in locals() and persistence_tasks:
-            await asyncio.gather(*persistence_tasks, return_exceptions=True)
+        if session_id is not None:
+            try:
+                await persistence.end_session(session_id)
+            except Exception:
+                logger.exception("Failed to close STT session metadata")
         _active_websockets = max(0, _active_websockets - 1)
         try:
             await websocket.close()

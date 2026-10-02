@@ -1,4 +1,4 @@
-const CACHE_NAME = 'afrihealth-v1.2';
+const CACHE_NAME = 'afrihealth-v1.3';
 const ASSETS = [
 './',
 './index.html',
@@ -26,6 +26,22 @@ Promise.all(keys.map((k) => k !== CACHE_NAME && caches.delete(k)))
 
 self.addEventListener('fetch', (e) => {
 if (e.request.method !== 'GET') return;
+const requestUrl = new URL(e.request.url);
+const isPage = e.request.mode === 'navigate' || requestUrl.pathname.endsWith('.html');
+if (isPage) {
+e.respondWith(
+fetch(e.request)
+	.then((response) => {
+		if (response.ok) {
+			const responseCopy = response.clone();
+			caches.open(CACHE_NAME).then((cache) => cache.put(e.request, responseCopy));
+		}
+		return response;
+	})
+	.catch(() => caches.match(e.request).then((cached) => cached || caches.match('./index.html')))
+);
+return;
+}
 e.respondWith(
 caches.match(e.request).then((cached) => cached || fetch(e.request).catch(() => cached))
 );

@@ -23,7 +23,7 @@ A clinician-reviewed Amharic-English code-switched clinical documentation platfo
 
 ## Overview
 
-Sahara Healthcare Suite is a clinician-facing documentation platform focused on Amharic-English code-switched clinical conversations. It captures patient audio, transcribes clinical speech in context, and supports downstream review workflows for editable SOAP notes, triage, coding, benchmarking, and FHIR-compatible exports. Other language pairs are future expansion targets.
+Sahara Healthcare Suite v1.0 is a clinician-facing documentation platform focused on Amharic-English code-switched clinical conversations. Afaan Oromoo-English is a Phase 2 roadmap item; Tigrinya-English is Phase 3. It captures audio, transcribes clinical speech, and supports review workflows for SOAP drafts, triage, coding, benchmarking, and FHIR-compatible exports.
 
 The system is built around a static frontend and a secure FastAPI gateway that keeps sensitive credentials, such as the Intron API key, out of the browser while enabling real-time clinical processing at edge scale.
 
@@ -59,9 +59,12 @@ The system is built around a static frontend and a secure FastAPI gateway that k
 The repository separates fixture demonstrations from measured validation:
 
 - The Module 4 fixture matrix uses embedded hypotheses and is not an audio benchmark or production model ranking.
+- [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) reports a separate four-model transcript comparison scored on the unchanged 15-case Amharic-English manifest. It includes normalized WER, alias-aware annotated target-term recall, and M-WER for Intron, Whisper Tiny, English-only Wav2Vec2, and Gemini.
 - The live benchmark accepts one reviewed Amharic-English sample and reports Intron Sahara v2.5 latency, transcript, WER, and CER.
 - WER/CER require a verified reference transcript. A provisional Intron-reference mode is available for model-to-model comparison, but it is not independent gold-standard accuracy.
 - The clinical validation report covers 15 reviewed simulated cases and reports a 56.38% mean WER, 44.33% target-term recall, and six cases with critical-term misses. These results require clinician review and do not support autonomous care.
+
+The four-model report scores saved transcripts, not fresh inference during report generation. Its custom target-term recall is not a demographic fairness metric; no hallucination-rate or streaming segment-loss result is reported. OpenAI's optional hosted baseline has no complete outputs in the recorded run and is excluded.
 
 ---
 

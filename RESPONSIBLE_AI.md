@@ -6,8 +6,8 @@
 
 ## 2. Privacy & Data Governance
 * *Audio handling:* The browser captures audio for streaming or explicit upload. Raw audio is not stored by the stream persistence tables; this does not imply that transcript data is not retained.
-* *Transcript retention:* Live partial and final transcripts are persisted in `clinic_sessions` and `transcript_events`. The repository does not currently implement a transcript expiry or deletion policy. Do not send identifiable patient data until approved retention, access, and deletion controls are implemented and verified.
-* *Limited redaction:* The clinical text-processing endpoint removes common email addresses and Ethiopian-format phone numbers before processing submitted text. This is not comprehensive de-identification and is not applied to transcripts persisted by the live WebSocket path.
+* *Transcript retention:* The live WebSocket path persists session metadata but does not currently write transcript text to `clinic_sessions` or `transcript_events`. Session metadata has no expiry or deletion policy. Do not send identifiable patient data until approved retention, access, and deletion controls are implemented and verified.
+* *Limited redaction:* The clinical text-processing endpoint removes common email addresses and Ethiopian-format phone numbers before processing submitted text. This is not comprehensive de-identification and is not applied to live WebSocket transcript messages returned to the browser.
 * *Consent:* Audio must be collected only after the patient or authorized participant has provided informed consent. Consent status and intended use should be recorded in dataset metadata.
 * *Access control:* API keys remain server-side. The backend supports an optional trusted-proxy identity-header check; the repository does not provide clinician accounts or role-based access control. Authenticated clinical access, audit logging, and an approved retention policy are still required before EHR integration.
 * *Medication safety limitation:* This repository does not implement a
@@ -17,8 +17,8 @@
   represent the current prototype as preventing unsafe medication suggestions.
 
 ## 3. Equity & Linguistic Accessibility
-* *Current language scope:* The current release targets English-Amharic code-switched conversations. Oromoo and other language pairs are future work and have not been established as production-supported by this repository.
-* *Evaluation limits:* The fixture benchmark does not report demographic-group fairness. Its aggregate FAAS score is not evidence that disparities between demographic or language groups have been measured.
+* *Current language scope:* v1.0 targets Amharic-English code-switched conversations. Afaan Oromoo-English is Phase 2 and Tigrinya-English is Phase 3; neither is currently enabled or established as production-supported.
+* *Evaluation limits:* The four-model report covers 15 simulated Amharic-English cases and uses normalized WER, alias-aware target-term recall, and M-WER. It does not report demographic-group fairness, hallucination rate, or streaming segment loss. The report must not be used to claim that disparities between demographic or language groups have been measured.
 * *Low-resource deployment:* The browser includes offline-recovery features, but reliability across mobile devices and unstable networks has not been clinically or operationally validated; test the target devices and connectivity before deployment.
 
 ## 4. Operational limitations

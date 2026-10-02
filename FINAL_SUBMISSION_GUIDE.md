@@ -3,8 +3,8 @@
 ## Submission statement
 
 AfriHealth AI is a clinician-reviewed voice documentation and decision-support
-prototype for English-Amharic code-switched workflows. Other language pairs,
-including Afaan Oromoo, are future work. It
+prototype for English-Amharic code-switched workflows (active v1.0 scope).
+Afaan Oromoo-English is planned for Phase 2 and Tigrinya-English for Phase 3. It
 helps frontline workers capture speech, review a transcript, structure a
 clinical intake, and prepare follow-up documentation. It does not diagnose,
 prescribe, or replace clinical judgment.
@@ -18,6 +18,8 @@ prescribe, or replace clinical judgment.
 - Architecture and data-flow description: `ARCHITECTURE.md`
 - Responsible AI and inclusion controls: `RESPONSIBLE_AI.md`
 - Reproducible fixture benchmark: `benchmark_suite.py`
+- Four-model, 15-case transcript benchmark: `BENCHMARK_RESULTS.md`,
+  `benchmark_report.json`, and `evaluation_report_summary.json`
 - AfriSwitch import and real-inference tooling:
   `afriswitch_import.py` and `afriswitch_asr_benchmark.py`
 - Reviewed 15-case simulated clinical benchmark report:
@@ -39,10 +41,21 @@ Use the evidence labels below in the submission:
    useful for model comparison, error analysis, and terminology improvement,
    but are not evidence from real patients and do not authorize autonomous
    care.
+5. **Four-model transcript comparison:** The same 15-case manifest contains
+  complete outputs for Intron Sahara v2.5, OpenAI Whisper Tiny, English-only
+  Meta Wav2Vec2 Base 960h, and Google Gemini. The report scores saved
+  transcripts against verified references; it does not rerun inference.
+  Gemini currently has the lowest normalized WER (11.46%) and highest
+  target-term recall (93.33%); Intron scores 34.91% normalized WER, 57.78%
+  target-term recall, and 42.22% M-WER. These
+  small simulated-set results do not establish population performance or
+  fairness. The annotator-count field is blank, and the source audio is not
+  included in the public repository.
 
-Do not present `benchmark_report.json`, `evaluation_report_summary.json`, and
-the clinical report as one experiment. They use different datasets and
-protocols.
+`evaluation_report_summary.json` is a metadata-rich summary of the same
+four-model experiment in `benchmark_report.json`. Keep both separate from the
+single-provider `clinical_validation_report.json`, which uses a different
+evaluation protocol.
 
 ## Run instructions for reviewers
 
@@ -91,9 +104,10 @@ Before any real clinical deployment or real-patient evaluation, obtain:
 
 ## Demo video
 
-No demo video file or video link is included, by request. The project includes
-[DEMO_SCRIPT.md](./DEMO_SCRIPT.md) so the owner can provide a live demonstration
-or record an unlisted video separately if the submission portal requires one.
+The README links the project's YouTube walkthrough. Confirm that it is
+accessible to judges and demonstrates the current build; use
+[DEMO_SCRIPT.md](./DEMO_SCRIPT.md) to record an updated 2–3 minute video if the
+existing walkthrough does not meet the challenge's demo requirement.
 
 ## Final checklist
 

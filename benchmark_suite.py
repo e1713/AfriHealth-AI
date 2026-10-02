@@ -1,11 +1,18 @@
 import os
 import json
-import math
+import re
 import asyncio
 import argparse
 import csv
 from pathlib import Path
 from statistics import fmean
+
+from clinical_validation_evaluator import (
+    calculate_mwer as clinical_calculate_mwer,
+    calculate_target_term_recall,
+    contains_term,
+    normalize_clinical_text,
+)
 
 try:
     import jiwer
@@ -26,15 +33,14 @@ CLINICAL_ENTITIES = [
 ]
 
 def calculate_wer(reference: str, hypothesis: str) -> float:
-    ref_clean = reference.lower().strip()
-    hyp_clean = hypothesis.lower().strip()
-    if not ref_clean:
-        return 0.0 if not hyp_clean else 1.0
-    if jiwer:
-        return float(jiwer.wer(ref_clean, hyp_clean))
-
-    ref_words = ref_clean.split()
-    hyp_words = hyp_clean.split()
+    normalized_reference = normalize_clinical_text(reference)
+    normalized_hypothesis = normalize_clinical_text(hypothesis)
+    if jiwer is not None:
+        return float(jiwer.wer(normalized_reference, normalized_hypothesis))
+    ref_words = normalized_reference.split()
+    hyp_words = normalized_hypothesis.split()
+    if not ref_words:
+        return 0.0 if not hyp_words else 1.0
     distances = list(range(len(hyp_words) + 1))
     for ref_word in ref_words:
         next_distances = [distances[0] + 1]
@@ -46,21 +52,40 @@ def calculate_wer(reference: str, hypothesis: str) -> float:
         distances = next_distances
     return distances[-1] / len(ref_words)
 
-def calculate_entity_recall(reference: str, hypothesis: str) -> float:
-    ref_words = set(reference.lower().split())
-    hyp_words = set(hypothesis.lower().split())
-    target_entities = [e for e in CLINICAL_ENTITIES if e in ref_words or any(e in w for w in ref_words)]
+def calculate_entity_recall(
+    reference: str,
+    hypothesis: str,
+    target_terms: str | list[str] | None = None,
+) -> float:
+    if target_terms is not None:
+        terms = (
+            [term.strip().strip('"') for term in target_terms.split(";") if term.strip()]
+            if isinstance(target_terms, str)
+            else target_terms
+        )
+        return calculate_target_term_recall(reference, hypothesis, terms)
+
+    target_entities = [entity for entity in CLINICAL_ENTITIES if contains_term(reference, entity)]
     if not target_entities:
         return 1.0
-    matches = sum(1 for entity in target_entities if any(entity in w for w in hyp_words))
-    return matches / len(target_entities)
+    return calculate_target_term_recall(reference, hypothesis, target_entities)
 
-def calculate_faas(entity_recall: float, wer: float) -> float:
-    if wer <= 0.0001:
-        wer = 0.0001
-    if entity_recall <= 0.0:
-        entity_recall = 0.001
-    return float(10.0 * math.log10(entity_recall / wer))
+
+def calculate_mwer(
+    reference: str,
+    hypothesis: str,
+    target_terms: str | list[str] | None = None,
+) -> float:
+    if target_terms is None:
+        target_terms = [entity for entity in CLINICAL_ENTITIES if contains_term(reference, entity)]
+        if not target_terms:
+            return 0.0
+    terms = (
+        [term.strip().strip('"') for term in target_terms.split(";") if term.strip()]
+        if isinstance(target_terms, str)
+        else target_terms
+    )
+    return clinical_calculate_mwer(reference, hypothesis, terms)
 
 DEFAULT_BENCHMARK_SAMPLES = [
     {
@@ -229,6 +254,7 @@ def validate_benchmark_samples(samples: list[dict], models: list[str]) -> None:
         item["id"]
         for item in samples
         if not item.get("reference")
+        or ("target_terms" in item and not item.get("target_terms"))
         or (
             "reference_verified" in item
             and not item["reference_verified"]
@@ -241,7 +267,7 @@ def validate_benchmark_samples(samples: list[dict], models: list[str]) -> None:
         suffix = "..." if len(incomplete) > 5 else ""
         raise ValueError(
             f"Cannot calculate benchmark metrics: {len(incomplete)} sample(s) lack "
-            f"a verified reference transcript or model hypothesis ({sample_ids}{suffix})."
+            f"a verified reference transcript, target terms, or model hypothesis ({sample_ids}{suffix})."
         )
 
 def run_afriswitch_pilot(root: Path) -> None:
@@ -292,6 +318,9 @@ def run_afriswitch_pilot(root: Path) -> None:
 async def run_benchmark():
     models = ["Intron Sahara v2.5", "OpenAI Whisper Tiny", "Meta Wav2Vec2 Base 960h (English)"]
     scoring_samples = unique_benchmark_samples(BENCHMARK_SAMPLES)
+    manifest_path = Path(os.getenv("BENCHMARK_DATASET_DIR", "./benchmark_data")) / "manifest.csv"
+    uses_target_terms = manifest_path.is_file()
+    recall_key = "mean_target_term_recall" if uses_target_terms else "mean_lexicon_entity_recall"
     models.extend(available_optional_models(scoring_samples))
     validate_benchmark_samples(scoring_samples, models)
 
@@ -300,16 +329,26 @@ async def run_benchmark():
     print("Models: Intron Sahara v2.5 | OpenAI Whisper Tiny | Meta Wav2Vec2 Base 960h (English)")
     print("============================================================")
 
-    results = {m: {"wers": [], "entity_recalls": []} for m in models}
+    results = {m: {"wers": [], "target_recalls": [], "mwers": []} for m in models}
 
     for item in scoring_samples:
         ref = item["reference"]
         for model_name in models:
             hyp = item["hypotheses"][model_name]
             wer = calculate_wer(ref, hyp)
-            entity_recall = calculate_entity_recall(ref, hyp)
+            entity_recall = calculate_entity_recall(
+                ref,
+                hyp,
+                item.get("target_terms") if uses_target_terms else None,
+            )
+            mwer = calculate_mwer(
+                ref,
+                hyp,
+                item.get("target_terms") if uses_target_terms else None,
+            )
             results[model_name]["wers"].append(wer)
-            results[model_name]["entity_recalls"].append(entity_recall)
+            results[model_name]["target_recalls"].append(entity_recall)
+            results[model_name]["mwers"].append(mwer)
 
     summary = {}
     print("\n============================================================")
@@ -318,23 +357,23 @@ async def run_benchmark():
 
     for m in models:
         mean_wer = fmean(results[m]["wers"])
-        mean_entity_recall = fmean(results[m]["entity_recalls"])
-        faas = calculate_faas(entity_recall=mean_entity_recall, wer=mean_wer)
-        
+        mean_target_recall = fmean(results[m]["target_recalls"])
+        mean_mwer = fmean(results[m]["mwers"])
         summary[m] = {
+            "mean_normalized_wer": round(mean_wer, 4),
             "mean_wer": round(mean_wer, 4),
-            "clinical_entity_recall": round(mean_entity_recall, 4),
-            "faas_score": round(faas, 2)
+            recall_key: round(mean_target_recall, 4),
+            "mean_mwer": round(mean_mwer, 4),
+            "sample_count": len(scoring_samples),
         }
         print(f"Model: {m}")
-        print(f"  - Mean WER: {summary[m]['mean_wer'] * 100:.2f}%")
-        print(f"  - Clinical Entity Recall: {summary[m]['clinical_entity_recall'] * 100:.2f}%")
-        print(f"  - FAAS Score: {summary[m]['faas_score']} dB\n")
+        print(f"  - Mean Normalized WER: {summary[m]['mean_normalized_wer'] * 100:.2f}%")
+        print(f"  - {'Target-Term' if uses_target_terms else 'Lexicon Entity'} Recall: {mean_target_recall * 100:.2f}%")
+        print(f"  - Mean M-WER: {summary[m]['mean_mwer'] * 100:.2f}%\n")
 
     with open(OUTPUT_REPORT_PATH, "w") as f:
         json.dump(summary, f, indent=2)
 
-    manifest_path = Path(os.getenv("BENCHMARK_DATASET_DIR", "./benchmark_data")) / "manifest.csv"
     if manifest_path.is_file():
         report_title = "# Clinical Audio Dataset Benchmark Report"
         evidence_note = (
@@ -344,6 +383,11 @@ async def run_benchmark():
         intron_status = "Measured hosted ASR"
         whisper_status = "Measured local ASR"
         wav2vec_status = "English-only local baseline; checkpoint in inference metadata"
+        recall_label = "Mean Target-Term Recall"
+        recall_method = (
+            "For each recording, the fraction of semicolon-separated manifest target terms "
+            "matched by normalized tokens; parenthetical bilingual alternatives are accepted."
+        )
     else:
         report_title = "# Fixture Speech Recognition Benchmark Report"
         evidence_note = (
@@ -353,18 +397,24 @@ async def run_benchmark():
         intron_status = "Fixture reference"
         whisper_status = "Fixture baseline"
         wav2vec_status = "Fixture baseline"
+        recall_label = "Mean Fixed-Lexicon Entity Recall"
+        recall_method = "Recall of the fixed English clinical keyword list in the reference."
 
     model_status = {
         "Intron Sahara v2.5": intron_status,
         "OpenAI Whisper Tiny": whisper_status,
         "Meta Wav2Vec2 Base 960h (English)": wav2vec_status,
     }
+    for model in models:
+        if model.startswith(("OpenAI ", "Google Gemini ")):
+            model_status.setdefault(model, "Measured hosted ASR")
     report_rows = []
     for model in models:
         values = summary[model]
         report_rows.append(
-            f"| {model} | {values['mean_wer'] * 100:.2f}% | "
-            f"{values['clinical_entity_recall'] * 100:.2f}% | {values['faas_score']:.2f} | "
+            f"| {model} | {values['mean_normalized_wer'] * 100:.2f}% | "
+            f"{values[recall_key] * 100:.2f}% | "
+            f"{values['mean_mwer'] * 100:.2f}% | "
             f"{model_status.get(model, 'Measured ASR')} |"
         )
     model_table_rows = "\n".join(report_rows)
@@ -373,14 +423,15 @@ async def run_benchmark():
 
 > **Evidence status:** {evidence_note}
 
-| Model | Average WER ↓ | Clinical Entity Recall ↑ | FAAS Score (dB) ↑ | Status |
-| :--- | :---: | :---: | :---: | :---: |
+| Model | Normalized WER ↓ | {recall_label} ↑ | M-WER ↓ | Status |
+| :--- | :---: | :---: | :---: | :--- |
 {model_table_rows}
 
 ### Evaluation Methodology
-1. **Word Error Rate (WER)**: Normalized string distance metric (S + D + I) / N.
-2. **Clinical Entity Recall**: Recall rate of reference clinical terms (symptoms, dosages, diagnoses).
-3. **FAAS composite**: Calculated as 10 * log10(Clinical Entity Recall / WER); this aggregate score is not a demographic fairness metric.
+1. **Normalized WER**: Clinical text normalization standardizes punctuation, common units, and selected transliterations before whitespace-token Levenshtein scoring (using `jiwer` when installed).
+2. **{recall_label}**: {recall_method} Clinical aliases may match English, Amharic, and transliterated variants.
+3. **M-WER**: `1 - target-term recall`, calculated per sample then averaged; lower is better.
+4. **Fairness**: No demographic or subgroup fairness metric is computed in this benchmark.
 
 The separate 15-case clinical validation baseline reported 56.38% mean WER,
 44.33% target-term recall, and critical-term misses in 6 cases. That result is

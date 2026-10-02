@@ -234,10 +234,11 @@
                 </button>
               </div>
               <div class="mt-3 flex flex-wrap items-center justify-center gap-2">
-                <label for="intron-upload-language" class="text-[11px] text-slate-400">Recording language</label>
+                <label for="intron-upload-language" class="text-[11px] text-slate-400">Active language scope v1.0</label>
                 <select id="intron-upload-language" class="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200">
-                  <option value="am">Amharic-English code-switch</option>
-                  <option value="om">Oromo-English code-switch</option>
+                  <option value="am" selected>🇪🇹 Amharic-English code-switch (Active v1.0)</option>
+                  <option value="om" disabled>🇪🇹 Afaan Oromoo-English (Roadmap Phase 2)</option>
+                  <option value="ti" disabled>🇪🇹 Tigrinya-English (Roadmap Phase 3)</option>
                 </select>
                 <button id="save-upload-recording" onclick="uploadSavedRecording()" disabled class="h-9 px-3 rounded-lg bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold">
                   <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Save and upload recording to Intron
@@ -414,6 +415,12 @@
             <div>
               <label for="soap-transcript" class="text-[10px] font-bold uppercase tracking-wider text-teal-300">Live Code-Switched Transcript Stream:</label>
               <textarea id="soap-transcript" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-[#080d19] p-3 text-xs font-mono leading-relaxed text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Live Amharic-English transcript will appear here..."></textarea>
+              <div class="mt-2 flex flex-wrap items-center gap-3">
+                <button id="btnProcessSOAP" type="button" onclick="processClinicalText()" class="rounded-md bg-teal-500 px-3 py-2 text-[11px] font-bold text-slate-950 transition hover:bg-teal-400 flex items-center gap-2">
+                  <i class="fa-solid fa-file-medical"></i> Generate SOAP &amp; ICD-10
+                </button>
+                <span id="soap-processing-status" class="text-[10px] text-slate-400" role="status" aria-live="polite">The backend validates structured SOAP JSON; prose returns a manual-review draft and does not generate ICD-10 codes.</span>
+              </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
@@ -627,6 +634,40 @@
             <p>15 reviewed Amharic-English recordings: <strong>56.38% mean WER</strong>, <strong>44.33% target-term recall</strong>, and <strong>6 critical-term-miss cases</strong>. Clinician review is mandatory; autonomous care is not supported.</p>
           </div>
         </div>
+        <section class="mt-4 bg-slate-950 p-4 rounded-xl border border-teal-500/30" aria-labelledby="manifest-benchmark-title">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-3">
+            <div>
+              <h3 id="manifest-benchmark-title" class="text-sm font-bold text-white">15-Case Clinical Transcript Benchmark</h3>
+              <p class="text-[11px] text-slate-400 mt-1">Normalized transcript scores on the saved Amharic-English manifest outputs. Target recall is not a fairness metric.</p>
+            </div>
+            <span class="text-[10px] font-mono text-teal-300">15 verified references</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+            <div class="border-l-2 border-teal-400 pl-3">
+              <div class="text-[10px] uppercase text-slate-500">Intron normalized WER</div>
+              <div id="benchmark-intron-wer" class="text-lg font-bold text-white">34.91%</div>
+            </div>
+            <div class="border-l-2 border-emerald-400 pl-3">
+              <div class="text-[10px] uppercase text-slate-500">Intron target recall</div>
+              <div id="benchmark-intron-recall" class="text-lg font-bold text-white">57.78%</div>
+            </div>
+            <div class="border-l-2 border-amber-400 pl-3">
+              <div class="text-[10px] uppercase text-slate-500">Intron M-WER</div>
+              <div id="benchmark-intron-mwer" class="text-lg font-bold text-white">42.22%</div>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-[11px]">
+              <thead class="border-b border-slate-800 text-slate-400"><tr><th class="py-2">Baseline</th><th>Normalized WER</th><th>Target recall</th><th>M-WER</th></tr></thead>
+              <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                <tr><td class="py-2">Google Gemini Flash</td><td id="benchmark-gemini-wer">11.46%</td><td id="benchmark-gemini-recall">93.33%</td><td id="benchmark-gemini-mwer">6.67%</td></tr>
+                <tr><td class="py-2">OpenAI Whisper Tiny</td><td id="benchmark-whisper-wer">99.56%</td><td id="benchmark-whisper-recall">23.67%</td><td id="benchmark-whisper-mwer">76.33%</td></tr>
+                <tr><td class="py-2">Meta Wav2Vec2 Base 960h (English)</td><td id="benchmark-wav2vec-wer">108.23%</td><td id="benchmark-wav2vec-recall">2.22%</td><td id="benchmark-wav2vec-mwer">97.78%</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="mt-3 text-[10px] text-slate-500">Offline scoring uses stored hypotheses; it does not rerun model inference. Wav2Vec2 is an English-only baseline. See BENCHMARK_RESULTS.md for the metric method and limitations.</p>
+        </section>
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div class="flex items-center gap-3 w-full md:w-auto">
             <label class="text-xs font-bold text-slate-400 uppercase whitespace-nowrap"><i class="fa-solid fa-database text-amber-400 mr-1"></i> Active Case Filter:</label>
@@ -690,7 +731,7 @@
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
             <div>
               <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-microphone-lines text-emerald-400 mr-2"></i>Live Intron Sahara v2.5 Benchmark</h3>
-              <p class="text-[11px] text-slate-500 mt-1">Upload or record one reviewed Amharic-English sample and measure the configured Intron provider. OpenAI and Gemini can be added later.</p>
+              <p class="text-[11px] text-slate-500 mt-1">Upload or record one reviewed Amharic-English sample and compare Intron with any configured OpenAI or Gemini provider.</p>
             </div>
             <span id="live-benchmark-status" class="text-[10px] font-mono text-slate-500">Ready</span>
           </div>
@@ -779,7 +820,7 @@
       <div class="p-6 overflow-y-auto space-y-6 text-xs sm:text-sm text-slate-300 leading-relaxed">
         <div class="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-xl text-emerald-300 space-y-2">
           <h4 class="font-bold text-base text-white"><i class="fa-solid fa-compass text-emerald-400"></i> Purpose and product direction</h4>
-          <p><strong>AfriHealth AI</strong> is a clinician-reviewed voice documentation and decision-support workflow for community health teams working across English, Amharic-English, and Afaan Oromoo-English conversations.</p>
+          <p><strong>AfriHealth AI</strong> is a clinician-reviewed voice documentation and decision-support workflow for community health teams working across English and Amharic-English conversations. Afaan Oromoo-English is Phase 2; Tigrinya-English is Phase 3.</p>
         </div>
         <div class="space-y-4">
           <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1">1. Product modules</h4>
@@ -1964,6 +2005,58 @@
       updateSoapState({ transcript }, { fromStream: true });
     }
 
+    async function processClinicalText() {
+      const status = document.getElementById('soap-processing-status');
+      const button = document.getElementById('btnProcessSOAP');
+      const transcript = document.getElementById('soap-transcript')?.value.trim() || soapState.transcript.trim();
+      if (!transcript) {
+        if (status) status.textContent = 'Add or record a transcript before processing.';
+        return;
+      }
+
+      if (button) button.disabled = true;
+      if (status) status.textContent = 'Validating structured clinical text...';
+      try {
+        const response = await fetchApi(`${getApiOrigin()}/api/v1/process-clinical`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ transcript })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.detail || `Clinical processing failed (${response.status})`);
+
+        const soap = result.soap || {};
+        updateSoapState({
+          transcript,
+          subjective: soap.subjective || '',
+          objective: soap.objective || '',
+          assessment: soap.assessment || '',
+          plan: soap.plan || ''
+        }, { fromStream: true });
+        const diagnoses = Array.isArray(soap.icd10_codes) ? soap.icd10_codes : [];
+        const diagnosisField = document.getElementById('ehr-icd');
+        if (diagnosisField) {
+          diagnosisField.textContent = diagnoses.length
+            ? diagnoses.map((item) => `${item.code}: ${item.description}`).join('\n')
+            : 'No ICD-10 mapping returned. Clinician selection and verification required.';
+        }
+
+        window.clinicalSignOffVerified = false;
+        setSoapVerificationState(false);
+        updateClinicianSignoffUI();
+        const manualReview = result.sign_off_required || soap.requires_manual_review || soap.requires_manual_entry;
+        if (status) {
+          status.textContent = manualReview
+            ? 'Manual-review draft returned. This endpoint does not generate SOAP or ICD-10 from ordinary prose.'
+            : 'Structured SOAP data parsed. Clinician verification is still required; no diagnosis was generated.';
+        }
+      } catch (error) {
+        if (status) status.textContent = `Clinical processing failed: ${error.message || error}`;
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
     function populateSoapFromClinicalFields(transcriptText) {
       const cc = document.getElementById('ehr-cc')?.value || '';
       const duration = document.getElementById('ehr-duration')?.value || '';
@@ -2767,6 +2860,31 @@
       }
     }
 
+    async function loadManifestBenchmarkSummary() {
+      try {
+        const response = await fetch('./benchmark_report.json', { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Benchmark report unavailable (${response.status})`);
+        const report = await response.json();
+        const fields = {
+          'Intron Sahara v2.5': ['benchmark-intron-wer', 'benchmark-intron-recall', 'benchmark-intron-mwer'],
+          'Google Gemini gemini-flash-latest': ['benchmark-gemini-wer', 'benchmark-gemini-recall', 'benchmark-gemini-mwer'],
+          'OpenAI Whisper Tiny': ['benchmark-whisper-wer', 'benchmark-whisper-recall', 'benchmark-whisper-mwer'],
+          'Meta Wav2Vec2 Base 960h (English)': ['benchmark-wav2vec-wer', 'benchmark-wav2vec-recall', 'benchmark-wav2vec-mwer']
+        };
+        for (const [model, ids] of Object.entries(fields)) {
+          const metrics = report[model];
+          if (!metrics) continue;
+          const values = [metrics.mean_normalized_wer, metrics.mean_target_term_recall, metrics.mean_mwer];
+          ids.forEach((id, index) => {
+            const element = document.getElementById(id);
+            if (element && Number.isFinite(values[index])) element.textContent = `${(values[index] * 100).toFixed(2)}%`;
+          });
+        }
+      } catch (error) {
+        console.warn('Could not load the offline benchmark summary:', error);
+      }
+    }
+
     function initBenchmarkChart() {
       const canvas = document.getElementById('benchmarkChart');
       if (!canvas) return;
@@ -3070,6 +3188,7 @@ Digital Signoff  : Dr. Tadesse (Duty Clinician)
       updateClinicianSignoffUI();
       loadVoicesOnce();
       initBenchmarkChart();
+      loadManifestBenchmarkSummary();
       onCaseSelectChange();
       checkSecureContext();
       drawWaveform(false);

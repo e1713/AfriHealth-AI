@@ -5,9 +5,9 @@ for which consent and de-identification have been documented.
 
 ## 0:00–0:20 — Problem and users
 
-Say: “AfriHealth AI is a prototype for clinician-reviewed documentation of
-English-Amharic code-switched consultations. Other language pairs, including
-Afaan Oromoo, are future work. It does not replace clinical judgment.”
+Say: “AfriHealth AI v1.0 focuses on clinician-reviewed English-Amharic
+code-switched documentation. Afaan Oromoo-English is Phase 2 and
+Tigrinya-English is Phase 3. It does not replace clinical judgment.”
 
 Show the three care modules and the target frontline workflow.
 
@@ -30,14 +30,22 @@ validates structured JSON and otherwise returns a manual-review fallback.
 
 ## 1:35–2:10 — Benchmark
 
-Open the benchmark matrix. Explain that the repository includes a reproducible
-three-sample fixture with embedded hypotheses for Intron Sahara v2.5, OpenAI
-Whisper Medium, and Meta Wav2Vec2 XLS-R. The fixture's FAAS is an aggregate
-composite score, not a demographic fairness evaluation.
+Distinguish the in-app fixture matrix from the offline comparative report. The
+in-app matrix uses embedded hypotheses and is not independent audio evaluation.
+Show `BENCHMARK_RESULTS.md` for the 15-case transcript comparison:
 
-Say: “These are fixture results, not a population-wide claim. A final
-submission should include the actual dataset version, sample count, model
-versions, consent status, and per-sample evidence.”
+| Model | Normalized WER | Target-term recall | M-WER |
+| --- | ---: | ---: | ---: |
+| Intron Sahara v2.5 | 34.91% | 57.78% | 42.22% |
+| OpenAI Whisper Tiny | 99.56% | 23.67% | 76.33% |
+| Meta Wav2Vec2 Base 960h (English) | 108.23% | 2.22% | 97.78% |
+| Google Gemini gemini-flash-latest | 11.46% | 93.33% | 6.67% |
+
+Say: “These scores are from saved transcripts on 15 simulated
+Amharic-English cases. Gemini scores best on this small set. The English-only
+Wav2Vec2 checkpoint is a limited baseline. M-WER is one minus target-term
+recall; neither metric is a fairness measure, and these results do not
+establish population-wide or clinical performance.”
 
 ## 2:10–2:35 — Safety and deployment
 

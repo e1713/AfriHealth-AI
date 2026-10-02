@@ -1,55 +1,95 @@
 {
-"challenge": "Sahara CodeSwitch Africa Challenge",
-"dataset": "Intron AfriHealth MultiBench v1.2",
-"evaluation_date": "2026-09-11",
-"models_evaluated": [
-{
-"model_id": "intron-sahara-v2.5",
-"name": "Intron Sahara v2.5 Clinical Engine",
-"is_primary": true,
-"metrics": {
-"nwer": 0.125,
-"cer": 0.068,
-"faas": 27.78,
-"bleu": 68.4,
-"chrf": 74.2
-},
-"code_switching_support": {
-"amharic_english": true,
-"oromoo_english": true
-}
-},
-{
-"model_id": "openai-whisper-medium",
-"name": "OpenAI Whisper Medium",
-"is_primary": false,
-"metrics": {
-"nwer": 0.342,
-"cer": 0.185,
-"faas": 14.20,
-"bleu": 41.2,
-"chrf": 52.8
-},
-"code_switching_support": {
-"amharic_english": false,
-"oromoo_english": false
-}
-},
-{
-"model_id": "meta-omnictc",
-"name": "Meta OmniCTC Pan-African ASR",
-"is_primary": false,
-"metrics": {
-"nwer": 0.289,
-"cer": 0.141,
-"faas": 18.55,
-"bleu": 49.6,
-"chrf": 58.1
-},
-"code_switching_support": {
-"amharic_english": false,
-"oromoo_english": false
-}
-}
-]
+	"report_type": "multi_model_transcript_benchmark",
+	"challenge": "Sahara CodeSwitch Africa Challenge",
+	"source_report": "benchmark_report.json",
+	"dataset": {
+		"manifest": "benchmark_data/manifest.csv",
+		"sample_count": 15,
+		"language_pair": "Amharic-English",
+		"case_type": "simulated clinical scenarios",
+		"references_verified": true,
+		"consent_obtained": true,
+		"de_identified": true,
+		"annotator_count": null,
+		"raw_audio_in_repository": false
+	},
+	"language_scope": {
+		"active_v1": "Amharic-English code-switching",
+		"phase_2": "Afaan Oromoo-English",
+		"phase_3": "Tigrinya-English"
+	},
+	"metric_definitions": {
+		"mean_normalized_wer": "Mean per-recording Levenshtein word error rate after lowercase, punctuation, common-unit, and selected transliteration normalization; scores can exceed 1.0.",
+		"mean_target_term_recall": "Mean per-recording fraction of manifest target terms matched with clinical aliases after normalization; parenthetical and semicolon-separated alternatives are accepted.",
+		"mean_mwer": "Medical Term Error Rate: 1 minus per-recording target-term recall, averaged across the 15 cases.",
+		"demographic_fairness": "Not measured.",
+		"hallucination_rate": "Not measured.",
+		"stream_segment_loss": "Not measured by this offline transcript benchmark."
+	},
+	"models_evaluated": [
+		{
+			"name": "Intron Sahara v2.5",
+			"model_id": "Intron synchronous ASR upload",
+			"provider_type": "hosted",
+			"is_primary": true,
+			"completed_samples": 15,
+			"metrics": {
+				"mean_normalized_wer": 0.3491,
+				"mean_target_term_recall": 0.5778,
+				"mean_mwer": 0.4222
+			}
+		},
+		{
+			"name": "OpenAI Whisper Tiny",
+			"model_id": "openai/whisper-tiny",
+			"provider_type": "local open-source",
+			"is_primary": false,
+			"completed_samples": 15,
+			"metrics": {
+				"mean_normalized_wer": 0.9956,
+				"mean_target_term_recall": 0.2367,
+				"mean_mwer": 0.7633
+			}
+		},
+		{
+			"name": "Meta Wav2Vec2 Base 960h (English)",
+			"model_id": "facebook/wav2vec2-base-960h",
+			"provider_type": "local open-source",
+			"language_limitation": "English-only checkpoint; not an Amharic/code-switch model.",
+			"is_primary": false,
+			"completed_samples": 15,
+			"metrics": {
+				"mean_normalized_wer": 1.0823,
+				"mean_target_term_recall": 0.0222,
+				"mean_mwer": 0.9778
+			}
+		},
+		{
+			"name": "Google Gemini gemini-flash-latest",
+			"model_id": "gemini-flash-latest",
+			"provider_type": "hosted",
+			"is_primary": false,
+			"completed_samples": 15,
+			"metrics": {
+				"mean_normalized_wer": 0.1146,
+				"mean_target_term_recall": 0.9333,
+				"mean_mwer": 0.0667
+			}
+		}
+	],
+	"models_not_scored": [
+		{
+			"name": "OpenAI gpt-4o-mini-transcribe",
+			"completed_samples": 0,
+			"expected_samples": 15,
+			"reason": "The recorded run metadata reports HTTP 429; partial output is excluded from comparative scores."
+		}
+	],
+	"limitations": [
+		"This is a 15-case simulated Amharic-English dataset and is not a population-level clinical performance estimate.",
+		"The manifest annotator_count field is blank.",
+		"The audio files are not included in the public repository, so transcript scoring is reproducible from the manifest but model inference cannot be independently rerun from this checkout.",
+		"Wav2Vec2 Base 960h is English-only and is included as a limited baseline.",
+		"No ASR-FAIRBENCH analysis, subgroup fairness result, hallucination rate, or streaming segment-loss result is claimed."
+	]
 }

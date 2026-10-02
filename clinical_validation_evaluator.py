@@ -17,8 +17,41 @@ CRITICAL_TERMS = {
 }
 
 
+CLINICAL_ALIASES = {
+    "headache": ("headache", "ras mathat", "ras matat", "rasmathat", "ራስ ምታት"),
+    "fever": ("fever", "tksat", "ትኩሳት"),
+    "paracetamol": ("paracetamol", "acetaminophen"),
+    "cough": ("cough", "ሳል"),
+    "shortness of breath": ("shortness of breath", "dyspnea", "difficulty breathing", "ትንፋሽ ማጠር"),
+    "diarrhea": ("diarrhea", "diarrhoea", "ተቅማጥ"),
+    "vomiting": ("vomiting", "emesis", "ማስታወክ"),
+    "hypertension": ("hypertension", "high blood pressure", "የደም ግፊት"),
+    "amoxicillin": ("amoxicillin", "amoxacillin"),
+    "metformin": ("metformin",),
+    "malaria": ("malaria", "ወባ"),
+    "obstetric history": ("g3p2", "gravida 3 para 2"),
+    "right lower quadrant": ("rlq", "right lower quadrant"),
+    "intravenous saline": ("iv saline", "iv normal saline", "normal saline"),
+}
+
+
+def normalize_clinical_text(text: str) -> str:
+    normalized = (text or "").lower()
+    normalized = re.sub(r"\bras\s*matat\b|\brasmathat\b|\bras\s*mathat\b", "ras mathat", normalized)
+    normalized = re.sub(r"(\d+(?:\.\d+)?)\s*mg\s*/\s*(\d+(?:\.\d+)?)\s*ml\b", r"\1 milligrams per \2 milliliters", normalized)
+    normalized = re.sub(r"(\d+(?:\.\d+)?)\s*mg\s*/\s*dl\b", r"\1 milligrams per deciliter", normalized)
+    normalized = re.sub(r"(\d+(?:\.\d+)?)\s*mg\b", r"\1 milligrams", normalized)
+    normalized = re.sub(r"(\d+(?:\.\d+)?)\s*ml\b", r"\1 milliliters", normalized)
+    normalized = re.sub(r"(\d+(?:\.\d+)?)\s*mcg\b", r"\1 micrograms", normalized)
+    normalized = re.sub(r"(\d+(?:\.\d+)?)\s*%", r"\1 percent", normalized)
+    normalized = re.sub(r"\bmmhg\b", "millimeters of mercury", normalized)
+    normalized = re.sub(r"[\u1360-\u136f]", " ", normalized)
+    normalized = re.sub(r"[^\w\s\u1200-\u137f]", " ", normalized, flags=re.UNICODE)
+    return " ".join(normalized.split())
+
+
 def tokens(value: str) -> list[str]:
-    return re.findall(r"[\w\u1200-\u137f]+", value.lower(), re.UNICODE)
+    return normalize_clinical_text(value).split()
 
 
 def wer(reference: str, hypothesis: str) -> float:
@@ -39,10 +72,57 @@ def wer(reference: str, hypothesis: str) -> float:
     return previous[-1] / max(1, len(expected))
 
 
+def _target_alternatives(target_term: str) -> list[str]:
+    alternatives = []
+    for part in target_term.split(";"):
+        parenthetical = re.findall(r"\(([^()]*)\)", part)
+        primary = re.sub(r"\s*\([^()]*\)", "", part).strip()
+        alternatives.extend(term for term in (primary, *parenthetical) if term.strip())
+    return alternatives
+
+
+def _contains_term_tokens(normalized_text: str, normalized_term: str) -> bool:
+    term_tokens = set(normalized_term.split())
+    return bool(term_tokens) and term_tokens.issubset(set(normalized_text.split()))
+
+
 def contains_term(hypothesis: str, term: str) -> bool:
-    hypothesis_tokens = tokens(hypothesis)
-    term_tokens = tokens(term)
-    return bool(term_tokens) and all(token in hypothesis_tokens for token in term_tokens)
+    normalized_hypothesis = normalize_clinical_text(hypothesis)
+    terms = _target_alternatives(term)
+    for target in terms:
+        normalized_target = normalize_clinical_text(target)
+        if not normalized_target:
+            continue
+        candidates = {normalized_target}
+        for canonical, aliases in CLINICAL_ALIASES.items():
+            normalized_aliases = {normalize_clinical_text(alias) for alias in aliases}
+            if normalized_target in normalized_aliases or any(
+                _contains_term_tokens(normalized_target, alias) for alias in normalized_aliases
+            ):
+                candidates.update(normalized_aliases)
+                candidates.add(normalize_clinical_text(canonical))
+        if any(_contains_term_tokens(normalized_hypothesis, candidate) for candidate in candidates if candidate):
+            return True
+    return False
+
+
+def calculate_target_term_recall(
+    reference: str,
+    hypothesis: str,
+    target_terms: list[str],
+) -> float:
+    terms = [term.strip() for term in target_terms if term.strip()]
+    if not terms:
+        raise ValueError("target_terms must contain at least one clinical term")
+    reference_terms = [term for term in terms if contains_term(reference, term)]
+    if not reference_terms:
+        raise ValueError("No target terms matched the reference transcript")
+    matched_terms = sum(contains_term(hypothesis, term) for term in reference_terms)
+    return matched_terms / len(reference_terms)
+
+
+def calculate_mwer(reference: str, hypothesis: str, target_terms: list[str]) -> float:
+    return 1.0 - calculate_target_term_recall(reference, hypothesis, target_terms)
 
 
 def evaluate(results_path: Path, model_name: str) -> dict:
@@ -57,7 +137,8 @@ def evaluate(results_path: Path, model_name: str) -> dict:
             for term in item.get("target_terms", "").split(";")
             if term.strip()
         ]
-        matched_terms = [term for term in target_terms if contains_term(hypothesis, term)]
+        target_recall = calculate_target_term_recall(reference, hypothesis, target_terms)
+        mwer = calculate_mwer(reference, hypothesis, target_terms)
         critical_terms = CRITICAL_TERMS.get(item["case_id"], [])
         critical_misses = [
             term for term in critical_terms if not contains_term(hypothesis, term)
@@ -66,9 +147,8 @@ def evaluate(results_path: Path, model_name: str) -> dict:
             {
                 "case_id": item["case_id"],
                 "wer": round(wer(reference, hypothesis), 4),
-                "target_term_recall": round(
-                    len(matched_terms) / max(1, len(target_terms)), 4
-                ),
+                "target_term_recall": round(target_recall, 4),
+                "mwer": round(mwer, 4),
                 "critical_term_miss_count": len(critical_misses),
             }
         )
@@ -77,19 +157,23 @@ def evaluate(results_path: Path, model_name: str) -> dict:
         raise ValueError("The private result file contains no cases.")
     return {
         "report_type": "clinical_asr_validation_aggregate",
-        "report_version": "1.1",
-        "evaluation_method": "token-level WER and exact normalized target-term matching",
+        "report_version": "1.2",
+        "evaluation_method": "normalized token-level WER, clinical alias target-term recall, and M-WER (1 - target-term recall)",
         "source": "reviewed simulated clinical recording results",
         "cases_evaluated": len(cases),
         "models": {
             model_name: {
                 "cases": len(cases),
+                "mean_normalized_wer": round(
+                    sum(case["wer"] for case in cases) / len(cases), 4
+                ),
                 "mean_word_error_rate": round(
                     sum(case["wer"] for case in cases) / len(cases), 4
                 ),
                 "mean_target_term_recall": round(
                     sum(case["target_term_recall"] for case in cases) / len(cases), 4
                 ),
+                "mean_mwer": round(sum(case["mwer"] for case in cases) / len(cases), 4),
                 "cases_with_critical_term_misses": sum(
                     case["critical_term_miss_count"] > 0 for case in cases
                 ),

@@ -4,8 +4,9 @@
 
 AfriHealth AI is a browser-based clinical voice documentation and
 decision-support prototype for community health workers and clinicians. The
-current release focuses on Amharic-English code-switching. Afaan Oromoo,
-Tigrinya, and other language pairs are future expansion targets.
+v1.0 active scope is Amharic-English code-switching. Afaan Oromoo-English
+is a Phase 2 roadmap item and Tigrinya-English is Phase 3; neither is enabled
+in the active language selector.
 The system produces draft transcripts and clinician-review artifacts; it is
 not an autonomous diagnostic or prescribing service.
 
@@ -66,7 +67,8 @@ case and keeps raw audio and provider response data outside Git.
 
 ### Clinical artifact generation
 
-`/api/v1/clinical/process-text` accepts transcript text, applies limited email
+`/api/v1/process-clinical` (also available as `/api/v1/clinical/process-text`)
+accepts transcript text, applies limited email
 and phone redaction, and attempts to validate structured SOAP JSON. Ordinary
 prose falls back to a summary marked for manual review; this endpoint does not
 invoke a generation model and is not currently called by `index.html`. The UI's

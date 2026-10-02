@@ -1349,6 +1349,7 @@ def get_fallback_soap(raw_transcript: str) -> ClinicalSOAPSchema:
     return _generate_structured_soap(raw_transcript, attempts=3)
 
 
+@app.post("/api/v1/process-clinical", response_model=ClinicalProcessResponse)
 @app.post("/api/v1/clinical/process-text", response_model=ClinicalProcessResponse)
 async def process_clinical_text(payload: ClinicalProcessRequest) -> ClinicalProcessResponse:
     """Validate all SOAP output against the strict clinical schema and degrade gracefully without 500s."""

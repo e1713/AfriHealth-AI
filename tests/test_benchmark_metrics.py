@@ -1,5 +1,6 @@
 import asyncio
 import csv
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -8,6 +9,8 @@ from unittest.mock import AsyncMock, patch
 import httpx
 
 import benchmark_suite
+from clinical_validation_evaluator import calculate_mwer, contains_term, normalize_clinical_text
+from clinical_validation_evaluator import evaluate as evaluate_clinical_results
 import generate_benchmark_hypotheses
 import run_full_evaluation
 
@@ -16,6 +19,47 @@ class BenchmarkMetricTests(unittest.TestCase):
     def test_entity_metrics_are_reference_recall(self):
         self.assertEqual(benchmark_suite.calculate_entity_recall("fever cough", "fever"), 0.5)
         self.assertEqual(run_full_evaluation.clinical_entity_recall("fever cough", "fever"), 0.5)
+
+    def test_entity_recall_uses_annotated_terms_and_bilingual_alternatives(self):
+        recall = benchmark_suite.calculate_entity_recall(
+            "fever and ሳል", "The patient has fever.", "fever; ሳል (Cough)"
+        )
+        self.assertEqual(recall, 0.5)
+
+    def test_clinical_text_normalization_standardizes_units_and_transliterations(self):
+        self.assertEqual(
+            normalize_clinical_text("500mg, 94%, ras matat; rasmathat"),
+            "500 milligrams 94 percent ras mathat ras mathat",
+        )
+        self.assertEqual(benchmark_suite.calculate_wer("Take 500mg.", "Take 500 milligrams"), 0.0)
+
+    def test_clinical_alias_matching_accepts_amharic_and_brand_aliases(self):
+        self.assertTrue(contains_term("ራስ ምታት", "headache"))
+        self.assertTrue(contains_term("acetaminophen", "paracetamol"))
+        self.assertTrue(contains_term("ትኩሳት", "fever"))
+        self.assertTrue(contains_term("ከምግብ በኋላ።", "ከምግብ በኋላ"))
+
+    def test_mwer_is_one_minus_annotated_target_recall(self):
+        self.assertEqual(
+            calculate_mwer("fever and cough", "fever", ["fever", "cough"]),
+            0.5,
+        )
+
+    def test_clinical_evaluator_reports_normalized_wer_and_mwer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            results = Path(directory) / "results.json"
+            results.write_text(json.dumps([{
+                "case_id": "CS-01",
+                "reference_transcript": "patient has fever and cough",
+                "transcript": "patient has fever",
+                "target_terms": "fever;cough",
+            }]), encoding="utf-8")
+            report = evaluate_clinical_results(results, "test-model")
+
+        metrics = report["models"]["test-model"]
+        self.assertEqual(metrics["mean_normalized_wer"], 0.4)
+        self.assertEqual(metrics["mean_target_term_recall"], 0.5)
+        self.assertEqual(metrics["mean_mwer"], 0.5)
 
     def test_active_benchmark_dataset_contains_more_than_four_samples(self):
         self.assertGreaterEqual(len(benchmark_suite.BENCHMARK_SAMPLES), 6)
@@ -83,7 +127,7 @@ class BenchmarkMetricTests(unittest.TestCase):
         self.assertEqual(rows[0]["gemini_hypothesis"], "")
 
     def test_benchmark_refuses_incomplete_audio_dataset(self):
-        with self.assertRaisesRegex(ValueError, "lack a verified reference transcript or model hypothesis"):
+        with self.assertRaisesRegex(ValueError, "lack a verified reference transcript, target terms, or model hypothesis"):
             benchmark_suite.validate_benchmark_samples(
                 [{
                     "id": "audio_only",
@@ -105,6 +149,18 @@ class BenchmarkMetricTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "lack a verified reference transcript"):
             benchmark_suite.validate_benchmark_samples([sample], models)
+
+    def test_benchmark_refuses_manifest_samples_without_target_terms(self):
+        model = "Intron Sahara v2.5"
+        sample = {
+            "id": "missing-targets",
+            "reference": "patient has fever",
+            "reference_verified": True,
+            "target_terms": "",
+            "hypotheses": {model: "patient has fever"},
+        }
+        with self.assertRaisesRegex(ValueError, "target terms"):
+            benchmark_suite.validate_benchmark_samples([sample], [model])
 
     def test_hypothesis_runner_requires_consent_and_reference_approval(self):
         sample = {

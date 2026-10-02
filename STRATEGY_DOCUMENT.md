@@ -3,8 +3,9 @@
 ## Executive summary
 
 AfriHealth AI is a clinician-reviewed voice documentation and decision-support
-workflow for community health teams working across English, Amharic-English,
-and Afaan Oromoo-English conversations. The product is designed to reduce
+workflow for community health teams working across English and Amharic-English
+conversations (active v1.0 scope). Afaan Oromoo-English is Phase 2 and
+Tigrinya-English is Phase 3. The product is designed to reduce
 documentation burden while keeping clinical decisions with qualified people.
 
 ## Product scope
@@ -29,13 +30,18 @@ dispatch care.
 
 ## Evidence strategy
 
-The project keeps three evidence layers separate:
+The project keeps four evidence layers separate:
 
 1. **Fixture benchmark:** a reproducible software test using embedded
    hypotheses. It is not independent audio inference.
-2. **AfriSwitch pilot:** real general-purpose Amharic/Oromo code-switched audio
+2. **15-case transcript comparison:** saved outputs from Intron Sahara v2.5,
+   Whisper Tiny, English-only Wav2Vec2 Base 960h, and Gemini are scored against
+   verified Amharic-English references using normalized WER, alias-aware
+   target-term recall, and M-WER. See `BENCHMARK_RESULTS.md`; these simulated-set
+   scores are not demographic fairness or population-performance evidence.
+3. **AfriSwitch pilot:** real general-purpose Amharic/Oromo code-switched audio
    used for exploratory ASR evaluation, not clinical validation.
-3. **Clinical review baseline:** 15 reviewed Amharic-English recordings with
+4. **Clinical review baseline:** 15 reviewed Amharic-English recordings with
    56.38% mean WER, 44.33% target-term recall, and critical-term misses in six
    cases. This is evidence for clinician review, not autonomous care.
 

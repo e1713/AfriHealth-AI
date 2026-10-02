@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, urlsplit
 
 import config
 from fastapi import HTTPException, UploadFile
+from fastapi.testclient import TestClient
 from starlette.responses import PlainTextResponse
 from starlette.requests import Request
 
@@ -34,6 +35,30 @@ class SafetyTests(unittest.TestCase):
         result = main._classify_maternal_acuity("The patient has heavy bleeding.")
         self.assertEqual(result["level"], 1)
         self.assertTrue(result["is_emergency_trigger"])
+
+    def test_process_clinical_route_returns_manual_review_fallback_for_prose(self):
+        result = asyncio.run(
+            main.process_clinical_text(
+                main.ClinicalProcessRequest(transcript="Patient reports headache and fever.")
+            )
+        )
+        self.assertTrue(result.sign_off_required)
+        self.assertTrue(result.soap.requires_manual_review)
+        self.assertEqual(result.soap.icd10_codes, [])
+
+    def test_process_clinical_http_route_accepts_transcript_and_returns_200_fallback(self):
+        with patch.object(main, "REQUIRE_PROXY_AUTH", False):
+            response = TestClient(main.app).post(
+                "/api/v1/process-clinical",
+                json={"transcript": "Patient reports headache and fever."},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["sign_off_required"])
+        self.assertTrue(payload["soap"]["requires_manual_review"])
+        self.assertEqual(payload["soap"]["icd10_codes"], [])
+        self.assertEqual(payload["scrubbed_transcript"], "Patient reports headache and fever.")
 
     def test_later_positive_maternal_symptom_overrides_earlier_negation(self):
         result = main._classify_maternal_acuity(

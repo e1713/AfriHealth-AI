@@ -3038,6 +3038,12 @@
     }
 
     if ('serviceWorker' in navigator) {
+      let refreshingForServiceWorker = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshingForServiceWorker) return;
+        refreshingForServiceWorker = true;
+        window.location.reload();
+      });
       navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(() => {
         const pill = document.getElementById('sw-status-pill');
         if (pill) pill.classList.remove('hidden');

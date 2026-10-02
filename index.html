@@ -78,73 +78,74 @@
     </div>
   </nav>
 
-  <div id="diagnostics-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5">
+  <div id="diagnostics-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4 opacity-100 transition-opacity duration-200">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-4 sm:p-6 shadow-2xl space-y-5">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <div class="flex items-center gap-2">
           <i class="fa-solid fa-sliders text-emerald-400 text-lg"></i>
           <h3 class="font-bold text-white text-base">System Setup & Hardware Diagnostics</h3>
         </div>
-        <button onclick="closeModal('diagnostics-modal')" class="text-slate-400 hover:text-white p-1 text-lg">
+        <button onclick="closeModal('diagnostics-modal')" aria-label="Close diagnostics" title="Close diagnostics" class="shrink-0 text-slate-400 hover:text-white p-1 text-lg">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
       <div class="space-y-3 text-xs">
-        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <i class="fa-solid fa-shield-halved text-emerald-400 text-base"></i>
-            <div>
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex min-w-0 items-center gap-3">
+            <i class="fa-solid fa-shield-halved shrink-0 text-emerald-400 text-base"></i>
+            <div class="min-w-0">
               <div class="font-bold text-white">Browser Secure Context (HTTPS / Localhost)</div>
               <div class="text-slate-400" id="diag-context-sub">Checking SSL context...</div>
             </div>
           </div>
-          <span id="diag-context-status" class="px-2.5 py-1 rounded font-mono font-bold bg-slate-900 text-slate-500">Checking...</span>
+          <span id="diag-context-status" class="self-start shrink-0 rounded-full border border-slate-700 bg-slate-800 px-2.5 py-1 font-mono text-[10px] font-bold text-slate-300 sm:self-auto">Checking...</span>
         </div>
-        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <i class="fa-solid fa-microphone text-teal-400 text-base"></i>
-            <div>
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex min-w-0 items-center gap-3">
+            <i class="fa-solid fa-microphone shrink-0 text-teal-400 text-base"></i>
+            <div class="min-w-0">
               <div class="font-bold text-white">WebRTC Microphone Hardware Permission</div>
               <div class="text-slate-400" id="diag-mic-sub">Click test to verify browser audio capture</div>
             </div>
           </div>
-          <button onclick="testMicrophoneAccess()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded font-semibold transition">
+          <button onclick="testMicrophoneAccess()" class="shrink-0 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded text-xs font-medium transition-colors self-end sm:self-auto">
             Test Mic
           </button>
         </div>
-        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <i class="fa-solid fa-cloud text-indigo-400 text-base"></i>
-            <div>
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex min-w-0 items-center gap-3">
+            <i class="fa-solid fa-cloud shrink-0 text-indigo-400 text-base"></i>
+            <div class="min-w-0">
               <div class="font-bold text-white">Intron Sahara API Endpoint Status</div>
               <div class="text-slate-400" id="diag-api-sub">Checking the backend Intron proxy...</div>
             </div>
           </div>
-          <button onclick="testIntronApiPing()" class="bg-slate-800 hover:bg-slate-700 text-indigo-400 border border-indigo-500/30 px-3 py-1.5 rounded font-semibold transition">
+          <span id="diag-api-status" class="self-start shrink-0 rounded-full border border-slate-700 bg-slate-800 px-2.5 py-1 font-mono text-[10px] font-bold text-slate-300 sm:self-auto">Checking...</span>
+          <button onclick="testIntronApiPing()" class="shrink-0 bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 px-3 py-1.5 rounded text-xs font-medium transition-colors self-end sm:self-auto">
             Ping API
           </button>
         </div>
-        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <i class="fa-solid fa-volume-high text-purple-400 text-base"></i>
-            <div>
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex min-w-0 items-center gap-3">
+            <i class="fa-solid fa-volume-high shrink-0 text-purple-400 text-base"></i>
+            <div class="min-w-0">
               <div class="font-bold text-white">Speech Synthesis (AI Voice Response)</div>
               <div class="text-slate-400" id="diag-tts-sub">Checking browser text-to-speech support...</div>
             </div>
           </div>
-          <button onclick="testSpeechSynthesis()" class="bg-slate-800 hover:bg-slate-700 text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded font-semibold transition">
+          <button onclick="testSpeechSynthesis()" class="shrink-0 bg-slate-800 hover:bg-slate-700 text-purple-300 border border-slate-700 px-3 py-1.5 rounded text-xs font-medium transition-colors self-end sm:self-auto">
             Test Voice
           </button>
         </div>
-        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <i class="fa-solid fa-notes-medical text-amber-400 text-base"></i>
-            <div>
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex min-w-0 items-center gap-3">
+            <i class="fa-solid fa-notes-medical shrink-0 text-amber-400 text-base"></i>
+            <div class="min-w-0">
               <div class="font-bold text-white">EHR / FHIR Server Endpoint</div>
               <div class="text-slate-400">Integration boundary documented; production endpoint not configured</div>
             </div>
           </div>
-          <span class="px-2.5 py-1 rounded font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Connected</span>
+          <span class="self-start shrink-0 rounded-full border border-sky-500/30 bg-sky-500/10 px-2.5 py-1 font-mono text-[10px] font-bold text-sky-300 sm:self-auto">Optional</span>
         </div>
       </div>
       <div class="pt-2 border-t border-slate-800 flex justify-end">
@@ -830,18 +831,18 @@
 
   </main>
 
-  <div id="proposal-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+  <div id="proposal-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4 opacity-100 transition-opacity duration-200">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
       <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900">
         <div class="flex items-center gap-2">
           <i class="fa-solid fa-award text-emerald-400 text-lg"></i>
           <h3 class="font-bold text-white text-base">AfriHealth AI Product Strategy</h3>
         </div>
-        <button onclick="closeModal('proposal-modal')" class="text-slate-400 hover:text-white p-1 text-lg">
+        <button onclick="closeModal('proposal-modal')" aria-label="Close Product Strategy" title="Close Product Strategy" class="shrink-0 text-slate-400 hover:text-white p-1 text-lg">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-      <div class="p-6 overflow-y-auto space-y-6 text-xs sm:text-sm text-slate-300 leading-relaxed">
+      <div class="min-w-0 overflow-x-hidden overflow-y-auto p-4 sm:p-6 space-y-6 text-xs sm:text-sm text-slate-300 leading-relaxed">
         <div class="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-xl text-emerald-300 space-y-2">
           <h4 class="font-bold text-base text-white"><i class="fa-solid fa-compass text-emerald-400"></i> Purpose and product direction</h4>
           <p><strong>AfriHealth AI</strong> is a clinician-reviewed voice documentation and decision-support workflow for community health teams working across English and Amharic-English conversations. Afaan Oromoo-English is Phase 2; Tigrinya-English is Phase 3.</p>
@@ -863,19 +864,24 @@
             </div>
           </div>
           <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">2. Evidence and governance</h4>
-          <p>The 15-case Amharic-English transcript benchmark reports 34.91% normalized WER, 57.78% target recall, and 42.22% M-WER. These saved-transcript results are separate from the in-app fixture and require clinician review; they do not support autonomous care.</p>
+          <div class="flex flex-wrap gap-2" aria-label="15-case benchmark metrics">
+            <span class="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-emerald-200"><strong class="text-emerald-300">34.91%</strong><span class="text-[11px]">Normalized WER</span></span>
+            <span class="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-cyan-100"><strong class="text-cyan-300">57.78%</strong><span class="text-[11px]">Target Recall</span></span>
+            <span class="inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-3 py-1.5 text-teal-100"><strong class="text-teal-300">42.22%</strong><span class="text-[11px]">M-WER</span></span>
+          </div>
+          <p class="break-words">These saved-transcript results are separate from the in-app fixture and require clinician review; they do not support autonomous care.</p>
           <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">3. Privacy and safety</h4>
           <p>Provider credentials remain server-side. Recordings are reviewed before upload, private validation inputs remain outside Git, and medication information must be independently verified by a clinician. Automated medication safety checks are not implemented end to end.</p>
           <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">4. Project team</h4>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div class="p-3 bg-slate-950 rounded-lg border border-slate-800"><strong class="text-white">Project owner</strong><br><span class="text-slate-400">Ermias Amare</span></div>
-            <div class="p-3 bg-slate-950 rounded-lg border border-slate-800"><strong class="text-white">Clinical team</strong><br><span class="text-slate-400">Hiwot Shiwangezaw<br>Rahel Tamiru</span></div>
-            <div class="p-3 bg-slate-950 rounded-lg border border-slate-800"><strong class="text-white">AI &amp; ML research</strong><br><span class="text-slate-400">Melaku Bayu</span></div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            <div class="bg-slate-950/60 border border-slate-800 p-3 rounded-lg"><strong class="text-white">Project owner</strong><br><span class="text-slate-400">Ermias Amare</span></div>
+            <div class="bg-slate-950/60 border border-slate-800 p-3 rounded-lg"><strong class="text-white">Clinical team</strong><br><span class="text-slate-400">Hiwot Shiwangezaw<br>Rahel Tamiru</span></div>
+            <div class="bg-slate-950/60 border border-slate-800 p-3 rounded-lg"><strong class="text-white">AI &amp; ML research</strong><br><span class="text-slate-400">Melaku Bayu</span></div>
           </div>
         </div>
       </div>
       <div class="p-4 border-t border-slate-800 bg-slate-950 flex justify-end">
-        <button onclick="closeModal('proposal-modal')" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-semibold transition">
+        <button onclick="closeModal('proposal-modal')" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-semibold transition-colors">
           Close Strategy
         </button>
       </div>
@@ -1643,27 +1649,56 @@
 
     function openModal(modalId) {
       const modal = document.getElementById(modalId);
-      if (modal) modal.classList.remove('hidden');
+      if (!modal) return;
+      if (modal.dataset.closeTimer) {
+        window.clearTimeout(Number(modal.dataset.closeTimer));
+        delete modal.dataset.closeTimer;
+      }
+      modal.classList.remove('hidden');
+      if (modal.classList.contains('transition-opacity')) {
+        modal.classList.add('opacity-0');
+        requestAnimationFrame(() => modal.classList.remove('opacity-0'));
+      }
     }
 
     function closeModal(modalId) {
       const modal = document.getElementById(modalId);
-      if (modal) modal.classList.add('hidden');
+      if (!modal) return;
+      if (!modal.classList.contains('transition-opacity')) {
+        modal.classList.add('hidden');
+        return;
+      }
+      modal.classList.add('opacity-0');
+      modal.dataset.closeTimer = String(window.setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('opacity-0');
+        delete modal.dataset.closeTimer;
+      }, 200));
+    }
+
+    function setDiagnosticsBadge(id, text, tone = 'slate') {
+      const badge = document.getElementById(id);
+      if (!badge) return;
+      const tones = {
+        emerald: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+        blue: 'border-sky-500/30 bg-sky-500/10 text-sky-300',
+        amber: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
+        slate: 'border-slate-700 bg-slate-800 text-slate-300'
+      };
+      badge.textContent = text;
+      badge.className = `self-start shrink-0 rounded-full border px-2.5 py-1 font-mono text-[10px] font-bold sm:self-auto ${tones[tone] || tones.slate}`;
     }
 
     function checkSecureContext() {
       const isSecure = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
       const sub = document.getElementById('diag-context-sub');
-      const status = document.getElementById('diag-context-status');
-      if (sub && status) {
+      if (sub) {
         if (isSecure) {
           sub.innerText = "Running in secure context (" + location.protocol + "//" + location.hostname + ")";
-          status.innerText = "HTTPS Active";
-          status.className = "px-2.5 py-1 rounded font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+          setDiagnosticsBadge('diag-context-status', 'HTTPS Active', 'emerald');
         } else {
           sub.innerText = "Insecure Context detected (Use localhost or HTTPS for mic access)";
-          status.innerText = "HTTP Warning";
-          status.className = "px-2.5 py-1 rounded font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30";
+          setDiagnosticsBadge('diag-context-status', 'HTTP Warning', 'amber');
         }
       }
     }
@@ -1686,19 +1721,22 @@
  async function testIntronApiPing() {
   const sub = document.getElementById('diag-api-sub');
   if (sub) sub.innerText = "Pinging Sahara API ...";
+  setDiagnosticsBadge('diag-api-status', 'Checking...', 'slate');
   const startTime = Date.now();
   const apiOrigin = getApiOrigin();
   try {
     const response = await fetchApi(`${apiOrigin}/health`, { headers: { Accept: 'application/json' } });
-    const latency = Date.now() - startTime;
+    const latency = Math.round(Date.now() - startTime);
     if (!response.ok) {
       throw new Error(`API returned HTTP ${response.status}`);
     }
     const payload = await response.json();
     const status = payload.intron_configured ? 'API online; Intron key configured' : 'API online; Intron key not configured';
-    if (sub) sub.innerText = `✅ ${status} (${latency}ms latency)`;
+    if (sub) sub.innerText = `✅ ${status} (${latency} ms latency)`;
+    setDiagnosticsBadge('diag-api-status', payload.intron_configured ? 'API Active' : 'API Online', payload.intron_configured ? 'emerald' : 'blue');
   } catch (error) {
     if (sub) sub.innerText = `❌ API unavailable: ${error.message}`;
+    setDiagnosticsBadge('diag-api-status', 'Unavailable', 'amber');
   }
 }
 

@@ -489,18 +489,18 @@
           <div class="lg:col-span-5 bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-4 flex flex-col justify-between">
             <div>
               <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3"><i class="fa-solid fa-phone-volume text-indigo-400"></i> Outpatient Call Simulator</h3>
-              <div class="p-3 bg-slate-900 rounded-lg border border-slate-800 space-y-2 mb-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-slate-900/80 rounded-lg border border-slate-700 mb-4">
                 <div class="flex justify-between text-xs">
                   <span class="text-slate-400">Patient:</span>
-                  <span class="text-white font-semibold">Lemlem (Maternal Post-Op Follow-up)</span>
+                  <span class="text-right text-white font-semibold">Lemlem (Maternal Post-Op Follow-up)</span>
                 </div>
                 <div class="flex justify-between text-xs">
                   <span class="text-slate-400">Post-Op:</span>
-                  <span class="text-white font-semibold">Day 3 (Appendectomy)</span>
+                  <span class="text-right text-white font-semibold">Day 3 (Appendectomy)</span>
                 </div>
                 <div class="flex justify-between text-xs">
                   <span class="text-slate-400">Language:</span>
-                  <span class="text-emerald-400 font-semibold">Amharic-English Code-Switch</span>
+                  <span class="text-right text-emerald-300 font-semibold">Amharic-English Code-Switch</span>
                 </div>
               </div>
               <div class="space-y-2">
@@ -522,13 +522,13 @@
               </h3>
               <p class="text-[10px] text-slate-500">Runs the clinical team's post-care protocol on real transcript text: recovery risk scoring plus, for maternal patients, the 5-level obstetric acuity scale (Annex 1-3).</p>
               <textarea id="postcare-transcript-input" rows="3" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 font-mono focus:border-indigo-500 focus:outline-none" placeholder="Type or paste a check-in transcript, e.g. 'active vaginal bleeding and severe pain'..."></textarea>
-              <div class="flex items-center gap-2">
-                <label class="text-[11px] text-slate-400">Care track</label>
-                <select id="postcare-care-track" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200">
+              <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <label for="postcare-care-track" class="shrink-0 text-[11px] font-semibold text-slate-300">Care track</label>
+                <select id="postcare-care-track" class="min-w-0 flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400/50">
                   <option value="general">General</option>
                   <option value="maternal">Maternal (Annex 1-3 acuity scale)</option>
                 </select>
-                <button onclick="analyzePostCareTranscript()" class="ml-auto bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-2">
+                <button onclick="analyzePostCareTranscript()" class="w-full sm:ml-auto sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
                   <i class="fa-solid fa-magnifying-glass-chart"></i> Analyze
                 </button>
               </div>
@@ -597,7 +597,7 @@
                   <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1"><i class="fa-solid fa-user-nurse text-emerald-400"></i> Escalation Queue</h4>
                   <p id="nurse-escalation-text" class="text-xs text-slate-400">Monitoring outpatient recovery telemetry...</p>
                 </div>
-                <button id="btn-escalate" disabled onclick="triggerNurseEscalation()" class="mt-3 w-full bg-red-600 disabled:opacity-40 hover:bg-red-500 text-white text-xs font-bold py-2 rounded-lg transition flex items-center justify-center gap-2">
+                <button id="btn-escalate" disabled onclick="triggerNurseEscalation()" class="mt-3 w-full bg-rose-600 hover:bg-rose-700 disabled:opacity-40 text-white text-xs font-semibold py-2 px-4 rounded transition-colors flex items-center justify-center gap-2">
                   <i class="fa-solid fa-bell"></i> Dispatch Nurse Alert
                 </button>
               </div>
@@ -1788,12 +1788,18 @@
       return english || cachedVoices[0] || null;
     }
 
+    function isModule3ServerAudioPlaying() {
+      const audio = document.querySelector('#followup-real-audio-player audio');
+      return Boolean(audio && !audio.paused && !audio.ended);
+    }
+
     function speakText(text, { lang = 'en-US', onstart, onend } = {}) {
       if (!voiceOutputEnabled || !text) return;
       if (!('speechSynthesis' in window)) {
         if (onend) onend();
         return;
       }
+      if (isModule3ServerAudioPlaying()) return;
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       const voice = pickVoice(lang);
@@ -2554,12 +2560,15 @@
       }
     }
 
-    function playDialogueSequence(lines, { onDone } = {}) {
+    function playDialogueSequence(lines, { onDone, fallbackMessage } = {}) {
       const dialogue = document.getElementById('followup-dialogue');
       const callIcon = document.getElementById('call-icon');
       const callStatus = document.getElementById('call-status-text');
       const callSub = document.getElementById('call-subtext');
-      if (dialogue) dialogue.innerHTML = "";
+      stopModule3Audio();
+      if (dialogue) dialogue.innerHTML = fallbackMessage
+        ? `<p class="mb-2 rounded border border-amber-500/30 bg-amber-500/10 p-2 text-[11px] text-amber-200">${escapeHtmlFollowup(fallbackMessage)}</p>`
+        : "";
       let index = 0;
       function next() {
         if (index >= lines.length) {
@@ -2592,13 +2601,14 @@
       next();
     }
 
-    function runFollowUpSimulation(type) {
+    function runFollowUpSimulation(type, fallbackMessage = '') {
       const badge = document.getElementById('followup-risk-badge');
       const desc = document.getElementById('followup-risk-desc');
       const escBtn = document.getElementById('btn-escalate');
       const callStatus = document.getElementById('call-status-text');
       const callSub = document.getElementById('call-subtext');
       const callIcon = document.getElementById('call-icon');
+      stopModule3Audio();
       if (callIcon) callIcon.className = "fa-solid fa-phone-volume text-emerald-400 animate-bounce";
       if (callStatus) callStatus.innerText = "Outbound Call Active (Connected)";
       if (callSub) callSub.innerText = "Case 2 maternal post-op follow-up in Amharic-English...";
@@ -2607,7 +2617,7 @@
           { speaker: 'agent', text: "ጤና ይስጥልኝ Lemlem, post-op ሕመሙ ደህና ነው? Lemlem, how is the post-op pain today?" },
           { speaker: 'patient', text: "ደህና ነኝ, ሕመሙ lessen ሲያደርግ, no fever today." },
           { speaker: 'agent', text: "Very good. Remember to take your prescribed medications as scheduled." }
-        ]);
+        ], { fallbackMessage });
         if (badge) {
           badge.className = "text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 inline-block";
           badge.innerText = "STABLE RECOVERY (NORMAL)";
@@ -2631,7 +2641,7 @@
         if (desc) desc.innerText = "Case 2 reports persistent abdominal pain after surgery. A clinician must assess symptoms and vitals.";
         if (escBtn) {
           escBtn.disabled = false;
-          escBtn.className = "mt-3 w-full bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-2 rounded-lg transition flex items-center justify-center gap-2 shadow-lg shadow-red-600/30";
+          escBtn.className = "mt-3 w-full bg-rose-600 hover:bg-rose-700 disabled:opacity-40 text-white text-xs font-semibold py-2 px-4 rounded transition-colors flex items-center justify-center gap-2";
         }
         analyzePostCareFromSimulation(patientResponse, "maternal");
       }
@@ -2804,16 +2814,55 @@
 
     function playFollowupAudio(url, fallbackText) {
       const player = document.getElementById('followup-real-audio-player');
-      player.innerHTML = '';
+      if (!player) return;
+      stopModule3Audio();
       if (url) {
         const audio = document.createElement('audio');
         audio.src = url;
         audio.controls = true;
-        audio.autoplay = true;
+        audio.preload = 'auto';
+        audio.addEventListener('play', cancelModule3Speech);
+        const fallbackToSpeech = () => {
+          if (audio.dataset.fallbackShown) return;
+          audio.dataset.fallbackShown = 'true';
+          audio.pause();
+          player.innerHTML = '<p class="text-[11px] text-amber-300">Server audio is unavailable. Using the local browser voice instead.</p>';
+          playModule3FallbackSpeech(fallbackText);
+        };
+        audio.addEventListener('error', fallbackToSpeech, { once: true });
         player.appendChild(audio);
+        cancelModule3Speech();
+        audio.play().catch(fallbackToSpeech);
       } else {
-        player.innerHTML = '<p class="text-[11px] text-amber-400 italic">No Intron TTS audio (key not configured on the server) -- question text shown above, and your browser\'s voice will read it instead.</p>';
-        speakText(fallbackText, { lang: 'am-ET' });
+        player.innerHTML = '<p class="text-[11px] text-amber-300">Server voice audio is unavailable. Using the local browser voice instead.</p>';
+        playModule3FallbackSpeech(fallbackText);
+      }
+    }
+
+    function cancelModule3Speech() {
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    }
+
+    function stopModule3Audio() {
+      const player = document.getElementById('followup-real-audio-player');
+      const audio = player?.querySelector('audio');
+      if (audio) {
+        audio.pause();
+        audio.removeAttribute('src');
+        audio.load();
+      }
+      if (player) player.innerHTML = '';
+      cancelModule3Speech();
+    }
+
+    function playModule3FallbackSpeech(text) {
+      if (!text) return;
+      if ('speechSynthesis' in window) {
+        cancelModule3Speech();
+        speakText(text, { lang: 'am-ET' });
+      } else {
+        const player = document.getElementById('followup-real-audio-player');
+        if (player) player.insertAdjacentHTML('beforeend', '<p class="text-[11px] text-slate-400">Read the question above and continue with the local follow-up simulation.</p>');
       }
     }
 

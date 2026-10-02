@@ -60,6 +60,27 @@ class SafetyTests(unittest.TestCase):
         self.assertEqual(payload["soap"]["icd10_codes"], [])
         self.assertEqual(payload["scrubbed_transcript"], "Patient reports headache and fever.")
 
+    def test_intron_v1_stt_route_uses_backend_proxy(self):
+        with (
+            patch.object(main, "REQUIRE_PROXY_AUTH", False),
+            patch.object(main, "INTRON_API_KEY", "server-side-test-key"),
+            patch.object(
+                main,
+                "_post_intron_sync_upload",
+                new_callable=AsyncMock,
+                return_value={"data": {"audio_transcript": "test transcript"}},
+            ) as proxy,
+        ):
+            response = TestClient(main.app).post(
+                "/api/v1/stt/intron",
+                files={"audio_file_blob": ("test.wav", b"audio", "audio/wav")},
+                data={"audio_file_name": "test.wav", "use_language_asr_input": "am"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["data"]["audio_transcript"], "test transcript")
+        proxy.assert_awaited_once()
+
     def test_later_positive_maternal_symptom_overrides_earlier_negation(self):
         result = main._classify_maternal_acuity(
             "Patient denies heavy bleeding, but has heavy bleeding now."

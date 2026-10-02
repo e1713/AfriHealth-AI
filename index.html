@@ -59,19 +59,21 @@
     </div>
   </header>
 
+  <div id="toast-region" class="pointer-events-none fixed right-0 top-20 z-[100] flex w-full max-w-sm flex-col gap-2 p-4" aria-live="polite" aria-relevant="additions"></div>
+
   <nav class="bg-slate-900 border-b border-slate-800 px-4 sm:px-8 py-2.5">
-    <div class="max-w-7xl mx-auto flex items-center justify-start gap-2 overflow-x-auto">
-      <button id="tab-triage" onclick="switchTab('triage')" class="nav-tab text-emerald-400 bg-slate-800 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-emerald-500/30">
+    <div class="max-w-7xl mx-auto flex flex-nowrap items-center justify-start gap-2 overflow-x-auto whitespace-nowrap">
+      <button id="tab-triage" onclick="switchTab('triage')" class="nav-tab shrink-0 text-emerald-400 bg-slate-800 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-emerald-500/30">
         <i class="fa-solid fa-notes-medical"></i> Module 1: Frontline Triage
       </button>
-      <button id="tab-ehr" onclick="switchTab('ehr')" class="nav-tab text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-transparent">
+      <button id="tab-ehr" onclick="switchTab('ehr')" class="nav-tab shrink-0 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-transparent">
         <i class="fa-solid fa-file-waveform"></i> Module 2: Voice EHR Intake
       </button>
-      <button id="tab-followup" onclick="switchTab('followup')" class="nav-tab text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-transparent">
+      <button id="tab-followup" onclick="switchTab('followup')" class="nav-tab shrink-0 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-transparent">
         <i class="fa-solid fa-phone-volume"></i> Module 3: Post-Care Voice Agent
       </button>
-      <button id="tab-benchmark" onclick="switchTab('benchmark')" class="nav-tab text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-transparent">
-        <i class="fa-solid fa-chart-column text-amber-400"></i> 3-Model Benchmark Matrix
+      <button id="tab-benchmark" onclick="switchTab('benchmark')" class="nav-tab shrink-0 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-transparent">
+        <i class="fa-solid fa-chart-column text-amber-400"></i> 4-Model Benchmark Matrix
       </button>
     </div>
   </nav>
@@ -115,7 +117,7 @@
             <i class="fa-solid fa-cloud text-indigo-400 text-base"></i>
             <div>
               <div class="font-bold text-white">Intron Sahara API Endpoint Status</div>
-              <div class="text-slate-400" id="diag-api-sub">Testing latency to infer.voice.intron.io...</div>
+              <div class="text-slate-400" id="diag-api-sub">Checking the backend Intron proxy...</div>
             </div>
           </div>
           <button onclick="testIntronApiPing()" class="bg-slate-800 hover:bg-slate-700 text-indigo-400 border border-indigo-500/30 px-3 py-1.5 rounded font-semibold transition">
@@ -178,42 +180,42 @@
                 <button onclick="loadTriagePreset(1)" class="w-full text-left p-3 rounded-lg border border-slate-800 hover:border-emerald-500/50 bg-slate-900 transition flex items-center justify-between group">
                   <div>
                     <div class="text-xs font-semibold text-emerald-400 group-hover:text-emerald-300">GOLD-ETH-001: Pediatric High Fever (Urgent)</div>
-                    <div class="text-xs text-slate-400 italic mt-0.5">"Patient twin years የነበረ character... severe cough and fever አለው..."</div>
+                    <div class="text-xs text-slate-300 italic mt-0.5">"Patient twin years የነበረ character... severe cough and fever አለው..."</div>
                   </div>
                   <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
                 </button>
                 <button onclick="loadTriagePreset(2)" class="w-full text-left p-3 rounded-lg border border-slate-800 hover:border-emerald-500/50 bg-slate-900 transition flex items-center justify-between group">
                   <div>
                     <div class="text-xs font-semibold text-yellow-400 group-hover:text-yellow-300">GOLD-ETH-002: Moderate Dehydration & Diarrhea</div>
-                    <div class="text-xs text-slate-400 italic mt-0.5">"Legaw 3 days abdominal pain and nausea ሲያደርግew felt very weak..."</div>
+                    <div class="text-xs text-slate-300 italic mt-0.5">"Legaw 3 days abdominal pain and nausea ሲያደርግew felt very weak..."</div>
                   </div>
                   <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
                 </button>
                 <button onclick="loadTriagePreset(3)" class="w-full text-left p-3 rounded-lg border border-slate-800 hover:border-emerald-500/50 bg-slate-900 transition flex items-center justify-between group">
                   <div>
                     <div class="text-xs font-semibold text-red-400 group-hover:text-red-300">GOLD-ETH-003: Acute Respiratory Distress</div>
-                    <div class="text-xs text-slate-400 italic mt-0.5">"Denegech chest tightness syamenaw shortness of breath ale..."</div>
+                    <div class="text-xs text-slate-300 italic mt-0.5">"Denegech chest tightness syamenaw shortness of breath ale..."</div>
                   </div>
                   <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
                 </button>
                 <button onclick="loadTriagePreset(4)" class="w-full text-left p-3 rounded-lg border border-slate-800 hover:border-emerald-500/50 bg-slate-900 transition flex items-center justify-between group">
                   <div>
                     <div class="text-xs font-semibold text-indigo-400 group-hover:text-indigo-300">GOLD-ETH-004: Post-Op Wound Infection</div>
-                    <div class="text-xs text-slate-400 italic mt-0.5">"Operasion-u site red and pus discharge ale, fever felt very high..."</div>
+                    <div class="text-xs text-slate-300 italic mt-0.5">"Operasion-u site red and pus discharge ale, fever felt very high..."</div>
                   </div>
                   <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
                 </button>
                 <button onclick="loadTriagePreset(5)" class="w-full text-left p-3 rounded-lg border border-slate-800 hover:border-emerald-500/50 bg-slate-900 transition flex items-center justify-between group">
                   <div>
                     <div class="text-xs font-semibold text-cyan-400 group-hover:text-cyan-300">GOLD-ETH-005: Diabetes Follow-Up & Foot Pain</div>
-                    <div class="text-xs text-slate-400 italic mt-0.5">"የህመም በሽታ ... የእግር ህመም and metformin prescribed once daily..."</div>
+                    <div class="text-xs text-slate-300 italic mt-0.5">"የህመም በሽታ ... የእግር ህመም and metformin prescribed once daily..."</div>
                   </div>
                   <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
                 </button>
                 <button onclick="loadTriagePreset(6)" class="w-full text-left p-3 rounded-lg border border-slate-800 hover:border-emerald-500/50 bg-slate-900 transition flex items-center justify-between group">
                   <div>
                     <div class="text-xs font-semibold text-violet-400 group-hover:text-violet-300">GOLD-ETH-006: GI Distress & BP Check</div>
-                    <div class="text-xs text-slate-400 italic mt-0.5">"Patient reports abdominal pain and diarrhea for 4 days..."</div>
+                    <div class="text-xs text-slate-300 italic mt-0.5">"Patient reports abdominal pain and diarrhea for 4 days..."</div>
                   </div>
                   <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
                 </button>
@@ -322,14 +324,14 @@
                 <span id="ehr-live-badge" class="text-[10px] text-slate-500 font-mono">Idle</span>
               </div>
               <div class="flex items-center gap-2 mb-3">
-                <label for="ehr-speaker-label" class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Recording speaker</label>
+                <label for="ehr-speaker-label" class="text-[10px] font-bold uppercase tracking-wider text-slate-300">Recording speaker</label>
                 <select id="ehr-speaker-label" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-[11px] text-slate-200 focus:border-teal-500 focus:outline-none">
                   <option value="Doctor">Doctor</option>
                   <option value="Patient">Patient</option>
                 </select>
-                <span class="text-[10px] text-slate-500">Select the speaker before each segment.</span>
+                <span class="text-[10px] text-slate-300">Select the speaker before each segment.</span>
               </div>
-              <p id="ehr-record-status" class="text-[11px] text-slate-500 mb-3">Record the live doctor-patient conversation; the chart on the right auto-fills as fields are recognized.</p>
+              <p id="ehr-record-status" class="text-[11px] text-slate-300 mb-3">Record the live doctor-patient conversation; the chart on the right auto-fills as fields are recognized.</p>
               <div id="ehr-transcript-box" class="p-4 bg-slate-900 rounded-lg border border-slate-800 text-xs font-mono leading-relaxed space-y-2 h-[260px] overflow-y-auto text-slate-300">
                 <p class="text-slate-500 italic">Click "Start Consultation Recording" to capture live audio, or "Load Consultation Demo" for a scripted example...</p>
               </div>
@@ -432,7 +434,12 @@
                 <textarea id="soap-objective" data-soap-field="objective" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Vitals and examination observations..."></textarea>
               </div>
               <div>
-                <label for="soap-assessment" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">A - Assessment (ICD-10 Code):</label>
+                <div class="flex items-center justify-between gap-2">
+                  <label for="soap-assessment" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">A - Assessment (ICD-10 Code):</label>
+                  <button type="button" onclick="unlockSoapDraft()" class="shrink-0 rounded border border-teal-500/30 px-2 py-1 text-[10px] font-semibold text-teal-300 hover:bg-teal-500/10 flex items-center gap-1">
+                    <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Edit SOAP Draft
+                  </button>
+                </div>
                 <textarea id="soap-assessment" data-soap-field="assessment" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Diagnosis, ICD-10 mapping, and confidence..."></textarea>
               </div>
               <div>
@@ -631,7 +638,7 @@
           </div>
           <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-xs text-red-100">
             <h3 class="font-bold text-red-300 mb-2"><i class="fa-solid fa-user-doctor mr-1"></i> Measured clinical validation</h3>
-            <p>15 reviewed Amharic-English recordings: <strong>56.38% mean WER</strong>, <strong>44.33% target-term recall</strong>, and <strong>6 critical-term-miss cases</strong>. Clinician review is mandatory; autonomous care is not supported.</p>
+            <p>15-case Amharic-English benchmark: <strong>34.91% normalized WER</strong>, <strong>57.78% target recall</strong>, and <strong>42.22% M-WER</strong>. Clinician review is mandatory; autonomous care is not supported.</p>
           </div>
         </div>
         <section class="mt-4 bg-slate-950 p-4 rounded-xl border border-teal-500/30" aria-labelledby="manifest-benchmark-title">
@@ -706,6 +713,7 @@
           <div class="lg:col-span-5 bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col justify-between">
             <div>
               <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3"><i class="fa-solid fa-table text-teal-400"></i> Clinician Human-In-The-Loop (HITL) Scores</h3>
+              <p class="text-[11px] text-slate-300 mb-2">Ratings below are qualitative human evaluation scores, not model-generated metrics.</p>
               <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs border-collapse">
                   <thead>
@@ -839,7 +847,7 @@
             </div>
           </div>
           <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">2. Evidence and governance</h4>
-          <p>Fixture benchmark values, AfriSwitch general-ASR results, and the 15-case clinical-review baseline are shown as separate evidence layers. The measured clinical baseline is 56.38% mean WER, 44.33% target-term recall, and six critical-term-miss cases. These results require clinician review and do not support autonomous care.</p>
+          <p>The 15-case Amharic-English transcript benchmark reports 34.91% normalized WER, 57.78% target recall, and 42.22% M-WER. These saved-transcript results are separate from the in-app fixture and require clinician review; they do not support autonomous care.</p>
           <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">3. Privacy and safety</h4>
           <p>Provider credentials remain server-side. Recordings are reviewed before upload, private validation inputs remain outside Git, and medication information must be independently verified by a clinician. Automated medication safety checks are not implemented end to end.</p>
           <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">4. Project team</h4>
@@ -959,7 +967,7 @@
     form.append('use_language_asr_input', 'am');
     form.append('use_category', 'file_category_telehealth');
     form.append('use_disable_llm_corrections', 'FALSE');
-    const response = await fetchApi(`${getApiOrigin()}/api/intron/stt/upload-sync`, { method: 'POST', body: form });
+    const response = await fetchApi(`${getApiOrigin()}/api/v1/stt/intron`, { method: 'POST', body: form });
     if (!response.ok) throw new Error(`Offline replay failed (${response.status})`);
     return true;
   }
@@ -1035,6 +1043,37 @@
 
   function fetchApi(input, options = {}) {
     return fetch(input, { ...options, credentials: 'include' });
+  }
+
+  function showToast(message, variant = 'info') {
+    const region = document.getElementById('toast-region');
+    if (!region) return;
+    const styles = {
+      info: { icon: 'fa-circle-info', color: 'border-sky-500/40 bg-slate-900 text-sky-100' },
+      success: { icon: 'fa-circle-check', color: 'border-emerald-500/40 bg-slate-900 text-emerald-100' },
+      warning: { icon: 'fa-triangle-exclamation', color: 'border-amber-500/40 bg-slate-900 text-amber-100' },
+      error: { icon: 'fa-circle-exclamation', color: 'border-red-500/40 bg-slate-900 text-red-100' }
+    };
+    const appearance = styles[variant] || styles.info;
+    const toast = document.createElement('div');
+    toast.className = `pointer-events-auto flex items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-xl ${appearance.color}`;
+    toast.setAttribute('role', variant === 'error' ? 'alert' : 'status');
+
+    const icon = document.createElement('i');
+    icon.className = `fa-solid ${appearance.icon} mt-0.5 shrink-0`;
+    icon.setAttribute('aria-hidden', 'true');
+    const text = document.createElement('p');
+    text.className = 'min-w-0 flex-1 leading-relaxed';
+    text.textContent = message;
+    const dismiss = document.createElement('button');
+    dismiss.type = 'button';
+    dismiss.className = 'shrink-0 rounded p-1 text-current/70 hover:text-current focus:outline-none focus:ring-2 focus:ring-current';
+    dismiss.setAttribute('aria-label', 'Dismiss notification');
+    dismiss.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
+    dismiss.addEventListener('click', () => toast.remove());
+    toast.append(icon, text, dismiss);
+    region.prepend(toast);
+    setTimeout(() => toast.remove(), 6500);
   }
 
   function scheduleWebSocketReconnect() {
@@ -1298,14 +1337,19 @@
   }
 
   function stopAudioStreaming() {
-    if (mediaStream) {
-      mediaStream.getTracks().forEach(track => track.stop());
-      mediaStream = null;
-    }
+    stopMediaStream(mediaStream);
+    mediaStream = null;
     if (audioContext) {
-      audioContext.close();
+      audioContext.close().catch(() => {});
       audioContext = null;
     }
+  }
+
+  function stopMediaStream(stream) {
+    if (!stream) return;
+    stream.getTracks().forEach((track) => {
+      if (track.readyState !== 'ended') track.stop();
+    });
   }
 
   function flushAudioWorklet() {
@@ -1610,7 +1654,7 @@
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         if (sub) sub.innerText = "✅ Microphone hardware authorized and active!";
-        stream.getTracks().forEach(track => track.stop());
+        stopMediaStream(stream);
       } catch (err) {
         if (sub) sub.innerText = "⚠️ Mic permission denied or hardware unavailable: " + err.message;
       }
@@ -1797,7 +1841,7 @@
             reviewAudioProcessor.disconnect();
             reviewAudioSource.disconnect();
             reviewAudioContext.close();
-            mediaRecorder.stream.getTracks().forEach(t => t.stop());
+            stopMediaStream(mediaRecorder.stream);
             if (savedRecordingUrl) URL.revokeObjectURL(savedRecordingUrl);
             savedRecordingUrl = URL.createObjectURL(savedRecordingBlob);
             const player = document.getElementById("saved-recording-player");
@@ -1868,7 +1912,7 @@
       if (upload) upload.disabled = true;
       if (status) status.innerText = "Uploading the reviewed recording to Intron...";
       try {
-        const response = await fetchApi(`${apiOrigin}/api/intron/stt/upload-sync`, { method: "POST", body: form });
+        const response = await fetchApi(`${apiOrigin}/api/v1/stt/intron`, { method: "POST", body: form });
         const result = await response.json();
         if (!response.ok) throw new Error(result.detail || result.message || `Upload failed (${response.status})`);
         const transcript = result?.data?.audio_transcript || result?.data?.transcript || result?.transcript;
@@ -1937,7 +1981,7 @@
 
     async function triggerEHRSync() {
       if (!window.clinicalSignOffVerified) {
-        alert('Clinician sign-off is required before committing patient data to the EHR or exporting HL7 FHIR records.');
+        showToast('Clinician sign-off is required before committing patient data to the EHR or exporting HL7 FHIR records.', 'warning');
         return;
       }
       const syncBtn = document.getElementById('btn-sync-ehr');
@@ -1962,7 +2006,7 @@
           syncBtn.innerHTML = `<i class="fa-solid fa-database"></i> EHR endpoint unavailable`;
           syncBtn.disabled = false;
         }
-        alert(`EHR commit was not completed: ${error.message}`);
+        showToast(`EHR commit was not completed: ${error.message}`, 'error');
       }
     }
 
@@ -2096,9 +2140,17 @@
       }
     }
 
+    function unlockSoapDraft() {
+      window.clinicalSignOffVerified = false;
+      setSoapVerificationState(false);
+      updateClinicianSignoffUI();
+      document.getElementById('soap-assessment')?.focus();
+      showToast('SOAP draft unlocked. Review your edits and sign off again before exporting.', 'info');
+    }
+
     async function verifySoapRecord() {
       if (!soapState.transcript.trim() && !soapState.subjective.trim()) {
-        alert('A transcript or subjective note is required before sign-off.');
+        showToast('A transcript or subjective note is required before sign-off.', 'warning');
         return;
       }
       window.clinicalSignOffVerified = true;
@@ -2384,7 +2436,7 @@
         ehrMediaRecorder = new MediaRecorder(stream);
         ehrMediaRecorder.ondataavailable = (e) => ehrAudioChunks.push(e.data);
         ehrMediaRecorder.onstop = async () => {
-          stream.getTracks().forEach(t => t.stop());
+          stopMediaStream(stream);
           const blob = new Blob(ehrAudioChunks, { type: 'audio/webm' });
           await uploadEHRAudioForTranscription(blob);
         };
@@ -2407,7 +2459,7 @@
       form.append("use_category", "file_category_telehealth");
       form.append("use_disable_llm_corrections", "FALSE");
       try {
-        const response = await fetchApi(`${apiOrigin}/api/intron/stt/upload-sync`, { method: "POST", body: form });
+        const response = await fetchApi(`${apiOrigin}/api/v1/stt/intron`, { method: "POST", body: form });
         const result = await response.json();
         if (!response.ok) throw new Error(result.detail || result.message || `Upload failed (${response.status})`);
         const transcript = result?.data?.audio_transcript || result?.data?.transcript || result?.transcript;
@@ -2698,7 +2750,7 @@
           followupMediaRecorder = new MediaRecorder(stream);
           followupMediaRecorder.ondataavailable = (e) => followupAudioChunks.push(e.data);
           followupMediaRecorder.onstop = async () => {
-            stream.getTracks().forEach((t) => t.stop());
+            stopMediaStream(stream);
             const blob = new Blob(followupAudioChunks, { type: 'audio/webm' });
             await submitFollowupAnswer(blob);
           };
@@ -2799,7 +2851,7 @@
         liveBenchmarkRecorder = new MediaRecorder(stream);
         liveBenchmarkRecorder.ondataavailable = (event) => liveBenchmarkChunks.push(event.data);
         liveBenchmarkRecorder.onstop = () => {
-          stream.getTracks().forEach((track) => track.stop());
+          stopMediaStream(stream);
           liveBenchmarkAudioBlob = new Blob(liveBenchmarkChunks, { type: 'audio/webm' });
           if (status) status.innerText = 'Recorded sample ready';
           setLiveBenchmarkStatus('Ready to benchmark');
@@ -2818,7 +2870,7 @@
       const reference = document.getElementById('live-benchmark-reference')?.value.trim() || '';
       const audio = fileInput?.files?.[0] || liveBenchmarkAudioBlob;
       if (!audio) {
-        alert('Upload or record a sample audio file first.');
+        showToast('Upload or record a sample audio file first.', 'warning');
         return;
       }
       const form = new FormData();
@@ -2827,7 +2879,7 @@
       form.append('language_code', 'am-ET');
       const selectedProviders = ['intron', 'openai', 'gemini'].filter((provider) => document.getElementById(`benchmark-provider-${provider}`)?.checked);
       if (!selectedProviders.length) {
-        alert('Select at least one benchmark model.');
+        showToast('Select at least one benchmark model.', 'warning');
         return;
       }
       form.append('providers', selectedProviders.join(','));
@@ -3113,7 +3165,7 @@
 
     async function exportFhirJson() {
       if (!window.clinicalSignOffVerified) {
-        alert('A signed clinician review is required before exporting HL7 FHIR records.');
+        showToast('A signed clinician review is required before exporting HL7 FHIR records.', 'warning');
         return;
       }
       try {
@@ -3126,13 +3178,13 @@
         if (!response.ok) throw new Error(result.detail || `FHIR export failed (${response.status})`);
         helperDownloadFile("fhir_encounter_EHR-90412.json", JSON.stringify(result, null, 2), "application/fhir+json");
       } catch (error) {
-        alert(`FHIR export was not completed: ${error.message}`);
+        showToast(`FHIR export was not completed: ${error.message}`, 'error');
       }
     }
 
     function downloadClinicalSummary() {
       if (!window.clinicalSignOffVerified) {
-        alert('A signed clinician review is required before saving or exporting a clinical summary.');
+        showToast('A signed clinician review is required before saving or exporting a clinical summary.', 'warning');
         return;
       }
       const cc = document.getElementById('ehr-cc')?.value || "Chest Pain & Headache";

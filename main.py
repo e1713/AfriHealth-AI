@@ -934,6 +934,7 @@ RATE_LIMIT_WINDOW_SECONDS = 60
 RATE_LIMIT_MAX_REQUESTS = 20
 RATE_LIMITED_PATH_PREFIXES = (
     "/api/v1/transcribe",
+    "/api/v1/stt/intron",
     "/api/v1/benchmark/live",
     "/api/v1/post-care/",
     "/api/intron/stt/upload-sync",
@@ -2434,6 +2435,7 @@ async def intron_tts_stream(websocket: WebSocket):
         _active_websockets = max(0, _active_websockets - 1)
 
 
+@app.post("/api/v1/stt/intron")
 @app.post("/api/intron/stt/upload-sync")
 async def intron_stt_upload_sync(request: Request):
     if not INTRON_API_KEY:

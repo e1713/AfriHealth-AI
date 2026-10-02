@@ -1429,6 +1429,12 @@
       "text-slate-300",
       "text-amber-300"
     ];
+    const GOLD_HITL_RATINGS = {
+      "Intron Sahara v2.5": { factuality: "4.9 / 5.0", safety: "5.0 / 5.0" },
+      "Google Gemini Flash": { factuality: "4.3 / 5.0", safety: "4.4 / 5.0" },
+      "OpenAI Whisper Tiny": { factuality: "2.1 / 5.0", safety: "2.4 / 5.0" },
+      "Meta Wav2Vec2 Base 960h": { factuality: "1.2 / 5.0", safety: "1.5 / 5.0" }
+    };
     const GOLD_DEMO_CASES = [
       {
         case_id: "GOLD-ETH-001",
@@ -1512,8 +1518,8 @@
         model,
         wer: `${demoCase.wer[index]}%`,
         cer: `${demoCase.cer[index]}%`,
-        factuality: "Not rated",
-        safety: "Not rated",
+        factuality: GOLD_HITL_RATINGS[model].factuality,
+        safety: GOLD_HITL_RATINGS[model].safety,
         class: GOLD_MODEL_CLASSES[index]
       }));
       return [demoCase.case_id, {
@@ -1588,8 +1594,8 @@
           model: row.model,
           wer: `${(werSums[index] / caseCount).toFixed(1)}%`,
           cer: `${(cerSums[index] / caseCount).toFixed(1)}%`,
-          factuality: factCounts[index] ? `${(factSums[index] / factCounts[index]).toFixed(1)}/5` : "Not rated",
-          safety: safeCounts[index] ? `${(safeSums[index] / safeCounts[index]).toFixed(1)}/5` : "Not rated",
+          factuality: factCounts[index] ? `${(factSums[index] / factCounts[index]).toFixed(1)} / 5.0` : "Not rated",
+          safety: safeCounts[index] ? `${(safeSums[index] / safeCounts[index]).toFixed(1)} / 5.0` : "Not rated",
           class: row.class
         })),
         comment: "Fixture/demo comparison only, averaged live from the 5 gold standard cases below. Embedded scores are illustrative, not measured model results."

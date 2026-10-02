@@ -707,8 +707,8 @@
             <div>
               <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3"><i class="fa-solid fa-table text-teal-400"></i> Clinician Human-In-The-Loop (HITL) Scores</h3>
               <p class="text-[11px] text-slate-300 mb-2">Factuality and safety are qualitative human-evaluation fields; no case-level ratings are supplied for this demo fixture.</p>
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs border-collapse">
+              <div class="min-w-full overflow-x-auto">
+                <table id="hitl-table" class="min-w-[640px] w-full text-left text-xs border-collapse">
                   <thead>
                     <tr class="border-b border-slate-800 text-slate-400">
                       <th class="py-2">Speech AI Model</th>
@@ -766,8 +766,8 @@
           <button onclick="runLiveProviderBenchmark()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-2">
             <i class="fa-solid fa-chart-line"></i> Run Live Benchmark
           </button>
-          <div id="live-benchmark-results" class="hidden overflow-x-auto">
-            <table class="w-full text-left text-xs border-collapse">
+          <div id="live-benchmark-results" class="hidden min-w-full overflow-x-auto">
+            <table class="min-w-[720px] w-full text-left text-xs border-collapse">
               <thead class="text-slate-400 border-b border-slate-800">
                 <tr><th class="py-2">Provider</th><th class="py-2">Status</th><th class="py-2">Latency</th><th class="py-2">WER</th><th class="py-2">CER</th><th class="py-2">Transcript</th></tr>
               </thead>
@@ -780,6 +780,11 @@
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-calculator text-emerald-400 mr-1"></i> Live Levenshtein Edit-Distance Calculator</h3>
             <span class="text-[11px] text-slate-500 font-mono">Formula: WER = (S + D + I) / N</span>
           </div>
+          <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-400" aria-label="Edit distance legend">
+            <span class="font-semibold text-emerald-300">[+ Inserted (Green)]</span>
+            <span aria-hidden="true">|</span>
+            <span class="font-semibold text-red-300 line-through">[- Omitted (Red Line-through)]</span>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div>
               <label class="text-slate-400 block mb-1 font-semibold">Reference Verbatim Ground Truth ($T_{gold}$)</label>
@@ -790,11 +795,11 @@
               <textarea id="calc-hypothesis" rows="2" class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 font-mono focus:border-emerald-500 focus:outline-none" placeholder="Enter ASR output transcript...">Patient twin years የነበረ severe cough and fever ale for 3 days.</textarea>
             </div>
           </div>
-          <div class="flex items-center justify-between pt-1">
+          <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
             <button onclick="runLiveWerCalculation()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 text-xs font-bold px-4 py-2 rounded-lg transition flex items-center gap-2">
               <i class="fa-solid fa-play"></i> Compute Exact WER & CER
             </button>
-            <div id="calc-results" class="flex items-center gap-4 text-xs font-mono">
+            <div id="calc-results" class="flex flex-wrap items-center gap-2 text-xs font-mono">
               <span class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded text-emerald-400 font-bold">Calculated WER: --%</span>
               <span class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded text-teal-400 font-bold">Calculated CER: --%</span>
             </div>
@@ -2888,7 +2893,15 @@
         if (body) {
           body.innerHTML = result.results.map((item) => {
             const complete = item.status === 'complete';
-            return `<tr><td class="py-2 text-slate-200">${escapeHtmlFollowup(item.model)}</td><td class="py-2 ${complete ? 'text-emerald-300' : 'text-amber-300'}">${escapeHtmlFollowup(item.status)}</td><td class="py-2">${item.latency_ms} ms</td><td class="py-2">${complete && item.WER !== undefined ? `${(item.WER * 100).toFixed(2)}%` : '--'}</td><td class="py-2">${complete && item.CER !== undefined ? `${(item.CER * 100).toFixed(2)}%` : '--'}</td><td class="py-2 max-w-sm whitespace-normal text-slate-400">${complete ? escapeHtmlFollowup(item.transcript) : escapeHtmlFollowup(item.error || 'Provider unavailable')}</td></tr>`;
+            const latencyMs = Number(item.latency_ms);
+            const latency = Number.isFinite(latencyMs)
+              ? latencyMs >= 1000 ? `${(latencyMs / 1000).toFixed(2)}s` : `${latencyMs} ms`
+              : '--';
+            const werPercent = complete && item.WER !== undefined ? Number(item.WER) * 100 : null;
+            const cerPercent = complete && item.CER !== undefined ? Number(item.CER) * 100 : null;
+            const lowWer = Number.isFinite(werPercent) && werPercent < 10;
+            const metricBadgeClass = `inline-flex whitespace-nowrap rounded border px-2 py-0.5 font-bold ${lowWer ? 'bg-emerald-900/50 text-emerald-300 border-emerald-700/50' : 'bg-slate-900 text-slate-300 border-slate-700'}`;
+            return `<tr><td class="py-2 text-slate-200">${escapeHtmlFollowup(item.model)}</td><td class="py-2 ${complete ? 'text-emerald-300' : 'text-amber-300'}">${escapeHtmlFollowup(item.status)}</td><td class="py-2"><span class="${metricBadgeClass}">${latency}</span></td><td class="py-2"><span class="${metricBadgeClass}">${Number.isFinite(werPercent) ? `${werPercent.toFixed(2)}%` : '--'}</span></td><td class="py-2"><span class="${metricBadgeClass}">${Number.isFinite(cerPercent) ? `${cerPercent.toFixed(2)}%` : '--'}</span></td><td class="py-2 max-w-sm whitespace-normal text-slate-400">${complete ? escapeHtmlFollowup(item.transcript) : escapeHtmlFollowup(item.error || 'Provider unavailable')}</td></tr>`;
           }).join('');
         }
         if (panel) panel.classList.remove('hidden');
@@ -2950,6 +2963,18 @@
       });
     }
 
+    function renderHITLScoreBadge(score) {
+      const value = Number.parseFloat(score);
+      const scoreClass = Number.isFinite(value)
+        ? value >= 4.5
+          ? 'bg-emerald-900/50 text-emerald-300 border-emerald-700/50'
+          : value >= 3
+            ? 'bg-sky-900/40 text-sky-300 border-sky-700/50'
+            : 'bg-amber-900/40 text-amber-300 border-amber-700/50'
+        : 'bg-slate-800 text-slate-300 border-slate-700';
+      return `<span class="inline-flex whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-semibold ${scoreClass}">${escapeHtmlFollowup(String(score))}</span>`;
+    }
+
     function onCaseSelectChange() {
       const select = document.getElementById('benchmark-case-select');
       const caseKey = select ? select.value : 'AGGREGATE';
@@ -2968,8 +2993,8 @@
             <td class="py-2.5 ${row.class}">${row.model}</td>
             <td class="py-2.5">${row.wer}</td>
             <td class="py-2.5">${row.cer}</td>
-            <td class="py-2.5">${row.factuality}</td>
-            <td class="py-2.5">${row.safety}</td>
+            <td class="py-2.5">${renderHITLScoreBadge(row.factuality)}</td>
+            <td class="py-2.5">${renderHITLScoreBadge(row.safety)}</td>
           </tr>
         `).join('');
       }
@@ -3020,11 +3045,14 @@
       const charEdits = computeLevenshteinDistance(refChars.split(''), hypChars.split(''));
       const wer = refWords.length ? ((wordEdits / refWords.length) * 100).toFixed(1) : 0;
       const cer = refChars.length ? ((charEdits / refChars.length) * 100).toFixed(1) : 0;
+      const metricBadgeClass = Number(wer) < 10
+        ? 'bg-emerald-900/50 border-emerald-700/50 text-emerald-300 font-bold'
+        : 'bg-slate-900 border-slate-800 text-slate-400 font-bold';
       const results = document.getElementById('calc-results');
       if (results) {
         results.innerHTML = `
-          <span class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded text-emerald-400 font-bold">Calculated WER: ${wer}%</span>
-          <span class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded text-teal-400 font-bold">Calculated CER: ${cer}%</span>
+          <span class="${metricBadgeClass} border px-3 py-1.5 rounded">Calculated WER: ${wer}%</span>
+          <span class="${metricBadgeClass} border px-3 py-1.5 rounded">Calculated CER: ${cer}%</span>
         `;
       }
     }

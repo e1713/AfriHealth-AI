@@ -40,6 +40,7 @@ receives the audio and uses `INTRON_API_KEY` server-side.
 Configure these only on the API host:
 
 ```text
+APP_ENV=production
 INTRON_API_KEY=...
 DATABASE_URL=${{Postgres.DATABASE_URL}}
 ALLOWED_ORIGINS=https://your-project.pages.dev

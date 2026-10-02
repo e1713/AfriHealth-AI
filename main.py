@@ -887,6 +887,9 @@ import time
 import logging
 import re
 import wave
+import uuid
+from datetime import datetime, timezone
+from html import escape
 from io import BytesIO
 from urllib.parse import urlencode
 from collections import deque
@@ -931,6 +934,8 @@ RATE_LIMIT_WINDOW_SECONDS = 60
 RATE_LIMIT_MAX_REQUESTS = 20
 RATE_LIMITED_PATH_PREFIXES = (
     "/api/v1/transcribe",
+    "/api/v1/benchmark/live",
+    "/api/v1/post-care/",
     "/api/intron/stt/upload-sync",
     "/api/intron/tts/",
     "/api/intron/voicebot/",
@@ -939,7 +944,15 @@ MAX_AUDIO_BYTES = 25 * 1024 * 1024
 MAX_AUDIO_DURATION_SECONDS = 120
 MAX_ACTIVE_WEBSOCKETS = 100
 _active_websockets = 0
-REQUIRE_PROXY_AUTH = os.getenv("REQUIRE_PROXY_AUTH", "false").lower() == "true"
+
+
+def _proxy_auth_required() -> bool:
+    if os.getenv("APP_ENV", "development").strip().lower() == "production":
+        return True
+    return os.getenv("REQUIRE_PROXY_AUTH", "false").strip().lower() == "true"
+
+
+REQUIRE_PROXY_AUTH = _proxy_auth_required()
 PROXY_IDENTITY_HEADERS = (
     "cf-access-authenticated-user-email",
     "x-authenticated-user",
@@ -1045,11 +1058,15 @@ def _keyword_is_negated(text: str, keyword: str) -> bool:
     normalized_keyword = keyword.lower().strip()
     if normalized_keyword.startswith(("no ", "absent ", "cannot ", "can't ")):
         return False
-    keyword_match = re.search(re.escape(normalized_keyword), text)
-    if not keyword_match:
+    keyword_matches = list(re.finditer(re.escape(normalized_keyword), text))
+    if not keyword_matches:
         return False
-    preceding_text = text[max(0, keyword_match.start() - 36):keyword_match.start()]
-    return bool(re.search(r"\b(?:no|not|never|denies?|without)\b[^.!?]{0,32}$", preceding_text))
+    for keyword_match in keyword_matches:
+        preceding_text = text[max(0, keyword_match.start() - 36):keyword_match.start()]
+        preceding_text = re.split(r"\b(?:but|however|although|yet)\b", preceding_text)[-1]
+        if not re.search(r"\b(?:no|not|never|denies?|without)\b[^.!?]{0,32}$", preceding_text):
+            return False
+    return True
 
 
 def _has_proxy_identity(headers) -> bool:
@@ -1167,6 +1184,7 @@ class FHIRExportRequest(BaseModel):
 
 class EHRCommitRequest(FHIRExportRequest):
     clinician_id: Optional[str] = Field(default=None, max_length=256)
+    clinician_signed_off: bool = False
 
 
 CLINICAL_SYMPTOM_MAP = {
@@ -1379,19 +1397,31 @@ def _build_fhir_bundle(payload: FHIRExportRequest) -> dict:
     ]
 
     if payload.soap:
+        clinician_id = getattr(payload, "clinician_id", None)
         entries.append(
             {
                 "resource": {
                     "resourceType": "Composition",
+                    "identifier": {
+                        "system": "urn:ietf:rfc:3986",
+                        "value": f"urn:uuid:{uuid.uuid4()}",
+                    },
                     "status": "final",
                     "type": {"text": "Structured SOAP clinical note"},
                     "subject": {"reference": f"Patient/{payload.patient_id}"},
                     "encounter": {"reference": f"Encounter/{payload.encounter_id}"},
+                    "date": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                    "author": [
+                        {"reference": f"Practitioner/{clinician_id}"}
+                        if clinician_id
+                        else {"display": "AfriHealth AI (automated draft)"}
+                    ],
+                    "title": "AfriHealth AI clinical note",
                     "section": [
-                        {"title": "Subjective", "text": {"status": "generated", "div": payload.soap.subjective}},
-                        {"title": "Objective", "text": {"status": "generated", "div": payload.soap.objective}},
-                        {"title": "Assessment", "text": {"status": "generated", "div": payload.soap.assessment}},
-                        {"title": "Plan", "text": {"status": "generated", "div": payload.soap.plan}},
+                        {"title": "Subjective", "text": _fhir_narrative(payload.soap.subjective)},
+                        {"title": "Objective", "text": _fhir_narrative(payload.soap.objective)},
+                        {"title": "Assessment", "text": _fhir_narrative(payload.soap.assessment)},
+                        {"title": "Plan", "text": _fhir_narrative(payload.soap.plan)},
                     ],
                     "extension": [
                         {
@@ -1461,6 +1491,13 @@ def _build_fhir_bundle(payload: FHIRExportRequest) -> dict:
     return {"resourceType": "Bundle", "type": "collection", "entry": entries}
 
 
+def _fhir_narrative(value: str) -> dict:
+    return {
+        "status": "generated",
+        "div": f'<div xmlns="http://www.w3.org/1999/xhtml">{escape(value, quote=False)}</div>',
+    }
+
+
 @app.post("/api/v1/fhir/export")
 async def export_fhir(payload: FHIRExportRequest) -> dict:
     """Build a FHIR bundle server-side after the clinician review gate."""
@@ -1470,6 +1507,8 @@ async def export_fhir(payload: FHIRExportRequest) -> dict:
 @app.post("/api/v1/ehr/commit")
 async def commit_to_ehr(payload: EHRCommitRequest) -> dict:
     """Send a signed-off FHIR bundle to an explicitly configured EHR endpoint."""
+    if not payload.clinician_signed_off:
+        raise HTTPException(status_code=400, detail="EHR commit requires explicit clinician sign-off")
     if not EHR_FHIR_ENDPOINT:
         raise HTTPException(status_code=503, detail="EHR_FHIR_ENDPOINT is not configured")
 
@@ -1604,13 +1643,14 @@ def _keyword_present_unnegated(text_lower: str, keyword: str, window: int = 3) -
     a simple word-window check, not real NLP negation scope detection --
     good enough to kill the most common false-positive pattern, not a
     substitute for a clinician reviewing ambiguous transcripts."""
-    idx = text_lower.find(keyword.lower())
-    if idx == -1:
-        return False
-    preceding = text_lower[:idx].split()[-window:]
-    if any(w.strip(".,!?;:") in NEGATION_WORDS for w in preceding):
-        return False
-    return True
+    for match in re.finditer(re.escape(keyword.lower()), text_lower):
+        preceding_text = re.split(
+            r"\b(?:but|however|although|yet)\b", text_lower[:match.start()]
+        )[-1]
+        preceding = preceding_text.split()[-window:]
+        if not any(w.strip(".,!?;:") in NEGATION_WORDS for w in preceding):
+            return True
+    return False
 
 
 def _score_recovery_risk(transcript: str) -> dict:
@@ -2438,8 +2478,6 @@ async def intron_stt_upload_sync(request: Request):
 # the rate limiter above -- fine for a single instance, swap for Redis if
 # this ever runs behind multiple workers.
 # ---------------------------------------------------------------------------
-import uuid
-
 # Bilingual (Amharic + English) protocol-driven follow-up questions.
 # care_track="maternal" uses the pregnancy/postpartum set instead. A native
 # Amharic-speaking clinician should review this wording before real use --

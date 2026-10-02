@@ -95,12 +95,15 @@ miss counts. The recordings may be reused for benchmarking, error analysis,
 and terminology improvement, but the evaluator does not train a model or
 support autonomous clinical decisions.
 
-### Durable stream sync
+### Stream session metadata
 
-Each live stream receives a session ID and clinic ID. Partial and committed
-transcripts are stored in PostgreSQL using Railway's `DATABASE_URL`; local
-development defaults to an async SQLite database. Raw audio is never stored by
-this layer. The schema is created automatically at service startup.
+Each live stream receives a session ID and clinic ID, which are stored in
+PostgreSQL using Railway's `DATABASE_URL`; local development defaults to an
+async SQLite database. The current WebSocket path returns partial and committed
+transcripts to the browser but does not call the transcript persistence method.
+Raw audio is processed in memory and is not stored by this layer. Session
+metadata has no expiry or deletion policy. The schema is created automatically
+at service startup.
 
 ### Live benchmark comparison
 
@@ -124,9 +127,10 @@ evaluation and future clinical governance.
 - Keep `INTRON_API_KEY` in a server environment variable.
 - Never place credentials in `index.html`, commits, screenshots, or demo
   recordings.
-- Raw audio is not stored by the stream persistence tables. Live partial and
-  final transcript text is stored in `clinic_sessions` and `transcript_events`;
-  no expiry or deletion policy is implemented in this repository.
+- Raw audio is not stored by the stream persistence tables. The WebSocket path
+  currently persists session metadata only; it does not write transcript text
+  to `clinic_sessions` or `transcript_events`. No expiry or deletion policy is
+  implemented for session metadata.
 - The clinical text endpoint redacts common email addresses and Ethiopian
   phone numbers only. This limited redaction is not applied to live-stream
   persistence and is not comprehensive de-identification.

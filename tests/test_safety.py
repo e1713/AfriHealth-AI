@@ -4,6 +4,7 @@ import io
 import json
 import unittest
 import wave
+from xml.etree import ElementTree
 from unittest.mock import AsyncMock, Mock, patch
 from urllib.parse import parse_qs, urlsplit
 
@@ -33,6 +34,18 @@ class SafetyTests(unittest.TestCase):
         result = main._classify_maternal_acuity("The patient has heavy bleeding.")
         self.assertEqual(result["level"], 1)
         self.assertTrue(result["is_emergency_trigger"])
+
+    def test_later_positive_maternal_symptom_overrides_earlier_negation(self):
+        result = main._classify_maternal_acuity(
+            "Patient denies heavy bleeding, but has heavy bleeding now."
+        )
+        self.assertEqual(result["level"], 1)
+        self.assertTrue(result["is_emergency_trigger"])
+
+    def test_later_positive_recovery_symptom_overrides_earlier_negation(self):
+        result = main._score_recovery_risk("No fever, but I have fever now.")
+        self.assertIn("persistent_fever", result["indicators_detected"])
+        self.assertEqual(result["risk_score"], 35)
 
     def test_missing_provider_key_fails_closed(self):
         original_key = main.INTRON_API_KEY
@@ -411,6 +424,12 @@ class SafetyTests(unittest.TestCase):
         self.assertTrue(main._has_proxy_identity({"cf-access-authenticated-user-email": "clinician@example.org"}))
         self.assertFalse(main._has_proxy_identity({}))
 
+    def test_production_environment_requires_proxy_auth(self):
+        with patch.dict("os.environ", {"APP_ENV": "production", "REQUIRE_PROXY_AUTH": "false"}, clear=True):
+            self.assertTrue(main._proxy_auth_required())
+        with patch.dict("os.environ", {"APP_ENV": "development"}, clear=True):
+            self.assertFalse(main._proxy_auth_required())
+
     def test_proxy_auth_middleware_rejects_missing_identity(self):
         original_setting = main.REQUIRE_PROXY_AUTH
         try:
@@ -457,7 +476,24 @@ class SafetyTests(unittest.TestCase):
             if entry["resource"]["resourceType"] == "Composition"
         ]
         self.assertEqual(len(compositions), 1)
-        self.assertEqual(compositions[0]["section"][0]["text"]["div"], "Chest pain for two days.")
+        composition = compositions[0]
+        self.assertTrue(composition["identifier"]["value"].startswith("urn:uuid:"))
+        self.assertTrue(composition["date"].endswith("Z"))
+        self.assertTrue(composition["author"])
+        self.assertTrue(composition["title"])
+        narrative = ElementTree.fromstring(composition["section"][0]["text"]["div"])
+        self.assertEqual(narrative.tag, "{http://www.w3.org/1999/xhtml}div")
+        self.assertEqual(narrative.text, "Chest pain for two days.")
+
+    def test_ehr_commit_requires_explicit_signoff(self):
+        payload = main.EHRCommitRequest(
+            patient_id="patient-1",
+            encounter_id="encounter-1",
+            chief_complaint="Chest pain",
+        )
+        with self.assertRaises(HTTPException) as context:
+            asyncio.run(main.commit_to_ehr(payload))
+        self.assertEqual(context.exception.status_code, 400)
 
     def test_live_benchmark_reports_unconfigured_providers(self):
         upload = UploadFile(file=io.BytesIO(b"audio"), filename="sample.wav")
@@ -487,6 +523,7 @@ class SafetyTests(unittest.TestCase):
             patient_id="patient-1",
             encounter_id="encounter-1",
             chief_complaint="Chest pain",
+            clinician_signed_off=True,
         )
         original_endpoint = main.EHR_FHIR_ENDPOINT
         try:

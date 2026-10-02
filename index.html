@@ -1907,7 +1907,7 @@
         const response = await fetchApi(`${getApiOrigin()}/api/v1/ehr/commit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify(buildFhirRequest())
+          body: JSON.stringify({ ...buildFhirRequest(), clinician_signed_off: true })
         });
         const result = await response.json();
         if (!response.ok) throw new Error(result.detail || `EHR commit failed (${response.status})`);

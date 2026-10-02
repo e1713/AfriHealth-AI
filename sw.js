@@ -1,4 +1,4 @@
-const CACHE_NAME = 'afrihealth-v1.3';
+const CACHE_NAME = 'afrihealth-v1.4';
 const ASSETS = [
 './',
 './index.html',
@@ -17,11 +17,13 @@ caches.open(CACHE_NAME)
 });
 
 self.addEventListener('activate', (e) => {
-e.waitUntil(
-caches.keys().then((keys) =>
-Promise.all(keys.map((k) => k !== CACHE_NAME && caches.delete(k)))
-).then(() => self.clients.claim())
-);
+e.waitUntil((async () => {
+const keys = await caches.keys();
+await Promise.all(keys.map((key) => key !== CACHE_NAME ? caches.delete(key) : Promise.resolve()));
+await self.clients.claim();
+const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+await Promise.all(windows.map((client) => client.navigate(client.url).catch(() => null)));
+})());
 });
 
 self.addEventListener('fetch', (e) => {

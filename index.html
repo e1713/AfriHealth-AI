@@ -1507,18 +1507,6 @@
       }
     ];
 
-    const GOLD_MODEL_NAMES = [
-      "Intron Sahara v2.5",
-      "Google Gemini Flash",
-      "OpenAI Whisper Tiny",
-      "Meta Wav2Vec2 Base 960h"
-    ];
-    const GOLD_MODEL_CLASSES = [
-      "text-emerald-400 font-bold",
-      "text-indigo-400",
-      "text-slate-300",
-      "text-amber-300"
-    ];
     const GOLD_STANDARD_DATASET = Object.fromEntries(GOLD_DEMO_CASES.map((demoCase) => {
       const matrix = GOLD_MODEL_NAMES.map((model, index) => ({
         model,
@@ -3038,12 +3026,6 @@
     }
 
     if ('serviceWorker' in navigator) {
-      let refreshingForServiceWorker = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshingForServiceWorker) return;
-        refreshingForServiceWorker = true;
-        window.location.reload();
-      });
       navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(() => {
         const pill = document.getElementById('sw-status-pill');
         if (pill) pill.classList.remove('hidden');

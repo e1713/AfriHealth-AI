@@ -832,20 +832,32 @@
   </main>
 
   <div id="proposal-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4 opacity-100 transition-opacity duration-200">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-6xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
       <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900">
         <div class="flex items-center gap-2">
           <i class="fa-solid fa-award text-emerald-400 text-lg"></i>
-          <h3 class="font-bold text-white text-base">AfriHealth AI Product Strategy</h3>
+          <div>
+            <h3 class="font-bold text-white text-base">AfriHealth AI Strategy &amp; Delivery Plan</h3>
+            <p class="mt-0.5 text-[11px] text-slate-400">Amharic-English v1.0 · Current prototype status and proposed priorities</p>
+          </div>
         </div>
         <button onclick="closeModal('proposal-modal')" aria-label="Close Product Strategy" title="Close Product Strategy" class="shrink-0 text-slate-400 hover:text-white p-1 text-lg">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
       <div class="min-w-0 overflow-x-hidden overflow-y-auto p-4 sm:p-6 space-y-6 text-xs sm:text-sm text-slate-300 leading-relaxed">
-        <div class="bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-xl text-emerald-300 space-y-2">
-          <h4 class="font-bold text-base text-white"><i class="fa-solid fa-compass text-emerald-400"></i> Purpose and product direction</h4>
-          <p><strong>AfriHealth AI</strong> is a clinician-reviewed voice documentation and decision-support workflow for community health teams working across English and Amharic-English conversations. Afaan Oromoo-English is Phase 2; Tigrinya-English is Phase 3.</p>
+        <div class="border-l-2 border-emerald-400 bg-slate-950/70 p-4 sm:p-5">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0 max-w-3xl">
+              <p class="text-[10px] font-bold uppercase text-emerald-300">Product direction</p>
+              <h4 class="mt-1 text-lg font-bold text-white">Make clinical speech easier to document, never harder to verify.</h4>
+              <p class="mt-2 text-slate-300"><strong>AfriHealth AI</strong> is a clinician-reviewed voice documentation prototype for community health teams working in Amharic-English. Intron Sahara v2.5 is the primary speech engine; clinicians remain responsible for reviewing transcripts and clinical outputs.</p>
+            </div>
+            <div class="flex flex-wrap gap-2 text-[10px] font-semibold">
+              <span class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300">Prototype: functional</span>
+              <span class="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-amber-300">Production: not ready for identifiable data</span>
+            </div>
+          </div>
         </div>
         <div class="space-y-4">
           <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1">1. Product modules</h4>
@@ -856,27 +868,42 @@
             </div>
             <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
               <div class="font-bold text-white">Module 2: EHR Intake</div>
-              <p class="text-slate-400 text-xs">Structures reviewed speech into draft documentation and coding artifacts. Vital signs require manual confirmation.</p>
+              <p class="text-slate-400 text-xs">Supports draft documentation workflows. SOAP processing accepts structured input or falls back to manual review; prose-to-SOAP/ICD-10 generation is not complete.</p>
             </div>
             <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
               <div class="font-bold text-white">Module 3: Post-Care</div>
               <p class="text-slate-400 text-xs">Supports follow-up simulations and highlights possible escalation signals for human assessment.</p>
             </div>
           </div>
-          <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">2. Evidence and governance</h4>
+          <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div class="min-w-0 border-t border-slate-800 pt-3"><div class="font-semibold text-white">Active language</div><p class="mt-1 text-xs text-slate-400">Amharic-English v1.0. Afaan Oromoo-English is Phase 2; Tigrinya-English is Phase 3.</p></div>
+            <div class="min-w-0 border-t border-slate-800 pt-3"><div class="font-semibold text-white">Human review</div><p class="mt-1 text-xs text-slate-400">Transcripts and generated clinical artifacts are drafts for qualified clinician verification.</p></div>
+            <div class="min-w-0 border-t border-slate-800 pt-3"><div class="font-semibold text-white">Current boundary</div><p class="mt-1 text-xs text-slate-400">Follow-up and triage support decisions; they do not diagnose, contact patients autonomously, or dispatch care.</p></div>
+          </div>
+          <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">Evidence snapshot</h4>
           <div class="flex flex-wrap gap-2" aria-label="15-case benchmark metrics">
             <span class="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-emerald-200"><strong class="text-emerald-300">34.91%</strong><span class="text-[11px]">Normalized WER</span></span>
-            <span class="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-cyan-100"><strong class="text-cyan-300">57.78%</strong><span class="text-[11px]">Target Recall</span></span>
+            <span class="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-cyan-100"><strong class="text-cyan-300">57.78%</strong><span class="text-[11px]">Annotated target-term recall</span></span>
             <span class="inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-3 py-1.5 text-teal-100"><strong class="text-teal-300">42.22%</strong><span class="text-[11px]">M-WER</span></span>
           </div>
-          <p class="break-words">These saved-transcript results are separate from the in-app fixture and require clinician review; they do not support autonomous care.</p>
-          <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">3. Privacy and safety</h4>
-          <p>Provider credentials remain server-side. Recordings are reviewed before upload, private validation inputs remain outside Git, and medication information must be independently verified by a clinician. Automated medication safety checks are not implemented end to end.</p>
-          <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">4. Project team</h4>
+          <p class="break-words text-[11px] text-slate-400">This is a saved-transcript comparison, not fresh model inference or population-performance evidence. Gemini reports 11.46% normalized WER; Whisper Tiny 99.56%; English-only Wav2Vec2 108.23%. A separate 15-recording clinical review found 56.38% mean WER, 44.33% target-term recall, and critical-term misses in 6 cases. All results require clinician review.</p>
+          <a href="BENCHMARK_RESULTS.md" class="inline-flex items-center gap-1 text-[11px] font-semibold text-cyan-300 hover:text-cyan-200">Review benchmark methodology and limitations <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+          <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">Readiness gates</h4>
+          <p class="text-xs">Not ready for identifiable patient data: transcript retention/deletion controls, built-in clinician authentication and role-based access, and verified production gateway configuration remain open. Medication safety is not enforced end to end; medication details require independent clinician verification.</p>
+          <p class="text-xs text-slate-400">Provider credentials remain server-side, and private validation inputs stay outside Git. Complete clinician sign-off and backend safety controls before operational use.</p>
+          <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">Delivery priorities</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="min-w-0 border-l-2 border-amber-400 bg-slate-950/60 p-3"><div class="font-semibold text-amber-300">01 · Close production safety gates</div><p class="mt-1 text-xs text-slate-400">Implement transcript retention/deletion and clinician authentication with role-based access; verify gateway authentication and exact production CORS origins before identifiable data use.</p></div>
+            <div class="min-w-0 border-l-2 border-cyan-400 bg-slate-950/60 p-3"><div class="font-semibold text-cyan-300">02 · Complete clinician-reviewed workflows</div><p class="mt-1 text-xs text-slate-400">Validate transcript-to-SOAP and coding behavior, require sign-off, and implement a backend medication safety gate before presenting medication checks as enforced.</p></div>
+            <div class="min-w-0 border-l-2 border-emerald-400 bg-slate-950/60 p-3"><div class="font-semibold text-emerald-300">03 · Strengthen evaluation evidence</div><p class="mt-1 text-xs text-slate-400">Complete missing annotator metadata, retain model/configuration details, and expand consented, de-identified Amharic-English evaluation while keeping saved transcripts distinct from fresh inference.</p></div>
+            <div class="min-w-0 border-l-2 border-slate-500 bg-slate-950/60 p-3"><div class="font-semibold text-slate-200">04 · Verify release and handoff</div><p class="mt-1 text-xs text-slate-400">Confirm frontend/backend deployment and CORS together, refresh the demo against the current build, and complete the recording and team handoff checklist.</p></div>
+          </div>
+          <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">Team and ownership</h4>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-            <div class="bg-slate-950/60 border border-slate-800 p-3 rounded-lg"><strong class="text-white">Project owner</strong><br><span class="text-slate-400">Ermias Amare</span></div>
+            <div class="bg-slate-950/60 border border-slate-800 p-3 rounded-lg"><strong class="text-white">Project Manager · Architecture Lead</strong><br><span class="text-slate-400">Ermias Amare</span></div>
             <div class="bg-slate-950/60 border border-slate-800 p-3 rounded-lg"><strong class="text-white">Clinical team</strong><br><span class="text-slate-400">Hiwot Shiwangezaw<br>Rahel Tamiru</span></div>
             <div class="bg-slate-950/60 border border-slate-800 p-3 rounded-lg"><strong class="text-white">AI &amp; ML research</strong><br><span class="text-slate-400">Melaku Bayu</span></div>
+            <div class="bg-slate-950/60 border border-slate-800 p-3 rounded-lg"><strong class="text-white">Software Engineer</strong><br><span class="text-slate-400">Fasil Bazazew</span></div>
           </div>
         </div>
       </div>

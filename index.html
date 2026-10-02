@@ -739,7 +739,7 @@
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
               <label for="live-benchmark-file" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sample audio</label>
-              <input id="live-benchmark-file" type="file" accept="audio/*" class="mt-1 w-full text-xs text-slate-400 file:mr-3 file:rounded file:border-0 file:bg-slate-800 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-teal-300 hover:file:bg-slate-700">
+              <input id="live-benchmark-file" type="file" accept="audio/*" onchange="handleLiveBenchmarkFileSelection()" class="mt-1 w-full text-xs text-slate-400 file:mr-3 file:rounded file:border-0 file:bg-slate-800 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-teal-300 hover:file:bg-slate-700">
               <div class="flex items-center gap-2 mt-2">
                 <button id="live-benchmark-record" onclick="toggleLiveBenchmarkRecording()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg px-3 py-2 text-[11px] font-bold text-slate-200 flex items-center gap-2">
                   <i class="fa-solid fa-microphone"></i> Record Sample
@@ -749,7 +749,7 @@
             </div>
             <div>
               <label for="live-benchmark-reference" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Verified reference transcript (optional)</label>
-              <textarea id="live-benchmark-reference" rows="4" class="mt-1 w-full resize-y bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs text-slate-200 font-mono focus:border-emerald-500 focus:outline-none" placeholder="Paste the approved Amharic-English reference transcript..."></textarea>
+              <textarea id="live-benchmark-reference" oninput="handleLiveReferenceInput()" rows="4" class="mt-1 w-full resize-y bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs text-slate-200 font-mono focus:border-emerald-500 focus:outline-none" placeholder="Paste the approved Amharic-English reference transcript..."></textarea>
               <div class="flex flex-wrap items-center gap-3 mt-2 text-[11px]">
                 <label class="text-slate-500">Reference mode</label>
                 <select id="live-benchmark-reference-mode" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200">
@@ -775,8 +775,13 @@
             </table>
           </div>
         </div>
-        <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <div id="levenshtein-calculator-region" class="space-y-3">
+          <div id="levenshtein-calculator-notice" class="rounded-lg border border-slate-800 bg-slate-900/70 p-3 text-xs text-slate-400" role="status">
+            ℹ️ Levenshtein Diff is enabled for Gold Standard benchmark cases or when a Reference Transcript is provided above.
+          </div>
+          <div id="levenshtein-calculator-wrapper" class="max-h-0 overflow-hidden transition-[max-height] duration-300 ease-in-out" aria-hidden="true" inert>
+            <div id="levenshtein-calculator-card" class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-2">
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-calculator text-emerald-400 mr-1"></i> Live Levenshtein Edit-Distance Calculator</h3>
             <span class="text-[11px] text-slate-500 font-mono">Formula: WER = (S + D + I) / N</span>
           </div>
@@ -785,6 +790,7 @@
             <span aria-hidden="true">|</span>
             <span class="font-semibold text-red-300 line-through">[- Omitted (Red Line-through)]</span>
           </div>
+          <div id="calc-diff-output" class="min-h-8 rounded border border-slate-800 bg-slate-900/50 p-2 text-xs leading-6 break-words" aria-live="polite"></div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div>
               <label class="text-slate-400 block mb-1 font-semibold">Reference Verbatim Ground Truth ($T_{gold}$)</label>
@@ -802,6 +808,8 @@
             <div id="calc-results" class="flex flex-wrap items-center gap-2 text-xs font-mono">
               <span class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded text-emerald-400 font-bold">Calculated WER: --%</span>
               <span class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded text-teal-400 font-bold">Calculated CER: --%</span>
+            </div>
+          </div>
             </div>
           </div>
         </div>
@@ -2820,6 +2828,7 @@
     let liveBenchmarkRecorder = null;
     let liveBenchmarkChunks = [];
     let liveBenchmarkAudioBlob = null;
+    let liveBenchmarkResults = [];
 
     function setLiveBenchmarkStatus(text, className = 'text-[10px] font-mono text-slate-500') {
       const status = document.getElementById('live-benchmark-status');
@@ -2921,11 +2930,92 @@
         : '';
     }
 
+    function setLevenshteinCalculatorVisible(visible) {
+      const wrapper = document.getElementById('levenshtein-calculator-wrapper');
+      const card = document.getElementById('levenshtein-calculator-card');
+      const notice = document.getElementById('levenshtein-calculator-notice');
+      if (!wrapper || !card) return;
+      const shouldShow = Boolean(visible);
+      if (wrapper.getAttribute('aria-hidden') === String(!shouldShow)) return;
+      wrapper.inert = !shouldShow;
+      wrapper.setAttribute('aria-hidden', String(!shouldShow));
+      if (notice) notice.hidden = shouldShow;
+      if (shouldShow) {
+        wrapper.style.maxHeight = '0px';
+        requestAnimationFrame(() => {
+          wrapper.style.maxHeight = `${card.scrollHeight}px`;
+        });
+        window.setTimeout(() => {
+          if (wrapper.getAttribute('aria-hidden') === 'false') wrapper.style.maxHeight = 'none';
+        }, 320);
+      } else {
+        wrapper.style.maxHeight = `${card.scrollHeight}px`;
+        requestAnimationFrame(() => {
+          if (wrapper.getAttribute('aria-hidden') === 'true') wrapper.style.maxHeight = '0px';
+        });
+      }
+    }
+
+    function handleLiveReferenceInput() {
+      const referenceInput = document.getElementById('live-benchmark-reference');
+      if (referenceInput) {
+        delete referenceInput.dataset.goldCaseId;
+        delete referenceInput.dataset.fixtureCase;
+      }
+      const reference = referenceInput?.value.trim() || getActiveGoldReference();
+      const referenceField = document.getElementById('calc-reference');
+      const hypothesisField = document.getElementById('calc-hypothesis');
+      setLevenshteinCalculatorVisible(Boolean(reference));
+      if (!reference) return;
+      if (referenceField) referenceField.value = reference;
+      const latestTranscript = liveBenchmarkResults.find((item) => item.transcript)?.transcript || '';
+      if (hypothesisField) hypothesisField.value = latestTranscript;
+      runLiveWerCalculation();
+      if (liveBenchmarkResults.length) renderLiveBenchmarkResults(liveBenchmarkResults, reference);
+    }
+
+    async function handleLiveBenchmarkFileSelection() {
+      const selectedFile = document.getElementById('live-benchmark-file')?.files?.[0];
+      const referenceInput = document.getElementById('live-benchmark-reference');
+      if (!selectedFile) return;
+      const fixture = await resolveBenchmarkFixture(selectedFile.name);
+      if (fixture) {
+        const existingReference = referenceInput?.value.trim() || '';
+        const useFixtureReference = !existingReference || referenceInput?.dataset.goldCaseId || referenceInput?.dataset.fixtureCase;
+        const reference = useFixtureReference ? fixture.reference : existingReference;
+        if (referenceInput) {
+          if (useFixtureReference) {
+            referenceInput.value = reference;
+            referenceInput.dataset.fixtureCase = fixture.sample_id;
+            delete referenceInput.dataset.goldCaseId;
+          }
+        }
+        liveBenchmarkResults = [{
+          model: 'Intron Sahara v2.5',
+          status: 'saved_fixture',
+          transcript: fixture.intron_hypothesis,
+          latency_ms: null
+        }];
+        syncLiveTranscriptToCalculator(reference, fixture.intron_hypothesis);
+        renderLiveBenchmarkResults(liveBenchmarkResults, reference);
+        setLiveBenchmarkStatus(`Loaded saved ${fixture.sample_id} Intron hypothesis`, 'text-[10px] font-mono text-sky-300');
+        return;
+      }
+      if (referenceInput?.dataset.fixtureCase) {
+        referenceInput.value = '';
+        delete referenceInput.dataset.fixtureCase;
+      }
+      liveBenchmarkResults = [];
+      const reference = referenceInput?.value.trim() || getActiveGoldReference();
+      setLevenshteinCalculatorVisible(Boolean(reference));
+    }
+
     function syncLiveTranscriptToCalculator(reference, transcript) {
       const referenceInput = document.getElementById('calc-reference');
       const hypothesisInput = document.getElementById('calc-hypothesis');
       if (referenceInput) referenceInput.value = reference;
       if (hypothesisInput) hypothesisInput.value = transcript;
+      setLevenshteinCalculatorVisible(Boolean(reference || getActiveGoldReference()));
       runLiveWerCalculation();
     }
 
@@ -2948,7 +3038,7 @@
         const statusText = item.status === 'saved_fixture' ? 'Saved hypothesis' : item.status;
         const statusClass = complete ? 'text-emerald-300' : item.status === 'saved_fixture' ? 'text-sky-300' : 'text-amber-300';
         const transcript = hasTranscript
-          ? `<div class="font-sans text-xs bg-slate-950/60 p-2 rounded border border-slate-800 break-words whitespace-pre-wrap">${escapeHtmlFollowup(item.transcript)}</div>`
+          ? `<div class="live-benchmark-transcript font-sans text-xs bg-slate-950/60 p-2 rounded border border-slate-800 break-words whitespace-pre-wrap">${escapeHtmlFollowup(item.transcript)}</div>`
           : escapeHtmlFollowup(item.error || 'Provider unavailable');
         return `<tr><td class="py-2 text-slate-200">${escapeHtmlFollowup(item.model)}</td><td class="py-2 ${statusClass}">${escapeHtmlFollowup(statusText)}</td><td class="py-2"><span class="${metricBadgeClass}">${latency}</span></td><td class="py-2"><span class="${metricBadgeClass}">${Number.isFinite(werPercent) ? `${werPercent.toFixed(1)}%` : '--'}</span></td><td class="py-2"><span class="${metricBadgeClass}">${Number.isFinite(cerPercent) ? `${cerPercent.toFixed(1)}%` : '--'}</span></td><td class="py-2 max-w-sm whitespace-normal text-slate-400">${transcript}</td></tr>`;
       }).join('');
@@ -2958,7 +3048,7 @@
     async function runLiveProviderBenchmark() {
       const fileInput = document.getElementById('live-benchmark-file');
       const referenceInput = document.getElementById('live-benchmark-reference');
-      let reference = referenceInput?.value.trim() || '';
+      let reference = referenceInput?.value.trim() || getActiveGoldReference();
       const selectedFile = fileInput?.files?.[0];
       const audio = selectedFile || liveBenchmarkAudioBlob;
       if (!audio) {
@@ -2966,19 +3056,28 @@
         return;
       }
 
+      liveBenchmarkResults = [];
+      setLevenshteinCalculatorVisible(Boolean(reference));
       setLiveBenchmarkStatus('Resolving transcript...', 'text-[10px] font-mono text-emerald-300');
       if (selectedFile) {
         const fixture = await resolveBenchmarkFixture(selectedFile.name);
         if (fixture) {
-          reference = reference || fixture.reference;
-          if (referenceInput && !referenceInput.value.trim()) referenceInput.value = reference;
-          syncLiveTranscriptToCalculator(reference, fixture.intron_hypothesis);
-          renderLiveBenchmarkResults([{
+          const existingReference = referenceInput?.value.trim() || '';
+          const useFixtureReference = !existingReference || referenceInput?.dataset.goldCaseId || referenceInput?.dataset.fixtureCase;
+          reference = useFixtureReference ? fixture.reference : existingReference;
+          if (referenceInput && useFixtureReference) {
+            referenceInput.value = reference;
+            referenceInput.dataset.fixtureCase = fixture.sample_id;
+            delete referenceInput.dataset.goldCaseId;
+          }
+          liveBenchmarkResults = [{
             model: 'Intron Sahara v2.5',
             status: 'saved_fixture',
             transcript: fixture.intron_hypothesis,
             latency_ms: null
-          }], reference);
+          }];
+          syncLiveTranscriptToCalculator(reference, fixture.intron_hypothesis);
+          renderLiveBenchmarkResults(liveBenchmarkResults, reference);
           setLiveBenchmarkStatus(`Loaded saved ${fixture.sample_id} Intron hypothesis`, 'text-[10px] font-mono text-sky-300');
           return;
         }
@@ -3004,13 +3103,15 @@
               : `Benchmark failed (${response.status})`;
           throw new Error(detail);
         }
-        const liveResult = result.results?.find((item) => item.model === 'Intron Sahara v2.5') || result.results?.[0];
-        const scoringReference = reference || result.reference_transcript || '';
+        liveBenchmarkResults = result.results || [];
+        const liveResult = liveBenchmarkResults.find((item) => item.model === 'Intron Sahara v2.5') || liveBenchmarkResults[0];
+        const scoringReference = referenceInput?.value.trim() || reference || getActiveGoldReference();
         if (liveResult?.transcript) {
           if (referenceInput && !referenceInput.value.trim() && scoringReference) referenceInput.value = scoringReference;
           syncLiveTranscriptToCalculator(scoringReference, liveResult.transcript);
         }
-        renderLiveBenchmarkResults(result.results || [], scoringReference);
+        setLevenshteinCalculatorVisible(Boolean(scoringReference));
+        renderLiveBenchmarkResults(liveBenchmarkResults, scoringReference);
         setLiveBenchmarkStatus('Benchmark complete', 'text-[10px] font-mono text-emerald-300');
       } catch (error) {
         const message = error?.message || String(error);
@@ -3112,6 +3213,26 @@
       if (codeBlock) {
         codeBlock.innerText = JSON.stringify(caseData.json || caseData, null, 2);
       }
+      const goldReference = getActiveGoldReference();
+      const liveReferenceInput = document.getElementById('live-benchmark-reference');
+      const calculatorReference = document.getElementById('calc-reference');
+      const calculatorHypothesis = document.getElementById('calc-hypothesis');
+      if (goldReference) {
+        if (liveReferenceInput) liveReferenceInput.value = goldReference;
+        if (liveReferenceInput) {
+          liveReferenceInput.dataset.goldCaseId = caseKey;
+          delete liveReferenceInput.dataset.fixtureCase;
+        }
+        if (calculatorReference) calculatorReference.value = goldReference;
+        if (calculatorHypothesis) calculatorHypothesis.value = '';
+        liveBenchmarkResults = [];
+        renderLevenshteinDiff(goldReference, '');
+      } else if (liveReferenceInput?.dataset.goldCaseId) {
+        liveReferenceInput.value = '';
+        delete liveReferenceInput.dataset.goldCaseId;
+      }
+      setLevenshteinCalculatorVisible(Boolean(goldReference || liveReferenceInput?.value.trim()));
+      if (goldReference) runLiveWerCalculation();
     }
 
     function toggleJsonInspector() {
@@ -3153,12 +3274,77 @@
       };
     }
 
+    function computeWordDiffOperations(referenceWords, hypothesisWords) {
+      const distances = Array(referenceWords.length + 1).fill(null).map(() => Array(hypothesisWords.length + 1).fill(0));
+      for (let index = 0; index <= referenceWords.length; index += 1) distances[index][0] = index;
+      for (let index = 0; index <= hypothesisWords.length; index += 1) distances[0][index] = index;
+      for (let row = 1; row <= referenceWords.length; row += 1) {
+        for (let column = 1; column <= hypothesisWords.length; column += 1) {
+          const substitutionCost = referenceWords[row - 1] === hypothesisWords[column - 1] ? 0 : 1;
+          distances[row][column] = Math.min(
+            distances[row - 1][column] + 1,
+            distances[row][column - 1] + 1,
+            distances[row - 1][column - 1] + substitutionCost
+          );
+        }
+      }
+      const operations = [];
+      let row = referenceWords.length;
+      let column = hypothesisWords.length;
+      while (row || column) {
+        if (row && column) {
+          const substitutionCost = referenceWords[row - 1] === hypothesisWords[column - 1] ? 0 : 1;
+          if (distances[row][column] === distances[row - 1][column - 1] + substitutionCost) {
+            if (substitutionCost) {
+              operations.push({ type: 'inserted', text: hypothesisWords[column - 1] });
+              operations.push({ type: 'omitted', text: referenceWords[row - 1] });
+            } else {
+              operations.push({ type: 'matched', text: referenceWords[row - 1] });
+            }
+            row -= 1;
+            column -= 1;
+            continue;
+          }
+        }
+        if (column && distances[row][column] === distances[row][column - 1] + 1) {
+          operations.push({ type: 'inserted', text: hypothesisWords[column - 1] });
+          column -= 1;
+        } else {
+          operations.push({ type: 'omitted', text: referenceWords[row - 1] });
+          row -= 1;
+        }
+      }
+      return operations.reverse();
+    }
+
+    function renderLevenshteinDiff(reference, hypothesis) {
+      const output = document.getElementById('calc-diff-output');
+      if (!output) return;
+      if (!reference.trim() || !hypothesis.trim()) {
+        output.innerHTML = '<span class="text-slate-500">A reference transcript and ASR hypothesis are needed to show the word diff.</span>';
+        return;
+      }
+      const operations = computeWordDiffOperations(
+        reference.trim().split(/\s+/).filter(Boolean),
+        hypothesis.trim().split(/\s+/).filter(Boolean)
+      );
+      output.innerHTML = operations.map((operation) => {
+        const token = `${escapeHtmlFollowup(operation.text)} `;
+        if (operation.type === 'inserted') return `<ins class="text-emerald-300 decoration-emerald-500 no-underline">${token}</ins>`;
+        if (operation.type === 'omitted') return `<del class="text-red-300 decoration-red-500">${token}</del>`;
+        return `<span class="text-slate-200">${token}</span>`;
+      }).join('');
+    }
+
     function runLiveWerCalculation() {
       const reference = document.getElementById('calc-reference')?.value || '';
       const hypothesis = document.getElementById('calc-hypothesis')?.value || '';
-      const scores = computeExactWERAndCER(reference, hypothesis);
+      const scores = reference.trim() && hypothesis.trim()
+        ? computeExactWERAndCER(reference, hypothesis)
+        : { wer: null, cer: null };
       const wer = scores.wer;
       const cer = scores.cer;
+      renderLevenshteinDiff(reference, hypothesis);
       const metricBadgeClass = Number.isFinite(wer) && wer < 10
         ? 'bg-emerald-900/50 border-emerald-700/50 text-emerald-300 font-bold'
         : 'bg-slate-900 border-slate-800 text-slate-400 font-bold';

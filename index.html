@@ -740,6 +740,25 @@
             <div>
               <label for="live-benchmark-file" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sample audio</label>
               <input id="live-benchmark-file" type="file" accept="audio/*" onchange="handleLiveBenchmarkFileSelection()" class="mt-1 w-full text-xs text-slate-400 file:mr-3 file:rounded file:border-0 file:bg-slate-800 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-teal-300 hover:file:bg-slate-700">
+              <label for="live-gold-case" class="mt-3 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Gold Standard case</label>
+              <select id="live-gold-case" onchange="loadLiveGoldCase()" class="mt-1 w-full bg-slate-900 border border-slate-700 rounded px-2 py-2 text-xs text-slate-200">
+                <option value="">Select a case</option>
+                <option value="CS-01">CS-01</option>
+                <option value="CS-02">CS-02</option>
+                <option value="CS-03">CS-03</option>
+                <option value="CS-04">CS-04</option>
+                <option value="CS-05">CS-05</option>
+                <option value="CS-06">CS-06</option>
+                <option value="CS-07">CS-07</option>
+                <option value="CS-08">CS-08</option>
+                <option value="CS-09">CS-09</option>
+                <option value="CS-10">CS-10</option>
+                <option value="CS-11">CS-11</option>
+                <option value="CS-12">CS-12</option>
+                <option value="CS-13">CS-13</option>
+                <option value="CS-14">CS-14</option>
+                <option value="CS-15">CS-15</option>
+              </select>
               <div class="flex items-center gap-2 mt-2">
                 <button id="live-benchmark-record" onclick="toggleLiveBenchmarkRecording()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg px-3 py-2 text-[11px] font-bold text-slate-200 flex items-center gap-2">
                   <i class="fa-solid fa-microphone"></i> Record Sample
@@ -748,15 +767,8 @@
               </div>
             </div>
             <div>
-              <label for="live-benchmark-reference" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Verified reference transcript (optional)</label>
-              <textarea id="live-benchmark-reference" oninput="handleLiveReferenceInput()" rows="4" class="mt-1 w-full resize-y bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs text-slate-200 font-mono focus:border-emerald-500 focus:outline-none" placeholder="Paste the approved Amharic-English reference transcript..."></textarea>
-              <div class="flex flex-wrap items-center gap-3 mt-2 text-[11px]">
-                <label class="text-slate-500">Reference mode</label>
-                <select id="live-benchmark-reference-mode" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200">
-                  <option value="verified">Verified transcript</option>
-                  <option value="intron">Intron output (provisional reference)</option>
-                </select>
-              </div>
+              <label for="live-transcript-box" class="text-[10px] font-bold uppercase tracking-wider text-emerald-300">LIVE AMHARIC-ENGLISH CODE-SWITCHED TRANSCRIPT</label>
+              <textarea id="live-transcript-box" rows="7" readonly class="mt-1 w-full resize-y bg-slate-950/60 border border-slate-800 rounded-lg p-3 text-xs text-slate-100 font-sans leading-relaxed focus:border-emerald-500 focus:outline-none" placeholder="Live ASR transcript (Ethiopic script + English clinical terms) will stream or display here upon recording or audio file upload..."></textarea>
               <div class="mt-2 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-300">
                 <span>Target ASR Engine:</span>
                 <span>⚡ Intron Sahara v2.5</span>
@@ -777,7 +789,7 @@
         </div>
         <div id="levenshtein-calculator-region" class="space-y-3">
           <div id="levenshtein-calculator-notice" class="rounded-lg border border-slate-800 bg-slate-900/70 p-3 text-xs text-slate-400" role="status">
-            ℹ️ Levenshtein Diff is enabled for Gold Standard benchmark cases or when a Reference Transcript is provided above.
+            ℹ️ Levenshtein Diff is enabled for Gold Standard benchmark cases or when a reference transcript is provided in the calculator.
           </div>
           <div id="levenshtein-calculator-wrapper" class="max-h-0 overflow-hidden transition-[max-height] duration-300 ease-in-out" aria-hidden="true" inert>
             <div id="levenshtein-calculator-card" class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3">
@@ -794,11 +806,11 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div>
               <label class="text-slate-400 block mb-1 font-semibold">Reference Verbatim Ground Truth ($T_{gold}$)</label>
-              <textarea id="calc-reference" rows="2" class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 font-mono focus:border-emerald-500 focus:outline-none" placeholder="Enter reference transcript...">Patient-u twin years የነበረ character severe cough and fever አለው for 3 days.</textarea>
+              <textarea id="calc-reference" oninput="handleCalculatorReferenceInput()" rows="2" class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 font-mono focus:border-emerald-500 focus:outline-none" placeholder="Enter verified Amharic-English reference transcript..."></textarea>
             </div>
             <div>
               <label class="text-slate-400 block mb-1 font-semibold">Hypothesis ASR Model Output ($T_{hyp}$)</label>
-              <textarea id="calc-hypothesis" rows="2" class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 font-mono focus:border-emerald-500 focus:outline-none" placeholder="Enter ASR output transcript...">Patient twin years የነበረ severe cough and fever ale for 3 days.</textarea>
+              <textarea id="calc-hypothesis" rows="2" class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 font-mono focus:border-emerald-500 focus:outline-none" placeholder="Live ASR output appears here after a benchmark run..."></textarea>
             </div>
           </div>
           <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
@@ -2847,6 +2859,8 @@
         return;
       }
       try {
+        const fileInput = document.getElementById('live-benchmark-file');
+        if (fileInput) fileInput.value = '';
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         liveBenchmarkChunks = [];
         liveBenchmarkRecorder = new MediaRecorder(stream);
@@ -2854,6 +2868,19 @@
         liveBenchmarkRecorder.onstop = () => {
           stopMediaStream(stream);
           liveBenchmarkAudioBlob = new Blob(liveBenchmarkChunks, { type: 'audio/webm' });
+          const referenceInput = document.getElementById('calc-reference');
+          const goldCaseSelect = document.getElementById('live-gold-case');
+          const transcriptBox = document.getElementById('live-transcript-box');
+          if (referenceInput?.dataset.fixtureCase || referenceInput?.dataset.goldCaseId) {
+            referenceInput.value = '';
+            delete referenceInput.dataset.fixtureCase;
+            delete referenceInput.dataset.goldCaseId;
+          }
+          if (goldCaseSelect) goldCaseSelect.value = '';
+          if (transcriptBox) transcriptBox.value = '';
+          liveBenchmarkResults = [];
+          setLevenshteinCalculatorVisible(Boolean(referenceInput?.value.trim()));
+          runLiveWerCalculation();
           if (status) status.innerText = 'Recorded sample ready';
           setLiveBenchmarkStatus('Ready to benchmark');
         };
@@ -2908,7 +2935,7 @@
 
     async function resolveBenchmarkFixture(filename) {
       const normalizedName = String(filename || '').split(/[\\/]/).pop().replace(/_/g, '-').toLowerCase();
-      const caseMatch = normalizedName.match(/^cs-(0?[1-5])\.(?:m4a|wav)$/);
+      const caseMatch = normalizedName.match(/^cs-(0[1-9]|1[0-5])(?:\.[^.]+)?$/);
       if (!caseMatch) return null;
       try {
         const response = await fetch('./benchmark_data/manifest.csv', { cache: 'no-store' });
@@ -2956,27 +2983,27 @@
       }
     }
 
-    function handleLiveReferenceInput() {
-      const referenceInput = document.getElementById('live-benchmark-reference');
-      if (referenceInput) {
-        delete referenceInput.dataset.goldCaseId;
-        delete referenceInput.dataset.fixtureCase;
-      }
-      const reference = referenceInput?.value.trim() || getActiveGoldReference();
+    function handleCalculatorReferenceInput() {
       const referenceField = document.getElementById('calc-reference');
+      if (referenceField) {
+        delete referenceField.dataset.goldCaseId;
+        delete referenceField.dataset.fixtureCase;
+      }
+      const reference = referenceField?.value.trim() || '';
       const hypothesisField = document.getElementById('calc-hypothesis');
-      setLevenshteinCalculatorVisible(Boolean(reference));
-      if (!reference) return;
-      if (referenceField) referenceField.value = reference;
-      const latestTranscript = liveBenchmarkResults.find((item) => item.transcript)?.transcript || '';
-      if (hypothesisField) hypothesisField.value = latestTranscript;
+      const transcriptBox = document.getElementById('live-transcript-box');
+      const latestTranscript = transcriptBox?.value || liveBenchmarkResults.find((item) => item.transcript)?.transcript || '';
+      if (hypothesisField && latestTranscript) hypothesisField.value = latestTranscript;
+      const selectedGoldCase = document.getElementById('live-gold-case')?.value;
+      setLevenshteinCalculatorVisible(Boolean(reference || getActiveGoldReference() || selectedGoldCase));
       runLiveWerCalculation();
       if (liveBenchmarkResults.length) renderLiveBenchmarkResults(liveBenchmarkResults, reference);
     }
 
     async function handleLiveBenchmarkFileSelection() {
       const selectedFile = document.getElementById('live-benchmark-file')?.files?.[0];
-      const referenceInput = document.getElementById('live-benchmark-reference');
+      const referenceInput = document.getElementById('calc-reference');
+      const transcriptBox = document.getElementById('live-transcript-box');
       if (!selectedFile) return;
       const fixture = await resolveBenchmarkFixture(selectedFile.name);
       if (fixture) {
@@ -2990,31 +3017,75 @@
             delete referenceInput.dataset.goldCaseId;
           }
         }
-        liveBenchmarkResults = [{
-          model: 'Intron Sahara v2.5',
-          status: 'saved_fixture',
-          transcript: fixture.intron_hypothesis,
-          latency_ms: null
-        }];
-        syncLiveTranscriptToCalculator(reference, fixture.intron_hypothesis);
-        renderLiveBenchmarkResults(liveBenchmarkResults, reference);
-        setLiveBenchmarkStatus(`Loaded saved ${fixture.sample_id} Intron hypothesis`, 'text-[10px] font-mono text-sky-300');
+        document.getElementById('live-gold-case').value = fixture.sample_id;
+        liveBenchmarkResults = [];
+        if (transcriptBox) transcriptBox.value = '';
+        const hypothesisField = document.getElementById('calc-hypothesis');
+        if (hypothesisField) hypothesisField.value = '';
+        setLevenshteinCalculatorVisible(Boolean(reference));
+        runLiveWerCalculation();
+        setLiveBenchmarkStatus(`${fixture.sample_id} selected. Run live ASR to transcribe this audio.`, 'text-[10px] font-mono text-sky-300');
         return;
       }
-      if (referenceInput?.dataset.fixtureCase) {
+      document.getElementById('live-gold-case').value = '';
+      if (referenceInput?.dataset.fixtureCase || referenceInput?.dataset.goldCaseId) {
         referenceInput.value = '';
         delete referenceInput.dataset.fixtureCase;
+        delete referenceInput.dataset.goldCaseId;
       }
       liveBenchmarkResults = [];
-      const reference = referenceInput?.value.trim() || getActiveGoldReference();
+      if (transcriptBox) transcriptBox.value = '';
+      const reference = referenceInput?.value.trim() || '';
       setLevenshteinCalculatorVisible(Boolean(reference));
+      runLiveWerCalculation();
+    }
+
+    async function loadLiveGoldCase() {
+      const caseId = document.getElementById('live-gold-case')?.value;
+      const referenceInput = document.getElementById('calc-reference');
+      const transcriptBox = document.getElementById('live-transcript-box');
+      const fileInput = document.getElementById('live-benchmark-file');
+      if (fileInput) fileInput.value = '';
+      liveBenchmarkAudioBlob = null;
+      if (!caseId) {
+        if (referenceInput?.dataset.fixtureCase) {
+          referenceInput.value = '';
+          delete referenceInput.dataset.fixtureCase;
+        }
+        liveBenchmarkResults = [];
+        if (transcriptBox) transcriptBox.value = '';
+        setLevenshteinCalculatorVisible(Boolean(referenceInput?.value.trim() || getActiveGoldReference()));
+        runLiveWerCalculation();
+        return;
+      }
+      const fixture = await resolveBenchmarkFixture(`${caseId}.m4a`);
+      if (!fixture) {
+        setLiveBenchmarkStatus(`Gold case ${caseId} is unavailable`, 'text-[10px] font-mono text-amber-300');
+        return;
+      }
+      if (referenceInput) {
+        referenceInput.value = fixture.reference;
+        referenceInput.dataset.fixtureCase = caseId;
+        delete referenceInput.dataset.goldCaseId;
+      }
+      liveBenchmarkResults = [{
+        model: 'Intron Sahara v2.5',
+        status: 'saved_fixture',
+        transcript: fixture.intron_hypothesis,
+        latency_ms: null
+      }];
+      syncLiveTranscriptToCalculator(fixture.reference, fixture.intron_hypothesis);
+      renderLiveBenchmarkResults(liveBenchmarkResults, fixture.reference);
+      setLiveBenchmarkStatus(`Loaded saved ${caseId} Intron hypothesis`, 'text-[10px] font-mono text-sky-300');
     }
 
     function syncLiveTranscriptToCalculator(reference, transcript) {
       const referenceInput = document.getElementById('calc-reference');
       const hypothesisInput = document.getElementById('calc-hypothesis');
+      const transcriptBox = document.getElementById('live-transcript-box');
+      if (transcriptBox) transcriptBox.value = transcript;
       if (referenceInput) referenceInput.value = reference;
-      if (hypothesisInput) hypothesisInput.value = transcript;
+      if (hypothesisInput) hypothesisInput.value = transcriptBox?.value || transcript;
       setLevenshteinCalculatorVisible(Boolean(reference || getActiveGoldReference()));
       runLiveWerCalculation();
     }
@@ -3022,7 +3093,10 @@
     function renderLiveBenchmarkResults(results, reference) {
       const body = document.getElementById('live-benchmark-results-body');
       const panel = document.getElementById('live-benchmark-results');
+      const transcriptBox = document.getElementById('live-transcript-box');
       if (!body) return;
+      const intronResult = results.find((item) => item.model === 'Intron Sahara v2.5') || results.find((item) => item.transcript);
+      if (transcriptBox && intronResult?.transcript) transcriptBox.value = intronResult.transcript;
       body.innerHTML = results.map((item) => {
         const hasTranscript = typeof item.transcript === 'string' && item.transcript.length > 0;
         const complete = item.status === 'complete';
@@ -3047,8 +3121,9 @@
 
     async function runLiveProviderBenchmark() {
       const fileInput = document.getElementById('live-benchmark-file');
-      const referenceInput = document.getElementById('live-benchmark-reference');
-      let reference = referenceInput?.value.trim() || getActiveGoldReference();
+      const referenceInput = document.getElementById('calc-reference');
+      const transcriptBox = document.getElementById('live-transcript-box');
+      let reference = referenceInput?.value.trim() || '';
       const selectedFile = fileInput?.files?.[0];
       const audio = selectedFile || liveBenchmarkAudioBlob;
       if (!audio) {
@@ -3057,6 +3132,7 @@
       }
 
       liveBenchmarkResults = [];
+      if (transcriptBox) transcriptBox.value = '';
       setLevenshteinCalculatorVisible(Boolean(reference));
       setLiveBenchmarkStatus('Resolving transcript...', 'text-[10px] font-mono text-emerald-300');
       if (selectedFile) {
@@ -3070,27 +3146,19 @@
             referenceInput.dataset.fixtureCase = fixture.sample_id;
             delete referenceInput.dataset.goldCaseId;
           }
-          liveBenchmarkResults = [{
-            model: 'Intron Sahara v2.5',
-            status: 'saved_fixture',
-            transcript: fixture.intron_hypothesis,
-            latency_ms: null
-          }];
-          syncLiveTranscriptToCalculator(reference, fixture.intron_hypothesis);
-          renderLiveBenchmarkResults(liveBenchmarkResults, reference);
-          setLiveBenchmarkStatus(`Loaded saved ${fixture.sample_id} Intron hypothesis`, 'text-[10px] font-mono text-sky-300');
-          return;
+          document.getElementById('live-gold-case').value = fixture.sample_id;
         }
       }
 
-      reference = reference || getActiveGoldReference();
-      if (referenceInput && !referenceInput.value.trim() && reference) referenceInput.value = reference;
+      if (referenceInput && !referenceInput.value.trim() && reference) {
+        referenceInput.value = reference;
+        referenceInput.dataset.goldCaseId = document.getElementById('benchmark-case-select')?.value || '';
+      }
       const form = new FormData();
       form.append('file', audio, audio.name || 'benchmark-sample.webm');
       form.append('reference_transcript', reference);
       form.append('language_code', 'am-ET');
       form.append('providers', 'intron');
-      form.append('reference_mode', document.getElementById('live-benchmark-reference-mode')?.value || 'verified');
       setLiveBenchmarkStatus('Running Intron Sahara v2.5...', 'text-[10px] font-mono text-emerald-300');
       try {
         const response = await fetchApi(`${getApiOrigin()}/api/v1/benchmark/live`, { method: 'POST', body: form });
@@ -3105,7 +3173,7 @@
         }
         liveBenchmarkResults = result.results || [];
         const liveResult = liveBenchmarkResults.find((item) => item.model === 'Intron Sahara v2.5') || liveBenchmarkResults[0];
-        const scoringReference = referenceInput?.value.trim() || reference || getActiveGoldReference();
+        const scoringReference = referenceInput?.value.trim() || reference;
         if (liveResult?.transcript) {
           if (referenceInput && !referenceInput.value.trim() && scoringReference) referenceInput.value = scoringReference;
           syncLiveTranscriptToCalculator(scoringReference, liveResult.transcript);
@@ -3214,24 +3282,22 @@
         codeBlock.innerText = JSON.stringify(caseData.json || caseData, null, 2);
       }
       const goldReference = getActiveGoldReference();
-      const liveReferenceInput = document.getElementById('live-benchmark-reference');
       const calculatorReference = document.getElementById('calc-reference');
       const calculatorHypothesis = document.getElementById('calc-hypothesis');
       if (goldReference) {
-        if (liveReferenceInput) liveReferenceInput.value = goldReference;
-        if (liveReferenceInput) {
-          liveReferenceInput.dataset.goldCaseId = caseKey;
-          delete liveReferenceInput.dataset.fixtureCase;
+        if (calculatorReference) {
+          calculatorReference.value = goldReference;
+          calculatorReference.dataset.goldCaseId = caseKey;
+          delete calculatorReference.dataset.fixtureCase;
         }
-        if (calculatorReference) calculatorReference.value = goldReference;
         if (calculatorHypothesis) calculatorHypothesis.value = '';
         liveBenchmarkResults = [];
         renderLevenshteinDiff(goldReference, '');
-      } else if (liveReferenceInput?.dataset.goldCaseId) {
-        liveReferenceInput.value = '';
-        delete liveReferenceInput.dataset.goldCaseId;
+      } else if (calculatorReference?.dataset.goldCaseId) {
+        calculatorReference.value = '';
+        delete calculatorReference.dataset.goldCaseId;
       }
-      setLevenshteinCalculatorVisible(Boolean(goldReference || liveReferenceInput?.value.trim()));
+      setLevenshteinCalculatorVisible(Boolean(goldReference || calculatorReference?.value.trim() || document.getElementById('live-gold-case')?.value));
       if (goldReference) runLiveWerCalculation();
     }
 

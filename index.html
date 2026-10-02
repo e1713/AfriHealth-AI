@@ -175,47 +175,40 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div class="lg:col-span-5 bg-slate-950 rounded-xl p-5 border border-slate-800 flex flex-col justify-between">
             <div>
-              <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4"><i class="fa-solid fa-microphone"></i> Select Clinical Audio Preset or Record Live</h3>
+              <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4"><i class="fa-solid fa-microphone"></i> 5 Gold Standard Cases: Select a Case or Record Live</h3>
               <div class="space-y-3 mb-5">
                 <button onclick="loadTriagePreset(1)" class="w-full text-left p-3 rounded-lg border border-slate-800 hover:border-emerald-500/50 bg-slate-900 transition flex items-center justify-between group">
                   <div>
-                    <div class="text-xs font-semibold text-emerald-400 group-hover:text-emerald-300">GOLD-ETH-001: Pediatric High Fever (Urgent)</div>
-                    <div class="text-xs text-slate-300 italic mt-0.5">"Patient twin years የነበረ character... severe cough and fever አለው..."</div>
+                    <div class="text-xs font-semibold text-emerald-400 group-hover:text-emerald-300">Case 1: Acute Emergency (Chest Pain &amp; Fever)</div>
+                    <div class="text-xs text-slate-300 italic mt-0.5">"ጤናይስጥልኝ, tell me about the main issue today..."</div>
                   </div>
                   <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
                 </button>
                 <button onclick="loadTriagePreset(2)" class="w-full text-left p-3 rounded-lg border border-slate-800 hover:border-emerald-500/50 bg-slate-900 transition flex items-center justify-between group">
                   <div>
-                    <div class="text-xs font-semibold text-yellow-400 group-hover:text-yellow-300">GOLD-ETH-002: Moderate Dehydration & Diarrhea</div>
-                    <div class="text-xs text-slate-300 italic mt-0.5">"Legaw 3 days abdominal pain and nausea ሲያደርግew felt very weak..."</div>
+                    <div class="text-xs font-semibold text-yellow-400 group-hover:text-yellow-300">Case 2: Maternal Post-Op Follow-up</div>
+                    <div class="text-xs text-slate-300 italic mt-0.5">"ጤናይስጥልኝ Lemlem, እንዴት ነሽ today?..."</div>
                   </div>
                   <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
                 </button>
                 <button onclick="loadTriagePreset(3)" class="w-full text-left p-3 rounded-lg border border-slate-800 hover:border-emerald-500/50 bg-slate-900 transition flex items-center justify-between group">
                   <div>
-                    <div class="text-xs font-semibold text-red-400 group-hover:text-red-300">GOLD-ETH-003: Acute Respiratory Distress</div>
-                    <div class="text-xs text-slate-300 italic mt-0.5">"Denegech chest tightness syamenaw shortness of breath ale..."</div>
+                    <div class="text-xs font-semibold text-red-400 group-hover:text-red-300">Case 3: Pediatric Respiratory &amp; High Fever</div>
+                    <div class="text-xs text-slate-300 italic mt-0.5">"ልጅዎን ምን አመመው? severe cough እና high fever..."</div>
                   </div>
                   <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
                 </button>
                 <button onclick="loadTriagePreset(4)" class="w-full text-left p-3 rounded-lg border border-slate-800 hover:border-emerald-500/50 bg-slate-900 transition flex items-center justify-between group">
                   <div>
-                    <div class="text-xs font-semibold text-indigo-400 group-hover:text-indigo-300">GOLD-ETH-004: Post-Op Wound Infection</div>
-                    <div class="text-xs text-slate-300 italic mt-0.5">"Operasion-u site red and pus discharge ale, fever felt very high..."</div>
+                    <div class="text-xs font-semibold text-indigo-400 group-hover:text-indigo-300">Case 4: Acute Gastroenteritis &amp; Dehydration</div>
+                    <div class="text-xs text-slate-300 italic mt-0.5">"ዛሬ ምን ተሰማህ? Severe watery diarrhea..."</div>
                   </div>
                   <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
                 </button>
                 <button onclick="loadTriagePreset(5)" class="w-full text-left p-3 rounded-lg border border-slate-800 hover:border-emerald-500/50 bg-slate-900 transition flex items-center justify-between group">
                   <div>
-                    <div class="text-xs font-semibold text-cyan-400 group-hover:text-cyan-300">GOLD-ETH-005: Diabetes Follow-Up & Foot Pain</div>
-                    <div class="text-xs text-slate-300 italic mt-0.5">"የህመም በሽታ ... የእግር ህመም and metformin prescribed once daily..."</div>
-                  </div>
-                  <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
-                </button>
-                <button onclick="loadTriagePreset(6)" class="w-full text-left p-3 rounded-lg border border-slate-800 hover:border-emerald-500/50 bg-slate-900 transition flex items-center justify-between group">
-                  <div>
-                    <div class="text-xs font-semibold text-violet-400 group-hover:text-violet-300">GOLD-ETH-006: GI Distress & BP Check</div>
-                    <div class="text-xs text-slate-300 italic mt-0.5">"Patient reports abdominal pain and diarrhea for 4 days..."</div>
+                    <div class="text-xs font-semibold text-cyan-400 group-hover:text-cyan-300">Case 5: Chronic Hypertension &amp; Diabetes Follow-up</div>
+                    <div class="text-xs text-slate-300 italic mt-0.5">"የደም ግፊት እና የስኳር መድሃኒትሽን..."</div>
                   </div>
                   <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-emerald-400"></i>
                 </button>
@@ -310,7 +303,7 @@
             <p class="text-sm text-slate-400 mt-1">Automating clinical note-taking during doctor consultations with structured FHIR / EHR JSON output.</p>
           </div>
           <button onclick="populateEHRDemo()" class="bg-slate-800 hover:bg-slate-700 text-xs font-semibold px-3.5 py-2 rounded-lg border border-slate-700 text-slate-200 transition flex items-center gap-2">
-            <i class="fa-solid fa-bolt text-yellow-400"></i> Load Consultation Demo
+            <i class="fa-solid fa-bolt text-yellow-400"></i> Load Case 1 of 5 Gold Standard Cases
           </button>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -482,6 +475,7 @@
               <h2 class="text-xl font-bold text-white">Post-Care Voice Follow-up</h2>
             </div>
             <p class="text-sm text-slate-400 mt-1">Simulating automated voice call check-ins post-discharge with automated risk escalation.</p>
+            <p class="text-xs text-slate-300 mt-1">Post-care demo focus: Case 2 of 5 Gold Standard Cases.</p>
           </div>
           <div class="flex items-center gap-2">
             <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1.5">
@@ -497,7 +491,7 @@
               <div class="p-3 bg-slate-900 rounded-lg border border-slate-800 space-y-2 mb-4">
                 <div class="flex justify-between text-xs">
                   <span class="text-slate-400">Patient:</span>
-                  <span class="text-white font-semibold">ከበደ Lemma (ID: #4892)</span>
+                  <span class="text-white font-semibold">Lemlem (Maternal Post-Op Follow-up)</span>
                 </div>
                 <div class="flex justify-between text-xs">
                   <span class="text-slate-400">Post-Op:</span>
@@ -510,11 +504,11 @@
               </div>
               <div class="space-y-2">
                 <button onclick="runFollowUpSimulation('stable')" class="w-full py-2.5 px-3 bg-slate-900 hover:bg-slate-800 border border-emerald-500/30 rounded-lg text-xs font-semibold text-emerald-400 text-left flex items-center justify-between transition">
-                  <span>Simulate: Normal Recovery Response</span>
+                  <span>Simulate: Case 2 Stable Follow-up</span>
                   <i class="fa-solid fa-circle-check text-emerald-400"></i>
                 </button>
                 <button onclick="runFollowUpSimulation('critical')" class="w-full py-2.5 px-3 bg-slate-900 hover:bg-slate-800 border border-red-500/30 rounded-lg text-xs font-semibold text-red-400 text-left flex items-center justify-between transition">
-                  <span>Simulate: GOLD-ETH-004 Wound Alert</span>
+                  <span>Simulate: Case 2 Maternal Post-Op Review</span>
                   <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
                 </button>
               </div>
@@ -634,7 +628,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-xs text-amber-100">
             <h3 class="font-bold text-amber-300 mb-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Fixture benchmark limitation</h3>
-            <p>The displayed matrix uses embedded hypotheses and illustrative case values. Its 0% WER-style result is reproducible as a software fixture, but it is not independent audio inference or proof of production superiority. The "All Cases" row is calculated live as the average of the six per-case rows below, not a separately hardcoded figure.</p>
+            <p>The displayed matrix uses embedded hypotheses and illustrative case values. Its WER/CER values are fixture examples, not independent audio inference or proof of production superiority. The aggregate row is calculated live from the five gold standard demo cases below.</p>
           </div>
           <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-xs text-red-100">
             <h3 class="font-bold text-red-300 mb-2"><i class="fa-solid fa-user-doctor mr-1"></i> Measured clinical validation</h3>
@@ -669,7 +663,7 @@
               <tbody class="divide-y divide-slate-800/60 text-slate-300">
                 <tr><td class="py-2">Google Gemini Flash</td><td id="benchmark-gemini-wer">11.46%</td><td id="benchmark-gemini-recall">93.33%</td><td id="benchmark-gemini-mwer">6.67%</td></tr>
                 <tr><td class="py-2">OpenAI Whisper Tiny</td><td id="benchmark-whisper-wer">99.56%</td><td id="benchmark-whisper-recall">23.67%</td><td id="benchmark-whisper-mwer">76.33%</td></tr>
-                <tr><td class="py-2">Meta Wav2Vec2 Base 960h (English)</td><td id="benchmark-wav2vec-wer">108.23%</td><td id="benchmark-wav2vec-recall">2.22%</td><td id="benchmark-wav2vec-mwer">97.78%</td></tr>
+                <tr><td class="py-2">Meta Wav2Vec2 Base 960h</td><td id="benchmark-wav2vec-wer">108.23%</td><td id="benchmark-wav2vec-recall">2.22%</td><td id="benchmark-wav2vec-mwer">97.78%</td></tr>
               </tbody>
             </table>
           </div>
@@ -679,18 +673,17 @@
           <div class="flex items-center gap-3 w-full md:w-auto">
             <label class="text-xs font-bold text-slate-400 uppercase whitespace-nowrap"><i class="fa-solid fa-database text-amber-400 mr-1"></i> Active Case Filter:</label>
             <select id="benchmark-case-select" onchange="onCaseSelectChange()" class="w-full md:w-80 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-semibold">
-              <option value="AGGREGATE">📊 ALL CASES: Aggregated Corpus Average (6 Samples)</option>
-              <option value="GOLD-ETH-001">GOLD-ETH-001: Pediatric High Fever & Severe Cough (ESI 2)</option>
-              <option value="GOLD-ETH-002">GOLD-ETH-002: Moderate Dehydration & Hypotension (ESI 3)</option>
-              <option value="GOLD-ETH-003">GOLD-ETH-003: Acute Chest Tightness & Dyspnea (ESI 1)</option>
-              <option value="GOLD-ETH-004">GOLD-ETH-004: Post-Op Appendectomy Wound Infection (ESI 2)</option>
-              <option value="GOLD-ETH-005">GOLD-ETH-005: Diabetes Follow-Up & Foot Pain (Monitoring)</option>
-              <option value="GOLD-ETH-006">GOLD-ETH-006: GI Distress & BP Check (Urgent)</option>
+              <option value="AGGREGATE">5 Gold Standard Cases: Aggregated Fixture Average</option>
+              <option value="GOLD-ETH-001">Case 1: Acute Emergency (Chest Pain &amp; Fever)</option>
+              <option value="GOLD-ETH-002">Case 2: Maternal Post-Op Follow-up</option>
+              <option value="GOLD-ETH-003">Case 3: Pediatric Respiratory &amp; High Fever</option>
+              <option value="GOLD-ETH-004">Case 4: Acute Gastroenteritis &amp; Dehydration</option>
+              <option value="GOLD-ETH-005">Case 5: Chronic Hypertension &amp; Diabetes Follow-up</option>
             </select>
           </div>
           <div id="case-summary-pills" class="flex items-center gap-2 flex-wrap text-xs">
-            <span class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded text-slate-300"><i class="fa-solid fa-clock text-emerald-400 mr-1"></i> Duration: <b class="text-white">71.8s</b></span>
-            <span class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded text-slate-300"><i class="fa-solid fa-language text-teal-400 mr-1"></i> Code-Switching: <b class="text-white">63.5% Amharic / 36.5% English</b></span>
+            <span class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded text-slate-300"><i class="fa-solid fa-database text-emerald-400 mr-1"></i> Dataset: <b class="text-white">5 Gold Standard Cases</b></span>
+            <span class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded text-slate-300"><i class="fa-solid fa-language text-teal-400 mr-1"></i> Language: <b class="text-white">Amharic-English</b></span>
           </div>
         </div>
         <div id="json-inspector-panel" class="hidden bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
@@ -703,7 +696,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div class="lg:col-span-7 bg-slate-950 p-4 rounded-xl border border-slate-800">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-chart-column text-amber-400"></i> WER % vs CER % Comparison (Lower is Better)</h3>
+              <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-chart-column text-amber-400"></i> 5 Gold Standard Cases: WER vs CER (Lower is Better)</h3>
               <span id="chart-case-badge" class="text-xs bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded font-mono">Aggregated Corpus</span>
             </div>
             <div class="h-64">
@@ -713,7 +706,7 @@
           <div class="lg:col-span-5 bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col justify-between">
             <div>
               <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3"><i class="fa-solid fa-table text-teal-400"></i> Clinician Human-In-The-Loop (HITL) Scores</h3>
-              <p class="text-[11px] text-slate-300 mb-2">Ratings below are qualitative human evaluation scores, not model-generated metrics.</p>
+              <p class="text-[11px] text-slate-300 mb-2">Factuality and safety are qualitative human-evaluation fields; no case-level ratings are supplied for this demo fixture.</p>
               <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs border-collapse">
                   <thead>
@@ -1424,181 +1417,194 @@
     return new Blob([view], { type: "audio/wav" });
   }
 
-    const GOLD_STANDARD_DATASET = {
-      "GOLD-ETH-001": {
-        title: "Pediatric High Fever & Severe Cough",
-        json: {
-          case_id: "GOLD-ETH-001",
-          patient: "Pediatric (2 Years)",
-          symptoms: ["Severe Cough", "High Fever (39.1°C)", "Shortness of breath"],
-          code_switched_verbatim: "Patient-u twin years የነበረ character severe cough and fever አለው for 3 days.",
-          urgency: "ESI 2 (Urgent)",
-          target_icd10: "J06.9"
-        },
-        chartData: {
-          labels: ['Intron Sahara v2.5', 'OpenAI Whisper v3', 'Gemini 3 Flash'],
-          wer: [7.1, 21.4, 16.2],
-          cer: [2.8, 9.5, 6.4]
-        },
-        matrix: [
-          { model: "Intron Sahara v2.5", wer: "7.1%", cer: "2.8%", factuality: "5.0/5", safety: "5.0/5", class: "text-emerald-400 font-bold" },
-          { model: "OpenAI Whisper v3", wer: "21.4%", cer: "9.5%", factuality: "3.5/5", safety: "3.8/5", class: "text-slate-300" },
-          { model: "Gemini 3 Flash", wer: "16.2%", cer: "6.4%", factuality: "4.1/5", safety: "4.2/5", class: "text-indigo-400" }
-        ],
-        comment: "Accurately recognized pediatric distress keywords in code-switched Amharic syntax, ensuring safe ESI 2 escalation."
+    const GOLD_MODEL_NAMES = [
+      "Intron Sahara v2.5",
+      "Google Gemini Flash",
+      "OpenAI Whisper Tiny",
+      "Meta Wav2Vec2 Base 960h"
+    ];
+    const GOLD_MODEL_CLASSES = [
+      "text-emerald-400 font-bold",
+      "text-indigo-400",
+      "text-slate-300",
+      "text-amber-300"
+    ];
+    const GOLD_DEMO_CASES = [
+      {
+        case_id: "GOLD-ETH-001",
+        title: "Case 1: Acute Emergency (Chest Pain & Fever)",
+        patient: "Adult patient",
+        symptoms: ["Chest pain", "Severe headache", "Fever"],
+        code_switched_verbatim: "Doctor: ጤናይስጥልኝ, tell me about the main issue today.\nPatient: የደረት ሕመም 2 days ሆነኝ:: Very severe headache ደግሞ አለኝ::\nDoctor: Vitals checked: BP 140/90 mmHg, Pulse 88 bpm, Temp 37.8°C.\nDoctor: Chest auscultation clear. Prescribing Amoxicillin 500mg TID and Paracetamol 500mg PRN.",
+        chief_complaint: "የደረት ሕመም (Chest Pain) & Severe Headache (2 Days)",
+        vitals: "BP 140/90 mmHg | Pulse 88 bpm | Temp 37.8°C",
+        target_icd10: "R07.9 (Unspecified Chest Pain) / R50.9 (Fever)",
+        urgency: "Urgent Triage (Red Flag: Chest Pain)",
+        plan: "Amoxicillin 500mg TID x 7 days, Paracetamol 500mg PRN",
+        wer: [8.1, 16.2, 21.4, 31.7],
+        cer: [3.2, 6.4, 9.5, 15.5],
+        comment: "Demo case for chest pain escalation and fever documentation. Confirm symptoms, vitals, and medication details clinically."
       },
-      "GOLD-ETH-002": {
-        title: "Moderate Dehydration & Hypotension",
-        json: {
-          case_id: "GOLD-ETH-002",
-          patient: "Adult Female (34 Years)",
-          symptoms: ["Abdominal Pain", "Nausea", "Dehydration", "Lethargy"],
-          code_switched_verbatim: "Legaw 3 days abdominal pain and nausea ሲያደርግew felt very weak and dizzy.",
-          urgency: "ESI 3 (Urgent)",
-          target_icd10: "A09"
-        },
-        chartData: {
-          labels: ['Intron Sahara v2.5', 'OpenAI Whisper v3', 'Gemini 3 Flash'],
-          wer: [9.2, 18.5, 13.8],
-          cer: [3.4, 8.1, 5.2]
-        },
-        matrix: [
-          { model: "Intron Sahara v2.5", wer: "9.2%", cer: "3.4%", factuality: "4.8/5", safety: "5.0/5", class: "text-emerald-400 font-bold" },
-          { model: "OpenAI Whisper v3", wer: "18.5%", cer: "8.1%", factuality: "4.0/5", safety: "4.0/5", class: "text-slate-300" },
-          { model: "Gemini 3 Flash", wer: "13.8%", cer: "5.2%", factuality: "4.4/5", safety: "4.5/5", class: "text-indigo-400" }
-        ],
-        comment: "Correctly extracted symptom timeline (3 days) and identified fluid loss indicators without hallucinating diagnoses."
+      {
+        case_id: "GOLD-ETH-002",
+        title: "Case 2: Maternal Post-Op Follow-up",
+        patient: "Lemlem, post-op day 3",
+        symptoms: ["Post-op abdominal pain", "Reduced bleeding", "Maternal follow-up"],
+        code_switched_verbatim: "Agent/Doctor: ጤናይስጥልኝ Lemlem, እንዴት ነሽ today? Any active vaginal bleeding or severe pain?\nPatient: Bleeding-ኡ ትንሽ ቀነሰልኝ, ነገር ግን abdominal pain-ኡ አሁንም ያመኛል።\nDoctor: Vitals recorded: Temp 36.8°C, BP 110/70 mmHg. Surgical wound site clean and dry.\nDoctor: Continue oral analgesics and report immediately if fever exceeds 38°C.",
+        chief_complaint: "Post-Op Abdominal Pain (Day 3 Appendectomy / Maternal Follow-up)",
+        vitals: "BP 110/70 mmHg | Temp 36.8°C",
+        target_icd10: "Z48.811 (Encounter for planned post-surgical wound care)",
+        urgency: "Urgent / Annex 2 (Maternal Escalation Warning Active)",
+        plan: "Continue oral analgesics, monitor wound site, safety netting for fever >38°C",
+        wer: [9.2, 13.8, 18.5, 29.1],
+        cer: [3.4, 5.2, 8.1, 14.8],
+        comment: "Demo case for maternal post-op follow-up. Reassess bleeding and pain; clinician confirms escalation needs."
       },
-      "GOLD-ETH-003": {
-        title: "Acute Chest Tightness & Dyspnea",
-        json: {
-          case_id: "GOLD-ETH-003",
-          patient: "Adult Male (58 Years)",
-          symptoms: ["Sudden Chest Tightness", "Shortness of Breath", "Diaphoresis"],
-          code_switched_verbatim: "Denegech chest tightness syamenaw shortness of breath ale, very sweating.",
-          urgency: "ESI 1 (Critical Emergency)",
-          target_icd10: "I20.9"
-        },
-        chartData: {
-          labels: ['Intron Sahara v2.5', 'OpenAI Whisper v3', 'Gemini 3 Flash'],
-          wer: [6.5, 17.8, 12.1],
-          cer: [2.2, 7.9, 4.8]
-        },
-        matrix: [
-          { model: "Intron Sahara v2.5", wer: "6.5%", cer: "2.2%", factuality: "5.0/5", safety: "5.0/5", class: "text-emerald-400 font-bold" },
-          { model: "OpenAI Whisper v3", wer: "17.8%", cer: "7.9%", factuality: "4.1/5", safety: "3.7/5", class: "text-slate-300" },
-          { model: "Gemini 3 Flash", wer: "12.1%", cer: "4.8%", factuality: "4.5/5", safety: "4.6/5", class: "text-indigo-400" }
-        ],
-        comment: "Zero-latency detection of cardiac warning flags ('Denegech chest tightness') with immediate ESI-1 emergency tagging."
+      {
+        case_id: "GOLD-ETH-003",
+        title: "Case 3: Pediatric Respiratory & High Fever",
+        patient: "Pediatric patient, 2 years",
+        symptoms: ["Severe cough", "High fever", "Respiratory infection"],
+        code_switched_verbatim: "Doctor: ልጅዎን ምን አመመው? What brings the baby in today?\nPatient: ሕፃኑ 2 years ነው, severe cough እና high fever አለው፤ 3 days ሆነው።\nDoctor: Vitals: Temp 38.5°C, SpO2 97% on room air. Lungs clear on bilateral auscultation.\nDoctor: Prescribing Paracetamol syrup 120mg/5ml and oral hydration advice.",
+        chief_complaint: "Pediatric Cough & High Fever (3 Days)",
+        vitals: "Temp 38.5°C | SpO2 97%",
+        target_icd10: "J06.9 (Acute Upper Respiratory Infection)",
+        urgency: "Priority Triage (Pediatric Fever Protocol)",
+        plan: "Paracetamol syrup 120mg/5ml q6h, increase oral fluids, review if respiratory distress worsens",
+        wer: [6.5, 12.1, 17.8, 34.2],
+        cer: [2.2, 4.8, 7.9, 16.5],
+        comment: "Demo case for pediatric fever review. Verify age, dose, respiratory status, and local protocol before action."
       },
-      "GOLD-ETH-004": {
-        title: "Post-Op Appendectomy Wound Infection",
-        json: {
-          case_id: "GOLD-ETH-004",
-          patient: "Outpatient Post-Op Day 3",
-          symptoms: ["Wound Redness", "Pus Discharge", "Fever (38.5°C)"],
-          code_switched_verbatim: "Operasion-u site red ሲያደርግ and pus discharge ale, fever felt high.",
-          urgency: "ESI 2 (Complication Alert)",
-          target_icd10: "T81.4"
-        },
-        chartData: {
-          labels: ['Intron Sahara v2.5', 'OpenAI Whisper v3', 'Gemini 3 Flash'],
-          wer: [8.8, 19.9, 15.1],
-          cer: [3.2, 8.9, 6.0]
-        },
-        matrix: [
-          { model: "Intron Sahara v2.5", wer: "8.8%", cer: "3.2%", factuality: "4.9/5", safety: "5.0/5", class: "text-emerald-400 font-bold" },
-          { model: "OpenAI Whisper v3", wer: "19.9%", cer: "8.9%", factuality: "3.7/5", safety: "3.9/5", class: "text-slate-300" },
-          { model: "Gemini 3 Flash", wer: "15.1%", cer: "6.0%", factuality: "4.3/5", safety: "4.4/5", class: "text-indigo-400" }
-        ],
-        comment: "Detected surgical wound infection keywords during automated voice check-in and triggered nurse alert protocol."
+      {
+        case_id: "GOLD-ETH-004",
+        title: "Case 4: Acute Gastroenteritis & Dehydration",
+        patient: "Adult patient",
+        symptoms: ["Watery diarrhea", "Vomiting", "Mild dehydration", "Weakness"],
+        code_switched_verbatim: "Doctor: ዛሬ ምን ተሰማህ? What are your symptoms today?\nPatient: Severe watery diarrhea እና vomiting አለኝ, 1 day ሆነኝ። Very weak ተሰምቶኛል።\nDoctor: Vitals: BP 100/65 mmHg, HR 102 bpm, Temp 37.2°C. Mild dehydration noted.\nDoctor: Administer Oral Rehydration Salts immediately and prescribe Zinc sulfate 20mg daily.",
+        chief_complaint: "Acute Watery Diarrhea & Vomiting (1 Day)",
+        vitals: "BP 100/65 mmHg | HR 102 bpm | Temp 37.2°C",
+        target_icd10: "A09 (Infectious Gastroenteritis)",
+        urgency: "Urgent Triage (Dehydration Risk / Fluid Resuscitation)",
+        plan: "Immediate ORS hydration, Zinc sulfate 20mg daily x 10 days",
+        wer: [8.8, 15.1, 19.9, 32.6],
+        cer: [3.2, 6.0, 8.9, 15.9],
+        comment: "Demo case for acute fluid-loss assessment. Confirm hydration, vital signs, and appropriate treatment."
       },
-      "GOLD-ETH-005": {
-        title: "Diabetes Follow-Up & Foot Pain",
-        json: {
-          case_id: "GOLD-ETH-005",
-          patient: "Adult Male (48 Years)",
-          symptoms: ["Foot Pain", "Numbness", "Medication Follow-Up"],
-          code_switched_verbatim: "የህመም በሽታ አብዛኛውን ጊዜ በእግር ህመም እና በቫይታሚን እጥረት ተገኝቷል። doctor advised metformin 500mg once daily and hydration.",
-          urgency: "ESI 3 (Monitoring)",
-          target_icd10: "E11.9"
-        },
-        chartData: {
-          labels: ['Intron Sahara v2.5', 'OpenAI Whisper v3', 'Gemini 3 Flash'],
-          wer: [10.4, 22.1, 17.6],
-          cer: [4.1, 9.8, 7.3]
-        },
-        matrix: [
-          { model: "Intron Sahara v2.5", wer: "10.4%", cer: "4.1%", factuality: "4.7/5", safety: "4.9/5", class: "text-emerald-400 font-bold" },
-          { model: "OpenAI Whisper v3", wer: "22.1%", cer: "9.8%", factuality: "3.6/5", safety: "3.8/5", class: "text-slate-300" },
-          { model: "Gemini 3 Flash", wer: "17.6%", cer: "7.3%", factuality: "4.1/5", safety: "4.3/5", class: "text-indigo-400" }
-        ],
-        comment: "Captured diabetic foot pain and medication follow-up details, preserving treatment continuity without inventing dose changes."
-      },
-      "GOLD-ETH-006": {
-        title: "GI Distress & Blood Pressure Check",
-        json: {
-          case_id: "GOLD-ETH-006",
-          patient: "Adult Female (29 Years)",
-          symptoms: ["Abdominal Pain", "Diarrhea", "Elevated Pulse"],
-          code_switched_verbatim: "Patient reports abdominal pain and diarrhea for 4 days. blood pressure is 110 over 70 and pulse is elevated.",
-          urgency: "ESI 2 (Urgent)",
-          target_icd10: "A09"
-        },
-        chartData: {
-          labels: ['Intron Sahara v2.5', 'OpenAI Whisper v3', 'Gemini 3 Flash'],
-          wer: [8.1, 18.9, 14.7],
-          cer: [3.1, 8.3, 5.8]
-        },
-        matrix: [
-          { model: "Intron Sahara v2.5", wer: "8.1%", cer: "3.1%", factuality: "4.8/5", safety: "4.9/5", class: "text-emerald-400 font-bold" },
-          { model: "OpenAI Whisper v3", wer: "18.9%", cer: "8.3%", factuality: "3.9/5", safety: "4.0/5", class: "text-slate-300" },
-          { model: "Gemini 3 Flash", wer: "14.7%", cer: "5.8%", factuality: "4.4/5", safety: "4.4/5", class: "text-indigo-400" }
-        ],
-        comment: "Maintained the GI and vitals timeline correctly and flagged an elevated pulse without drifting into a false diagnosis."
+      {
+        case_id: "GOLD-ETH-005",
+        title: "Case 5: Chronic Hypertension & Diabetes Follow-up",
+        patient: "Adult patient",
+        symptoms: ["Hypertension", "Type 2 diabetes", "Lower-limb numbness"],
+        code_switched_verbatim: "Doctor: የደም ግፊት እና የስኳር መድሃኒትሽን እየወሰድሽ ነው? How is your medication adherence?\nPatient: አዎ መድሃኒቱን correctly እወስዳለሁ, ነገር ግን እግሬ ላይ numbness ይሰማኛል።\nDoctor: Vitals: BP 130/80 mmHg, Fasting Blood Sugar 140 mg/dL.\nDoctor: Continue Metformin 500mg BID and Amlodipine 5mg daily. Order HbA1c test.",
+        chief_complaint: "Diabetes & Hypertension Check-up with Lower Limb Numbness",
+        vitals: "BP 130/80 mmHg | Fasting Blood Sugar 140 mg/dL",
+        target_icd10: "E11.9 (Type 2 Diabetes) / I10 (Essential Hypertension)",
+        urgency: "Routine / Follow-up",
+        plan: "Maintain Metformin 500mg BID and Amlodipine 5mg, schedule laboratory HbA1c screening",
+        wer: [10.4, 17.6, 22.1, 35.5],
+        cer: [4.1, 7.3, 9.8, 17.2],
+        comment: "Demo case for chronic-care follow-up. Verify adherence, numbness, vitals, and the HbA1c plan."
       }
-    };
+    ];
+
+    const GOLD_MODEL_NAMES = [
+      "Intron Sahara v2.5",
+      "Google Gemini Flash",
+      "OpenAI Whisper Tiny",
+      "Meta Wav2Vec2 Base 960h"
+    ];
+    const GOLD_MODEL_CLASSES = [
+      "text-emerald-400 font-bold",
+      "text-indigo-400",
+      "text-slate-300",
+      "text-amber-300"
+    ];
+    const GOLD_STANDARD_DATASET = Object.fromEntries(GOLD_DEMO_CASES.map((demoCase) => {
+      const matrix = GOLD_MODEL_NAMES.map((model, index) => ({
+        model,
+        wer: `${demoCase.wer[index]}%`,
+        cer: `${demoCase.cer[index]}%`,
+        factuality: "Not rated",
+        safety: "Not rated",
+        class: GOLD_MODEL_CLASSES[index]
+      }));
+      return [demoCase.case_id, {
+        title: demoCase.title,
+        json: {
+          case_id: demoCase.case_id,
+          patient: demoCase.patient,
+          symptoms: demoCase.symptoms,
+          code_switched_verbatim: demoCase.code_switched_verbatim,
+          chief_complaint: demoCase.chief_complaint,
+          vitals: demoCase.vitals,
+          target_icd10: demoCase.target_icd10,
+          urgency: demoCase.urgency,
+          plan: demoCase.plan
+        },
+        chartData: {
+          labels: GOLD_MODEL_NAMES,
+          wer: demoCase.wer,
+          cer: demoCase.cer
+        },
+        matrix,
+        comment: demoCase.comment
+      }];
+    }));
 
     (function buildAggregateFromCases() {
-      const caseKeys = Object.keys(GOLD_STANDARD_DATASET);
-      const numModels = GOLD_STANDARD_DATASET[caseKeys[0]].matrix.length;
-      const parseNum = (s) => parseFloat(String(s).replace('%', '').replace('/5', ''));
-
+      const caseKeys = GOLD_DEMO_CASES.map((demoCase) => demoCase.case_id);
+      const numModels = GOLD_MODEL_NAMES.length;
+      const parseNum = (value) => {
+        const number = parseFloat(String(value).replace('%', '').replace('/5', ''));
+        return Number.isFinite(number) ? number : null;
+      };
       const werSums = new Array(numModels).fill(0);
       const cerSums = new Array(numModels).fill(0);
       const factSums = new Array(numModels).fill(0);
       const safeSums = new Array(numModels).fill(0);
+      const factCounts = new Array(numModels).fill(0);
+      const safeCounts = new Array(numModels).fill(0);
 
       caseKeys.forEach((key) => {
-        GOLD_STANDARD_DATASET[key].matrix.forEach((row, i) => {
-          werSums[i] += parseNum(row.wer);
-          cerSums[i] += parseNum(row.cer);
-          factSums[i] += parseNum(row.factuality);
-          safeSums[i] += parseNum(row.safety);
+        GOLD_STANDARD_DATASET[key].matrix.forEach((row, index) => {
+          werSums[index] += parseNum(row.wer) || 0;
+          cerSums[index] += parseNum(row.cer) || 0;
+          const factuality = parseNum(row.factuality);
+          const safety = parseNum(row.safety);
+          if (factuality !== null) {
+            factSums[index] += factuality;
+            factCounts[index] += 1;
+          }
+          if (safety !== null) {
+            safeSums[index] += safety;
+            safeCounts[index] += 1;
+          }
         });
       });
 
-      const n = caseKeys.length;
-      const avgWer = werSums.map((v) => v / n);
-      const avgCer = cerSums.map((v) => v / n);
+      const caseCount = caseKeys.length;
       const sampleMatrix = GOLD_STANDARD_DATASET[caseKeys[0]].matrix;
-
-      GOLD_STANDARD_DATASET["AGGREGATE"] = {
-        title: "All Cases Aggregated Corpus Average",
-        chartData: {
-          labels: sampleMatrix.map((r) => r.model),
-          wer: avgWer.map((v) => Math.round(v * 10) / 10),
-          cer: avgCer.map((v) => Math.round(v * 10) / 10)
+      GOLD_STANDARD_DATASET.AGGREGATE = {
+        title: "Average across 5 Gold Standard Cases",
+        json: {
+          case_count: caseCount,
+          case_ids: caseKeys,
+          note: "Illustrative fixture scores, not independent model evaluation."
         },
-        matrix: sampleMatrix.map((row, i) => ({
+        chartData: {
+          labels: GOLD_MODEL_NAMES,
+          wer: werSums.map((sum) => Math.round((sum / caseCount) * 10) / 10),
+          cer: cerSums.map((sum) => Math.round((sum / caseCount) * 10) / 10)
+        },
+        matrix: sampleMatrix.map((row, index) => ({
           model: row.model,
-          wer: `${(werSums[i] / n).toFixed(1)}%`,
-          cer: `${(cerSums[i] / n).toFixed(1)}%`,
-          factuality: `${(factSums[i] / n).toFixed(1)}/5`,
-          safety: `${(safeSums[i] / n).toFixed(1)}/5`,
+          wer: `${(werSums[index] / caseCount).toFixed(1)}%`,
+          cer: `${(cerSums[index] / caseCount).toFixed(1)}%`,
+          factuality: factCounts[index] ? `${(factSums[index] / factCounts[index]).toFixed(1)}/5` : "Not rated",
+          safety: safeCounts[index] ? `${(safeSums[index] / safeCounts[index]).toFixed(1)}/5` : "Not rated",
           class: row.class
         })),
-        comment: "Fixture/demo comparison only, averaged live from the 4 gold cases below. These embedded values are not independent audio inference and must not be used as clinical performance claims."
+        comment: "Fixture/demo comparison only, averaged live from the 5 gold standard cases below. Embedded scores are illustrative, not measured model results."
       };
     })();
 
@@ -1764,7 +1770,7 @@
     }
 
     function loadTriagePreset(presetNum) {
-      const caseId = `GOLD-ETH-00${presetNum}`;
+      const caseId = GOLD_DEMO_CASES[presetNum - 1]?.case_id;
       const caseData = GOLD_STANDARD_DATASET[caseId];
       if (!caseData) return;
       const transcriptEl = document.getElementById('triage-transcript');
@@ -1779,32 +1785,17 @@
           `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-xs font-semibold"><i class="fa-solid fa-circle-check mr-1 text-[10px]"></i>${s}</span>`
         ).join('');
       }
-      let recommendationText = "";
+      const category = caseData.json.urgency;
       if (badgeEl) {
-        if (presetNum === 1) {
-          badgeEl.className = "mt-2 text-xs font-extrabold px-3 py-1.5 rounded-lg bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 inline-block";
-          badgeEl.innerText = "ESI LEVEL 2 - URGENT PEDIATRIC";
-        } else if (presetNum === 2) {
-          badgeEl.className = "mt-2 text-xs font-extrabold px-3 py-1.5 rounded-lg bg-teal-500/20 text-teal-300 border border-teal-500/40 inline-block";
-          badgeEl.innerText = "ESI LEVEL 3 - MODERATE RISK";
-        } else {
-          badgeEl.className = "mt-2 text-xs font-extrabold px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 border border-red-500/40 inline-block animate-pulse";
-          badgeEl.innerText = "ESI LEVEL 1 - HIGH CRITICAL ALERT";
-        }
+        const badgeStyle = category.startsWith('Routine')
+          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+          : category.startsWith('Priority')
+            ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40'
+            : 'bg-red-500/20 text-red-300 border-red-500/40';
+        badgeEl.className = `mt-2 text-xs font-extrabold px-3 py-1.5 rounded-lg border inline-block ${badgeStyle}`;
+        badgeEl.innerText = category;
       }
-      if (presetNum === 1) {
-        recommendationText = "Action: Immediate referral to Primary Health Care Center. Administer oral rehydration and antipyretic.";
-      } else if (presetNum === 2) {
-        recommendationText = "Action: Clinic observation, ORS rehydration, and vitals check within 2 hours.";
-      } else if (presetNum === 3) {
-        recommendationText = "Action: Urgent ambulance dispatch to district emergency care. High respiratory risk.";
-      } else if (presetNum === 4) {
-        recommendationText = "Action: Post-op wound review, sterile dressing change, and nurse escalation for possible surgical site infection.";
-      } else if (presetNum === 5) {
-        recommendationText = "Action: Review glucose control and medication adherence; check foot exam and hydration status during follow-up.";
-      } else {
-        recommendationText = "Action: Reassess GI hydration, vital signs, and escalation threshold; keep under close observation for dehydration.";
-      }
+      const recommendationText = `Clinician review required. ${caseData.json.plan}`;
       if (recEl) recEl.innerText = recommendationText;
       speakRecommendation(recommendationText);
     }
@@ -1932,27 +1923,28 @@
 
     function populateEHRDemo() {
       window.clinicalSignOffVerified = false;
+      const caseData = GOLD_STANDARD_DATASET['GOLD-ETH-001'].json;
       const box = document.getElementById('ehr-transcript-box');
       if (box) {
-        box.innerHTML = `
-          <p><b class="text-teal-400">Doctor:</b> "Tell me about the main issue today."</p>
-          <p><b class="text-emerald-400">Patient:</b> "Chest pain syamenagn 2 days honesal. Very headache also."</p>
-          <p><b class="text-teal-400">Doctor:</b> "Vitals checked: BP 140/90 mmHg, Pulse 88 bpm, Temp 37.8°C."</p>
-          <p><b class="text-teal-400">Doctor:</b> "Prescribing Amoxicillin 500mg and Paracetamol 500mg."</p>
-        `;
+        box.replaceChildren();
+        caseData.code_switched_verbatim.split('\n').forEach((line) => {
+          const paragraph = document.createElement('p');
+          paragraph.textContent = line;
+          box.appendChild(paragraph);
+        });
       }
-      document.getElementById('ehr-cc').value = "Chest Pain & Severe Headache";
+      document.getElementById('ehr-cc').value = caseData.chief_complaint;
       document.getElementById('ehr-duration').value = "2 Days";
       document.getElementById('ehr-bp').value = "140/90";
       document.getElementById('ehr-pulse').value = "88";
       document.getElementById('ehr-temp').value = "37.8";
-      document.getElementById('ehr-meds').value = "1. Amoxicillin 500mg TID x 7 Days\n2. Paracetamol 500mg PRN for Fever";
+      document.getElementById('ehr-meds').value = caseData.plan;
       const icd = document.getElementById('ehr-icd');
-      if (icd) icd.innerText = "ICD-10 Code: R07.9 (Unspecified Chest Pain) / Pyrexia R50.9";
+      if (icd) icd.innerText = `ICD-10: ${caseData.target_icd10}`;
       soapManualFields.clear();
       setSoapVerificationState(false);
       updateSoapState({
-        transcript: 'Doctor: Tell me about the main issue today.\nPatient: Chest pain syamenagn 2 days honesal. Very headache also.\nDoctor: Vitals checked: BP 140/90 mmHg, Pulse 88 bpm, Temp 37.8 C.\nDoctor: Prescribing Amoxicillin 500mg and Paracetamol 500mg.'
+        transcript: caseData.code_switched_verbatim
       });
       populateSoapFromClinicalFields(soapState.transcript);
       updateClinicianSignoffUI();
@@ -2527,10 +2519,10 @@
       const callIcon = document.getElementById('call-icon');
       if (callIcon) callIcon.className = "fa-solid fa-phone-volume text-emerald-400 animate-bounce";
       if (callStatus) callStatus.innerText = "Outbound Call Active (Connected)";
-      if (callSub) callSub.innerText = "Sahara Voice Agent speaking in Amharic-English...";
+      if (callSub) callSub.innerText = "Case 2 maternal post-op follow-up in Amharic-English...";
       if (type === 'stable') {
         playDialogueSequence([
-          { speaker: 'agent', text: "ጤና ይስጥልኝ ከበደ, post-op ሕመሙ ደህና ነው? Kebede, how is the post-op pain today?" },
+          { speaker: 'agent', text: "ጤና ይስጥልኝ Lemlem, post-op ሕመሙ ደህና ነው? Lemlem, how is the post-op pain today?" },
           { speaker: 'patient', text: "ደህና ነኝ, ሕመሙ lessen ሲያደርግ, no fever today." },
           { speaker: 'agent', text: "Very good. Remember to take your prescribed medications as scheduled." }
         ]);
@@ -2542,21 +2534,24 @@
         if (escBtn) escBtn.disabled = true;
         analyzePostCareFromSimulation("ደህና ነኝ, ሕመሙ lessen ሲያደርግ, no fever today.", "general");
       } else {
-        playDialogueSequence([
-          { speaker: 'agent', text: "ጤና ይስጥልኝ ከበደ, how is the wound site feeling? Kebede, how is the wound site feeling?" },
-          { speaker: 'patient', text: "Operasion-u site red ሲያደርግ and pus discharge ale, fever felt very high." },
-          { speaker: 'agent', text: "Understood. I am flagging this immediately for nurse escalation." }
-        ]);
+        const case2 = GOLD_STANDARD_DATASET['GOLD-ETH-002'].json;
+        const dialogue = case2.code_switched_verbatim.split('\n').map((line) => {
+          const separator = line.indexOf(':');
+          const speaker = line.slice(0, separator).toLowerCase().includes('patient') ? 'patient' : 'agent';
+          return { speaker, text: line.slice(separator + 1).trim() };
+        });
+        const patientResponse = dialogue.find((line) => line.speaker === 'patient')?.text || '';
+        playDialogueSequence(dialogue);
         if (badge) {
-          badge.className = "text-xs font-bold px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 border border-red-500/40 inline-block animate-pulse";
-          badge.innerText = "HIGH RISK - SURGICAL WOUND INFECTION";
+          badge.className = "text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 inline-block";
+          badge.innerText = "MATERNAL POST-OP REVIEW REQUIRED";
         }
-        if (desc) desc.innerText = "ALERT: Active signs of wound infection and high fever detected in speech.";
+        if (desc) desc.innerText = "Case 2 reports persistent abdominal pain after surgery. A clinician must assess symptoms and vitals.";
         if (escBtn) {
           escBtn.disabled = false;
           escBtn.className = "mt-3 w-full bg-red-600 hover:bg-red-500 text-white text-xs font-bold py-2 rounded-lg transition flex items-center justify-center gap-2 shadow-lg shadow-red-600/30";
         }
-        analyzePostCareFromSimulation("wound site red and pus discharge, fever felt very high", "general");
+        analyzePostCareFromSimulation(patientResponse, "maternal");
       }
     }
 
@@ -2947,8 +2942,8 @@
         data: {
           labels: initialData.labels,
           datasets: [
-            { label: 'Word Error Rate (WER %)', data: initialData.wer, backgroundColor: ['#10b981', '#64748b', '#6366f1'], borderRadius: 6 },
-            { label: 'Character Error Rate (CER %)', data: initialData.cer, backgroundColor: ['#059669', '#475569', '#4f46e5'], borderRadius: 6 }
+            { label: 'Word Error Rate (WER %)', data: initialData.wer, backgroundColor: ['#10b981', '#6366f1', '#64748b', '#f59e0b'], borderRadius: 6 },
+            { label: 'Character Error Rate (CER %)', data: initialData.cer, backgroundColor: ['#059669', '#4f46e5', '#475569', '#d97706'], borderRadius: 6 }
           ]
         },
         options: {

@@ -2857,24 +2857,140 @@
       }
     }
 
+    function parseBenchmarkManifest(csvText) {
+      const rows = [];
+      let row = [];
+      let field = '';
+      let quoted = false;
+      for (let index = 0; index < csvText.length; index += 1) {
+        const character = csvText[index];
+        if (quoted) {
+          if (character === '"' && csvText[index + 1] === '"') {
+            field += '"';
+            index += 1;
+          } else if (character === '"') {
+            quoted = false;
+          } else {
+            field += character;
+          }
+        } else if (character === '"' && field.length === 0) {
+          quoted = true;
+        } else if (character === ',') {
+          row.push(field);
+          field = '';
+        } else if (character === '\n') {
+          row.push(field);
+          rows.push(row);
+          row = [];
+          field = '';
+        } else if (character !== '\r') {
+          field += character;
+        }
+      }
+      if (field.length || row.length) {
+        row.push(field);
+        rows.push(row);
+      }
+      const [headers, ...records] = rows;
+      return records
+        .filter((record) => record.length === headers.length)
+        .map((record) => Object.fromEntries(headers.map((header, index) => [header, record[index]])));
+    }
+
+    async function resolveBenchmarkFixture(filename) {
+      const normalizedName = String(filename || '').split(/[\\/]/).pop().replace(/_/g, '-').toLowerCase();
+      const caseMatch = normalizedName.match(/^cs-(0?[1-5])\.(?:m4a|wav)$/);
+      if (!caseMatch) return null;
+      try {
+        const response = await fetch('./benchmark_data/manifest.csv', { cache: 'no-store' });
+        if (!response.ok) return null;
+        const caseId = `CS-${caseMatch[1].padStart(2, '0')}`;
+        const fixture = parseBenchmarkManifest(await response.text()).find((record) => record.sample_id === caseId);
+        if (!fixture?.intron_hypothesis || !fixture.reference) return null;
+        return fixture;
+      } catch (error) {
+        console.warn('Could not load the saved benchmark transcript:', error);
+        return null;
+      }
+    }
+
+    function getActiveGoldReference() {
+      const caseId = document.getElementById('benchmark-case-select')?.value;
+      return caseId && caseId !== 'AGGREGATE'
+        ? GOLD_STANDARD_DATASET[caseId]?.json?.code_switched_verbatim || ''
+        : '';
+    }
+
+    function syncLiveTranscriptToCalculator(reference, transcript) {
+      const referenceInput = document.getElementById('calc-reference');
+      const hypothesisInput = document.getElementById('calc-hypothesis');
+      if (referenceInput) referenceInput.value = reference;
+      if (hypothesisInput) hypothesisInput.value = transcript;
+      runLiveWerCalculation();
+    }
+
+    function renderLiveBenchmarkResults(results, reference) {
+      const body = document.getElementById('live-benchmark-results-body');
+      const panel = document.getElementById('live-benchmark-results');
+      if (!body) return;
+      body.innerHTML = results.map((item) => {
+        const hasTranscript = typeof item.transcript === 'string' && item.transcript.length > 0;
+        const complete = item.status === 'complete';
+        const scores = hasTranscript && reference ? computeExactWERAndCER(reference, item.transcript) : null;
+        const werPercent = scores?.wer ?? null;
+        const cerPercent = scores?.cer ?? null;
+        const latencyMs = Number(item.latency_ms);
+        const latency = Number.isFinite(latencyMs)
+          ? latencyMs >= 1000 ? `${(latencyMs / 1000).toFixed(2)}s` : `${latencyMs} ms`
+          : '--';
+        const lowWer = Number.isFinite(werPercent) && werPercent < 10;
+        const metricBadgeClass = `inline-flex whitespace-nowrap rounded border px-2 py-0.5 font-bold ${lowWer ? 'bg-emerald-900/50 text-emerald-300 border-emerald-700/50' : 'bg-slate-900 text-slate-300 border-slate-700'}`;
+        const statusText = item.status === 'saved_fixture' ? 'Saved hypothesis' : item.status;
+        const statusClass = complete ? 'text-emerald-300' : item.status === 'saved_fixture' ? 'text-sky-300' : 'text-amber-300';
+        const transcript = hasTranscript
+          ? `<div class="font-sans text-xs bg-slate-950/60 p-2 rounded border border-slate-800 break-words whitespace-pre-wrap">${escapeHtmlFollowup(item.transcript)}</div>`
+          : escapeHtmlFollowup(item.error || 'Provider unavailable');
+        return `<tr><td class="py-2 text-slate-200">${escapeHtmlFollowup(item.model)}</td><td class="py-2 ${statusClass}">${escapeHtmlFollowup(statusText)}</td><td class="py-2"><span class="${metricBadgeClass}">${latency}</span></td><td class="py-2"><span class="${metricBadgeClass}">${Number.isFinite(werPercent) ? `${werPercent.toFixed(1)}%` : '--'}</span></td><td class="py-2"><span class="${metricBadgeClass}">${Number.isFinite(cerPercent) ? `${cerPercent.toFixed(1)}%` : '--'}</span></td><td class="py-2 max-w-sm whitespace-normal text-slate-400">${transcript}</td></tr>`;
+      }).join('');
+      if (panel) panel.classList.remove('hidden');
+    }
+
     async function runLiveProviderBenchmark() {
       const fileInput = document.getElementById('live-benchmark-file');
-      const reference = document.getElementById('live-benchmark-reference')?.value.trim() || '';
-      const audio = fileInput?.files?.[0] || liveBenchmarkAudioBlob;
+      const referenceInput = document.getElementById('live-benchmark-reference');
+      let reference = referenceInput?.value.trim() || '';
+      const selectedFile = fileInput?.files?.[0];
+      const audio = selectedFile || liveBenchmarkAudioBlob;
       if (!audio) {
         showToast('Upload or record a sample audio file first.', 'warning');
         return;
       }
+
+      setLiveBenchmarkStatus('Resolving transcript...', 'text-[10px] font-mono text-emerald-300');
+      if (selectedFile) {
+        const fixture = await resolveBenchmarkFixture(selectedFile.name);
+        if (fixture) {
+          reference = reference || fixture.reference;
+          if (referenceInput && !referenceInput.value.trim()) referenceInput.value = reference;
+          syncLiveTranscriptToCalculator(reference, fixture.intron_hypothesis);
+          renderLiveBenchmarkResults([{
+            model: 'Intron Sahara v2.5',
+            status: 'saved_fixture',
+            transcript: fixture.intron_hypothesis,
+            latency_ms: null
+          }], reference);
+          setLiveBenchmarkStatus(`Loaded saved ${fixture.sample_id} Intron hypothesis`, 'text-[10px] font-mono text-sky-300');
+          return;
+        }
+      }
+
+      reference = reference || getActiveGoldReference();
+      if (referenceInput && !referenceInput.value.trim() && reference) referenceInput.value = reference;
       const form = new FormData();
       form.append('file', audio, audio.name || 'benchmark-sample.webm');
       form.append('reference_transcript', reference);
       form.append('language_code', 'am-ET');
-      const selectedProviders = ['intron'];
-      if (!selectedProviders.length) {
-        showToast('Select at least one benchmark model.', 'warning');
-        return;
-      }
-      form.append('providers', selectedProviders.join(','));
+      form.append('providers', 'intron');
       form.append('reference_mode', document.getElementById('live-benchmark-reference-mode')?.value || 'verified');
       setLiveBenchmarkStatus('Running Intron Sahara v2.5...', 'text-[10px] font-mono text-emerald-300');
       try {
@@ -2888,23 +3004,13 @@
               : `Benchmark failed (${response.status})`;
           throw new Error(detail);
         }
-        const body = document.getElementById('live-benchmark-results-body');
-        const panel = document.getElementById('live-benchmark-results');
-        if (body) {
-          body.innerHTML = result.results.map((item) => {
-            const complete = item.status === 'complete';
-            const latencyMs = Number(item.latency_ms);
-            const latency = Number.isFinite(latencyMs)
-              ? latencyMs >= 1000 ? `${(latencyMs / 1000).toFixed(2)}s` : `${latencyMs} ms`
-              : '--';
-            const werPercent = complete && item.WER !== undefined ? Number(item.WER) * 100 : null;
-            const cerPercent = complete && item.CER !== undefined ? Number(item.CER) * 100 : null;
-            const lowWer = Number.isFinite(werPercent) && werPercent < 10;
-            const metricBadgeClass = `inline-flex whitespace-nowrap rounded border px-2 py-0.5 font-bold ${lowWer ? 'bg-emerald-900/50 text-emerald-300 border-emerald-700/50' : 'bg-slate-900 text-slate-300 border-slate-700'}`;
-            return `<tr><td class="py-2 text-slate-200">${escapeHtmlFollowup(item.model)}</td><td class="py-2 ${complete ? 'text-emerald-300' : 'text-amber-300'}">${escapeHtmlFollowup(item.status)}</td><td class="py-2"><span class="${metricBadgeClass}">${latency}</span></td><td class="py-2"><span class="${metricBadgeClass}">${Number.isFinite(werPercent) ? `${werPercent.toFixed(2)}%` : '--'}</span></td><td class="py-2"><span class="${metricBadgeClass}">${Number.isFinite(cerPercent) ? `${cerPercent.toFixed(2)}%` : '--'}</span></td><td class="py-2 max-w-sm whitespace-normal text-slate-400">${complete ? escapeHtmlFollowup(item.transcript) : escapeHtmlFollowup(item.error || 'Provider unavailable')}</td></tr>`;
-          }).join('');
+        const liveResult = result.results?.find((item) => item.model === 'Intron Sahara v2.5') || result.results?.[0];
+        const scoringReference = reference || result.reference_transcript || '';
+        if (liveResult?.transcript) {
+          if (referenceInput && !referenceInput.value.trim() && scoringReference) referenceInput.value = scoringReference;
+          syncLiveTranscriptToCalculator(scoringReference, liveResult.transcript);
         }
-        if (panel) panel.classList.remove('hidden');
+        renderLiveBenchmarkResults(result.results || [], scoringReference);
         setLiveBenchmarkStatus('Benchmark complete', 'text-[10px] font-mono text-emerald-300');
       } catch (error) {
         const message = error?.message || String(error);
@@ -3034,25 +3140,33 @@
       return dp[a.length][b.length];
     }
 
+    function computeExactWERAndCER(reference, hypothesis) {
+      const referenceWords = reference.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      const hypothesisWords = hypothesis.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      const referenceCharacters = Array.from(reference.trim().toLowerCase().replace(/\s+/g, ''));
+      const hypothesisCharacters = Array.from(hypothesis.trim().toLowerCase().replace(/\s+/g, ''));
+      const wordEdits = computeLevenshteinDistance(referenceWords, hypothesisWords);
+      const characterEdits = computeLevenshteinDistance(referenceCharacters, hypothesisCharacters);
+      return {
+        wer: referenceWords.length ? (wordEdits / referenceWords.length) * 100 : null,
+        cer: referenceCharacters.length ? (characterEdits / referenceCharacters.length) * 100 : null
+      };
+    }
+
     function runLiveWerCalculation() {
-      const ref = document.getElementById('calc-reference')?.value || '';
-      const hyp = document.getElementById('calc-hypothesis')?.value || '';
-      const refWords = ref.trim().toLowerCase().split(/\s+/).filter(Boolean);
-      const hypWords = hyp.trim().toLowerCase().split(/\s+/).filter(Boolean);
-      const refChars = ref.trim().toLowerCase().replace(/\s+/g, '');
-      const hypChars = hyp.trim().toLowerCase().replace(/\s+/g, '');
-      const wordEdits = computeLevenshteinDistance(refWords, hypWords);
-      const charEdits = computeLevenshteinDistance(refChars.split(''), hypChars.split(''));
-      const wer = refWords.length ? ((wordEdits / refWords.length) * 100).toFixed(1) : 0;
-      const cer = refChars.length ? ((charEdits / refChars.length) * 100).toFixed(1) : 0;
-      const metricBadgeClass = Number(wer) < 10
+      const reference = document.getElementById('calc-reference')?.value || '';
+      const hypothesis = document.getElementById('calc-hypothesis')?.value || '';
+      const scores = computeExactWERAndCER(reference, hypothesis);
+      const wer = scores.wer;
+      const cer = scores.cer;
+      const metricBadgeClass = Number.isFinite(wer) && wer < 10
         ? 'bg-emerald-900/50 border-emerald-700/50 text-emerald-300 font-bold'
         : 'bg-slate-900 border-slate-800 text-slate-400 font-bold';
       const results = document.getElementById('calc-results');
       if (results) {
         results.innerHTML = `
-          <span class="${metricBadgeClass} border px-3 py-1.5 rounded">Calculated WER: ${wer}%</span>
-          <span class="${metricBadgeClass} border px-3 py-1.5 rounded">Calculated CER: ${cer}%</span>
+          <span class="${metricBadgeClass} border px-3 py-1.5 rounded">Calculated WER: ${Number.isFinite(wer) ? `${wer.toFixed(1)}%` : '--'}</span>
+          <span class="${metricBadgeClass} border px-3 py-1.5 rounded">Calculated CER: ${Number.isFinite(cer) ? `${cer.toFixed(1)}%` : '--'}</span>
         `;
       }
     }

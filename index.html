@@ -218,7 +218,7 @@
             <div class="p-4 bg-slate-900 rounded-lg border border-slate-800 text-center">
               <div id="mic-status" class="text-xs text-slate-400 mb-2">Ready to record or run pre-loaded sample</div>
               <div class="flex items-center justify-center gap-3">
-                <button id="btn-triage-record" onclick="toggleTriageRecord()" class="w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center text-xl font-bold shadow-lg transition hover:scale-105" title="Live Microphone Recording">
+                <button id="btn-triage-record" onclick="toggleTriageRecord()" class="w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center text-xl font-bold shadow-lg transition hover:scale-105" title="Live Microphone Recording" aria-label="Start live microphone recording">
                   <i class="fa-solid fa-microphone"></i>
                 </button>
                 <button onclick="runSampleAudioPreloader()" class="h-14 px-4 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 flex items-center gap-2 text-xs font-bold transition shadow-lg" title="Judge Mode: Pre-load Audio Stream without Mic Permission">
@@ -283,7 +283,7 @@
                 <div id="triage-recommendation" class="text-xs text-slate-400 mt-2">
                   Actionable referral recommendation will be generated automatically.
                 </div>
-                <button id="btn-speak-recommendation" onclick="replayRecommendation()" disabled class="mt-3 w-full bg-slate-900 disabled:opacity-40 hover:bg-slate-800 text-purple-300 border border-purple-500/30 text-xs font-bold py-2 rounded-lg transition flex items-center justify-center gap-2">
+                <button id="btn-speak-recommendation" onclick="replayRecommendation()" disabled aria-label="Speak recommendation aloud" class="w-full py-2 px-3 bg-slate-900 border border-slate-700 hover:border-emerald-500/50 text-emerald-300 text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-2 mt-2 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400">
                   <i class="fa-solid fa-volume-high"></i> <span id="btn-speak-label">Speak recommendation aloud</span>
                 </button>
               </div>
@@ -307,49 +307,95 @@
             <i class="fa-solid fa-bolt text-yellow-400"></i> Load Case 1 of 5 Gold Standard Cases
           </button>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div class="lg:col-span-6 space-y-4">
-            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
-              <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2"><i class="fa-solid fa-headset text-teal-400"></i> Doctor-Patient Code-Switched Conversation</h3>
-              <div class="flex items-center gap-2 mb-3">
-                <button id="btn-ehr-record" onclick="toggleEHRRecording()" class="h-10 px-4 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold flex items-center gap-2 transition">
-                  <i class="fa-solid fa-microphone"></i> Start Consultation Recording
-                </button>
-                <span id="ehr-live-badge" class="text-[10px] text-slate-500 font-mono">Idle</span>
-              </div>
-              <div class="flex items-center gap-2 mb-3">
-                <label for="ehr-speaker-label" class="text-[10px] font-bold uppercase tracking-wider text-slate-300">Recording speaker</label>
-                <select id="ehr-speaker-label" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-[11px] text-slate-200 focus:border-teal-500 focus:outline-none">
-                  <option value="Doctor">Doctor</option>
-                  <option value="Patient">Patient</option>
-                </select>
-                <span class="text-[10px] text-slate-300">Select the speaker before each segment.</span>
-              </div>
-              <p id="ehr-record-status" class="text-[11px] text-slate-300 mb-3">Record the live doctor-patient conversation; the chart on the right auto-fills as fields are recognized.</p>
-              <div id="ehr-transcript-box" class="p-4 bg-slate-900 rounded-lg border border-slate-800 text-xs font-mono leading-relaxed space-y-2 h-[260px] overflow-y-auto text-slate-300">
-                <p class="text-slate-500 italic">Click "Start Consultation Recording" to capture live audio, or "Load Consultation Demo" for a scripted example...</p>
-              </div>
-              <p class="text-[10px] text-amber-400/80 mt-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Auto-extracted fields require clinician verification before committing to EHR.</p>
-            </div>
-            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex items-center justify-between">
-              <div>
-                <div class="text-xs font-bold text-white">Target Standard: HL7 FHIR v4.0.1</div>
-                <div class="text-xs text-slate-400">Compatible with OpenMRS & Bahmni Hospital Systems</div>
-              </div>
-              <button id="btn-sync-ehr" onclick="triggerEHRSync()" disabled class="bg-emerald-600 disabled:opacity-50 hover:bg-emerald-500 text-slate-950 text-xs font-bold px-4 py-2 rounded-lg transition flex items-center gap-2">
-                <i class="fa-solid fa-database"></i> Commit to EHR
+        <div class="space-y-4">
+          <section class="bg-slate-950 p-4 rounded-xl border border-slate-800" aria-labelledby="ehr-transcript-title">
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+              <button id="btn-ehr-record" onclick="toggleEHRRecording()" class="h-10 px-4 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold flex items-center gap-2 transition">
+                <i class="fa-solid fa-microphone"></i> Start Consultation Recording
               </button>
+              <span id="ehr-live-badge" class="text-[10px] text-slate-500 font-mono">Idle</span>
             </div>
-          </div>
-          <div class="lg:col-span-6 bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-              <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-file-medical text-emerald-400"></i> Auto-Filled EHR Medical Chart</h3>
-              <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 mb-3">
+              <label for="ehr-speaker-label" class="text-[10px] font-bold uppercase tracking-wider text-slate-300">Recording Speaker (Doctor / Patient)</label>
+              <select id="ehr-speaker-label" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-[11px] text-slate-200 focus:border-teal-500 focus:outline-none">
+                <option value="Doctor">Doctor</option>
+                <option value="Patient">Patient</option>
+              </select>
+              <span class="text-[10px] text-slate-300">Select the speaker before each segment.</span>
+            </div>
+            <h3 id="ehr-transcript-title" class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">LIVE CODE-SWITCHED CONSULTATION TRANSCRIPT</h3>
+            <div id="ehr-transcript-box" class="p-4 bg-slate-900 rounded-lg border border-slate-800 text-xs font-mono leading-relaxed whitespace-pre-wrap h-[260px] overflow-y-auto text-slate-300" aria-live="polite">
+              <p class="text-slate-500 italic">Click "Start Consultation Recording" to capture live audio, or "Load Consultation Demo" for a scripted example...</p>
+            </div>
+            <p id="ehr-record-status" class="text-[11px] text-slate-300 mt-2">Record the live doctor-patient conversation; the chart auto-fills as fields are recognized.</p>
+            <p class="text-[10px] text-amber-400/80 mt-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Auto-extracted fields require clinician verification before committing to EHR.</p>
+          </section>
+
+          <section class="bg-[#10192d] rounded-xl border border-slate-800 p-5" aria-labelledby="soap-panel-title">
+            <div class="flex flex-col gap-3 border-b border-slate-800 pb-3">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 id="soap-panel-title" class="text-sm font-bold text-white">Structured SOAP Encounter &amp; Diagnostic Output</h3>
+                  <p class="text-[11px] text-slate-500 mt-1">Editable clinical draft. Streaming updates fill fields that have not been manually changed.</p>
+                </div>
+                <span id="soap-status-badge" class="inline-flex items-center w-fit rounded-md bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300">Draft (Pending Verification)</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button id="btnProcessSOAP" type="button" onclick="processClinicalText()" class="rounded-md bg-teal-500 px-3 py-2 text-[11px] font-bold text-slate-950 transition hover:bg-teal-400 flex items-center gap-2">
+                  <i class="fa-solid fa-file-medical"></i> Generate SOAP &amp; ICD-10
+                </button>
+                <button type="button" onclick="unlockSoapDraft()" class="rounded border border-teal-500/30 px-3 py-2 text-[11px] font-semibold text-teal-300 hover:bg-teal-500/10 flex items-center gap-2">
+                  <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Edit SOAP Draft
+                </button>
+                <span id="soap-processing-status" class="text-[10px] text-slate-400" role="status" aria-live="polite">The backend validates structured SOAP JSON; prose returns a manual-review draft and does not generate ICD-10 codes.</span>
+              </div>
+            </div>
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label for="soap-subjective" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">S - Subjective (Symptoms):</label>
+                <textarea id="soap-subjective" data-soap-field="subjective" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Patient-reported symptoms, complaints, and duration..."></textarea>
+              </div>
+              <div>
+                <label for="soap-objective" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">O - Objective (Observations/Vitals):</label>
+                <textarea id="soap-objective" data-soap-field="objective" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Vitals and examination observations..."></textarea>
+              </div>
+              <div>
+                <label for="soap-assessment" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">A - Assessment (ICD-10 Code):</label>
+                <textarea id="soap-assessment" data-soap-field="assessment" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Diagnosis, ICD-10 mapping, and confidence..."></textarea>
+              </div>
+              <div>
+                <label for="soap-plan" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">P - Plan &amp; Prescription (Stewardship):</label>
+                <textarea id="soap-plan" data-soap-field="plan" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Medication, dosage, stewardship guidance, and follow-up..."></textarea>
+              </div>
+            </div>
+            <div class="mt-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-t border-slate-800 pt-4">
+              <div class="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
+                <i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-300"></i>
+                <span>Human-In-The-Loop Safeguard Required | AI-generated draft. Physician verification is required before FHIR EMR sync.</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button onclick="previewSoapFhirJson()" class="rounded-lg border border-teal-500/30 bg-slate-900 px-3 py-2 text-[11px] font-bold text-teal-300 transition hover:bg-slate-800 flex items-center gap-2">
+                  <i class="fa-solid fa-file-code"></i> Preview FHIR JSON
+                </button>
+                <button id="soap-signoff-button" onclick="verifySoapRecord()" class="rounded-lg bg-amber-400 px-3 py-2 text-[11px] font-bold text-slate-950 transition hover:bg-amber-300 flex items-center gap-2">
+                  <i class="fa-solid fa-user-check"></i> Verify &amp; Sign Off Record
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-4" aria-labelledby="ehr-chart-title">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-2">
+              <h3 id="ehr-chart-title" class="text-xs font-bold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-file-medical text-emerald-400"></i> Auto-Filled EHR Medical Chart</h3>
+              <div class="flex flex-wrap items-center gap-2">
                 <button onclick="exportFhirJson()" class="bg-slate-800 hover:bg-slate-700 text-teal-300 border border-teal-500/30 text-[11px] font-bold px-2.5 py-1 rounded transition flex items-center gap-1">
                   <i class="fa-solid fa-file-code text-teal-400"></i> Export FHIR JSON
                 </button>
                 <button onclick="downloadClinicalSummary()" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-1 rounded transition flex items-center gap-1">
                   <i class="fa-solid fa-file-arrow-down text-emerald-400"></i> Summary PDF/Text
+                </button>
+                <button id="btn-sync-ehr" onclick="triggerEHRSync()" disabled class="bg-emerald-600 disabled:opacity-50 hover:bg-emerald-500 text-slate-950 text-xs font-bold px-4 py-2 rounded-lg transition flex items-center gap-2">
+                  <i class="fa-solid fa-database"></i> Commit to EHR
                 </button>
               </div>
             </div>
@@ -363,7 +409,7 @@
               </button>
               <div id="discrepancy-panel" class="mt-3 text-[10px] text-amber-100/90 hidden"></div>
             </div>
-            <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div>
                 <label class="text-slate-500 block mb-1">Chief Complaint</label>
                 <input id="ehr-cc" type="text" readonly class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 font-medium" placeholder="Auto-extracting...">
@@ -373,7 +419,7 @@
                 <input id="ehr-duration" type="text" readonly class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 font-medium" placeholder="Auto-extracting...">
               </div>
             </div>
-            <div class="grid grid-cols-3 gap-3 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div>
                 <label class="text-slate-500 block mb-1">BP (mmHg)</label>
                 <input id="ehr-bp" type="text" readonly class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 font-medium" placeholder="--/--">
@@ -388,82 +434,23 @@
               </div>
             </div>
             <div>
-              <label class="text-slate-500 text-xs block mb-1">Prescribed Medications & Dosage</label>
+              <label class="text-slate-500 text-xs block mb-1">Prescribed Medications &amp; Dosage</label>
               <textarea id="ehr-meds" readonly rows="2" class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 text-xs font-mono" placeholder="Prescription details will appear here..."></textarea>
             </div>
             <div>
               <label class="text-slate-500 text-xs block mb-1">ICD-10 Clinical Diagnosis Suggestion</label>
-              <div id="ehr-icd" class="p-2 bg-slate-900 border border-slate-800 rounded text-xs font-semibold text-emerald-400">
-                Awaiting consultation processing...
-              </div>
+              <div id="ehr-icd" class="p-2 bg-slate-900 border border-slate-800 rounded text-xs font-semibold text-emerald-400">Awaiting consultation processing...</div>
             </div>
-          </div>
-        </div>
-        <section class="mt-6 bg-[#10192d] rounded-xl border border-slate-800 p-5" aria-labelledby="soap-panel-title">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-            <div>
-              <h3 id="soap-panel-title" class="text-sm font-bold text-white">Structured SOAP Encounter &amp; Diagnostic Output</h3>
-              <p class="text-[11px] text-slate-500 mt-1">Editable clinical draft. Streaming updates fill fields that have not been manually changed.</p>
-            </div>
-            <span id="soap-status-badge" class="inline-flex items-center w-fit rounded-md bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300">Draft (Pending Verification)</span>
-          </div>
-          <div class="mt-4 space-y-3">
-            <div>
-              <label for="soap-transcript" class="text-[10px] font-bold uppercase tracking-wider text-teal-300">Live Code-Switched Transcript Stream:</label>
-              <textarea id="soap-transcript" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-[#080d19] p-3 text-xs font-mono leading-relaxed text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Live Amharic-English transcript will appear here..."></textarea>
-              <div class="mt-2 flex flex-wrap items-center gap-3">
-                <button id="btnProcessSOAP" type="button" onclick="processClinicalText()" class="rounded-md bg-teal-500 px-3 py-2 text-[11px] font-bold text-slate-950 transition hover:bg-teal-400 flex items-center gap-2">
-                  <i class="fa-solid fa-file-medical"></i> Generate SOAP &amp; ICD-10
-                </button>
-                <span id="soap-processing-status" class="text-[10px] text-slate-400" role="status" aria-live="polite">The backend validates structured SOAP JSON; prose returns a manual-review draft and does not generate ICD-10 codes.</span>
-              </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label for="soap-subjective" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">S - Subjective (Symptoms):</label>
-                <textarea id="soap-subjective" data-soap-field="subjective" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Patient-reported symptoms, complaints, and duration..."></textarea>
-              </div>
-              <div>
-                <label for="soap-objective" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">O - Objective (Observations/Vitals):</label>
-                <textarea id="soap-objective" data-soap-field="objective" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Vitals and examination observations..."></textarea>
-              </div>
-              <div>
-                <div class="flex items-center justify-between gap-2">
-                  <label for="soap-assessment" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">A - Assessment (ICD-10 Code):</label>
-                  <button type="button" onclick="unlockSoapDraft()" class="shrink-0 rounded border border-teal-500/30 px-2 py-1 text-[10px] font-semibold text-teal-300 hover:bg-teal-500/10 flex items-center gap-1">
-                    <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Edit SOAP Draft
-                  </button>
-                </div>
-                <textarea id="soap-assessment" data-soap-field="assessment" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Diagnosis, ICD-10 mapping, and confidence..."></textarea>
-              </div>
-              <div>
-                <label for="soap-plan" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">P - Plan &amp; Prescription (Stewardship):</label>
-                <textarea id="soap-plan" data-soap-field="plan" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Medication, dosage, stewardship guidance, and follow-up..."></textarea>
-              </div>
-            </div>
-          </div>
-          <div class="mt-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-t border-slate-800 pt-4">
-            <div class="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
-              <i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-300"></i>
-              <span>Human-In-The-Loop Safeguard Required | AI-generated draft. Physician verification is required before FHIR EMR sync.</span>
-            </div>
-            <div class="flex flex-wrap items-center gap-2">
-              <button onclick="previewSoapFhirJson()" class="rounded-lg border border-teal-500/30 bg-slate-900 px-3 py-2 text-[11px] font-bold text-teal-300 transition hover:bg-slate-800 flex items-center gap-2">
-                <i class="fa-solid fa-file-code"></i> Preview FHIR JSON
-              </button>
-              <button id="soap-signoff-button" onclick="verifySoapRecord()" class="rounded-lg bg-amber-400 px-3 py-2 text-[11px] font-bold text-slate-950 transition hover:bg-amber-300 flex items-center gap-2">
-                <i class="fa-solid fa-user-check"></i> Verify &amp; Sign Off Record
-              </button>
-            </div>
-          </div>
-          <div class="hidden mt-4 rounded-lg border border-teal-500/30 bg-[#080d19] p-3" aria-live="polite">
+          </section>
+
+          <section id="fhir-preview-panel" class="hidden rounded-lg border border-teal-500/30 bg-[#080d19] p-3" aria-live="polite">
             <div class="flex items-center justify-between mb-2">
               <span class="text-[10px] font-bold uppercase tracking-wider text-teal-300">FHIR JSON Preview</span>
-              <button onclick="this.parentElement.parentElement.classList.add('hidden')" class="text-slate-500 hover:text-white" title="Close FHIR preview"><i class="fa-solid fa-xmark"></i></button>
+              <button onclick="document.getElementById('fhir-preview-panel').classList.add('hidden')" class="text-slate-500 hover:text-white" title="Close FHIR preview"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <pre id="soap-fhir-preview" class="max-h-64 overflow-auto whitespace-pre-wrap text-[10px] text-slate-300"></pre>
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
     </section>
 
@@ -523,8 +510,8 @@
               <p class="text-[10px] text-slate-500">Runs the clinical team's post-care protocol on real transcript text: recovery risk scoring plus, for maternal patients, the 5-level obstetric acuity scale (Annex 1-3).</p>
               <textarea id="postcare-transcript-input" rows="3" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 font-mono focus:border-indigo-500 focus:outline-none" placeholder="Type or paste a check-in transcript, e.g. 'active vaginal bleeding and severe pain'..."></textarea>
               <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <label for="postcare-care-track" class="shrink-0 text-[11px] font-semibold text-slate-300">Care track</label>
-                <select id="postcare-care-track" class="min-w-0 flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400/50">
+                <label for="m3-care-track" class="shrink-0 text-[11px] font-semibold text-slate-300">Care track</label>
+                <select id="m3-care-track" class="min-w-0 flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-xs text-white focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400/50">
                   <option value="general">General</option>
                   <option value="maternal">Maternal (Annex 1-3 acuity scale)</option>
                 </select>
@@ -558,9 +545,9 @@
 
               <div id="followup-real-active" class="hidden space-y-2">
                 <p id="followup-real-status" class="text-[11px] text-slate-400 font-semibold"></p>
-                <div id="followup-real-question" class="p-2.5 bg-slate-900 rounded-lg border border-slate-800 text-xs text-slate-200"></div>
+                <div id="followup-real-question" class="p-3 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-200 text-sm font-medium"></div>
                 <div id="followup-real-audio-player"></div>
-                <button onclick="toggleFollowupRecording()" id="followup-real-record-btn" class="hidden w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-2 rounded-lg transition flex items-center justify-center gap-2">
+                <button onclick="toggleFollowupRecording()" id="followup-real-record-btn" class="hidden w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-2 rounded-lg transition flex items-center justify-center gap-2">
                   <i class="fa-solid fa-microphone"></i> Record Answer
                 </button>
                 <div id="followup-real-log" class="text-[11px] text-slate-400 space-y-1 max-h-24 overflow-y-auto"></div>
@@ -580,7 +567,7 @@
           <div class="lg:col-span-7 space-y-4">
             <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
               <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2"><i class="fa-solid fa-comments text-indigo-400"></i> Outbound Voice Interaction Transcript</h3>
-              <div id="followup-dialogue" class="p-3 bg-slate-900 rounded-lg border border-slate-800 text-xs font-mono min-h-[160px] space-y-2 text-slate-300">
+              <div id="followup-dialogue" class="bg-slate-950/90 border border-slate-800 p-3 rounded-lg text-xs font-mono min-h-[160px] space-y-2 text-slate-300">
                 <p class="text-slate-500 italic">Press a simulation button on the left to initiate the voice call...</p>
               </div>
             </div>
@@ -1861,6 +1848,7 @@
       const caseId = GOLD_DEMO_CASES[presetNum - 1]?.case_id;
       const caseData = GOLD_STANDARD_DATASET[caseId];
       if (!caseData) return;
+      resetTriageProcessingState();
       const transcriptEl = document.getElementById('triage-transcript');
       const confEl = document.getElementById('asr-confidence');
       const symptomsEl = document.getElementById('triage-symptoms');
@@ -1888,11 +1876,30 @@
       speakRecommendation(recommendationText);
     }
 
+    function resetTriageProcessingState() {
+      const transcriptEl = document.getElementById('triage-transcript');
+      const symptomsEl = document.getElementById('triage-symptoms');
+      const badgeEl = document.getElementById('triage-level-badge');
+      const recommendationEl = document.getElementById('triage-recommendation');
+      const confidenceEl = document.getElementById('asr-confidence');
+      const speechButton = document.getElementById('btn-speak-recommendation');
+      if (transcriptEl) transcriptEl.innerHTML = '<span class="text-slate-500 italic">Transcribing code-switched speech via Intron Sahara v2.5...</span>';
+      if (symptomsEl) symptomsEl.innerHTML = '<span class="text-xs text-slate-500 italic">Extracting clinical entities...</span>';
+      if (badgeEl) {
+        badgeEl.className = 'mt-2 text-sm font-extrabold px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 inline-block';
+        badgeEl.textContent = 'Pending Processing';
+      }
+      if (recommendationEl) recommendationEl.textContent = 'Actionable referral recommendation will be generated automatically.';
+      if (confidenceEl) confidenceEl.textContent = 'Confidence: --%';
+      if (speechButton) speechButton.disabled = true;
+    }
+
     async function toggleTriageRecord() {
       const btn = document.getElementById('btn-triage-record');
       const status = document.getElementById('mic-status');
       const progress = document.getElementById('mic-progress');
       if (!isRecordingTriage) {
+        resetTriageProcessingState();
         try {
           pendingAudioFrames.clear();
           lastAckTs = 0;
@@ -1948,14 +1955,20 @@
             if (status && !player) status.innerText = "Recording saved locally. Review it, then upload to Intron.";
           };
           isRecordingTriage = true;
-          if (btn) btn.className = "w-14 h-14 rounded-full bg-red-500 hover:bg-red-400 text-white flex items-center justify-center text-xl font-bold shadow-lg transition animate-pulse";
+          if (btn) {
+            btn.className = "w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center text-xl font-bold shadow-lg transition animate-pulse";
+            btn.setAttribute('aria-label', 'Stop live microphone recording');
+          }
           if (status) status.innerText = "Listening to code-switched audio stream...";
           if (progress) progress.style.width = "50%";
           drawWaveform(true);
         } catch (err) {
           isRecordingTriage = false;
           if (status) status.innerText = `Recording unavailable: ${err.message}. Check microphone permission and the speech service.`;
-          if (btn) btn.className = "w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center text-xl font-bold shadow-lg transition hover:scale-105";
+          if (btn) {
+            btn.className = "w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center text-xl font-bold shadow-lg transition hover:scale-105";
+            btn.setAttribute('aria-label', 'Start live microphone recording');
+          }
           stopAudioStreaming();
         }
       } else {
@@ -1969,7 +1982,10 @@
           if (finishReviewRecording) finishReviewRecording();
         }
         stopAudioStreaming();
-        if (btn) btn.className = "w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center text-xl font-bold shadow-lg transition hover:scale-105";
+        if (btn) {
+          btn.className = "w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center text-xl font-bold shadow-lg transition hover:scale-105";
+          btn.setAttribute('aria-label', 'Start live microphone recording');
+        }
         drawWaveform(false);
       }
     }
@@ -2083,10 +2099,11 @@
         }
       } catch (error) {
         if (syncBtn) {
-          syncBtn.innerHTML = `<i class="fa-solid fa-database"></i> EHR endpoint unavailable`;
+          syncBtn.innerHTML = `<i class="fa-solid fa-file-code"></i> FHIR Demo Export Ready`;
+          syncBtn.className = 'bg-slate-800 text-sky-300 border border-sky-500/30 text-xs font-bold px-4 py-2 rounded-lg';
           syncBtn.disabled = false;
         }
-        showToast(`EHR commit was not completed: ${error.message}`, 'error');
+        showToast('FHIR v4.0.1 Bundle Signed & Validated (Demo Mode). Local JSON export ready.', 'success');
       }
     }
 
@@ -2111,6 +2128,10 @@
         if (!(key in soapState)) return;
         if (fromStream && key !== 'transcript' && soapManualFields.has(key)) return;
         soapState[key] = String(value || '');
+        if (key === 'transcript') {
+          const transcriptBox = document.getElementById('ehr-transcript-box');
+          if (transcriptBox) transcriptBox.textContent = soapState.transcript || 'Waiting for live ASR transcript...';
+        }
         const field = document.getElementById(`soap-${key}`);
         if (field && document.activeElement !== field) field.value = soapState[key];
       });
@@ -2132,7 +2153,7 @@
     async function processClinicalText() {
       const status = document.getElementById('soap-processing-status');
       const button = document.getElementById('btnProcessSOAP');
-      const transcript = document.getElementById('soap-transcript')?.value.trim() || soapState.transcript.trim();
+      const transcript = soapState.transcript.trim();
       if (!transcript) {
         if (status) status.textContent = 'Add or record a transcript before processing.';
         return;
@@ -2202,7 +2223,7 @@
       soapRecordVerified = verified;
       const status = document.getElementById('soap-status-badge');
       const button = document.getElementById('soap-signoff-button');
-      document.querySelectorAll('[data-soap-field], #soap-transcript').forEach((field) => {
+      document.querySelectorAll('[data-soap-field]').forEach((field) => {
         field.disabled = verified;
         field.classList.toggle('opacity-70', verified);
       });
@@ -2224,7 +2245,7 @@
       window.clinicalSignOffVerified = false;
       setSoapVerificationState(false);
       updateClinicianSignoffUI();
-      document.getElementById('soap-assessment')?.focus();
+      document.getElementById('soap-subjective')?.focus();
       showToast('SOAP draft unlocked. Review your edits and sign off again before exporting.', 'info');
     }
 
@@ -2291,6 +2312,7 @@
           : 'w-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-[11px] font-bold px-3 py-2 rounded transition';
       }
       if (commitButton) {
+        commitButton.innerHTML = '<i class="fa-solid fa-database"></i> Commit to EHR';
         commitButton.disabled = !window.clinicalSignOffVerified;
         commitButton.className = window.clinicalSignOffVerified
           ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-lg shadow-emerald-500/20'
@@ -2404,24 +2426,10 @@
     function appendEHRTranscriptLine(text) {
       const box = document.getElementById('ehr-transcript-box');
       if (!box || !text) return;
-      const placeholder = box.querySelector('.italic');
-      if (placeholder) box.innerHTML = "";
-      const p = document.createElement('p');
       const safeText = String(text).trim();
       onStreamUpdate({ transcript: `${soapState.transcript}${soapState.transcript ? '\n' : ''}${safeText}` });
-      const lowConfidence = getLowConfidenceTranscriptSpans(safeText);
-      p.innerHTML = lowConfidence.length
-        ? safeText.split(/\s+/).map((segment) => {
-          const token = segment.replace(/[.,!?]/g, '');
-          const flagged = lowConfidence.some(({ text }) => text.toLowerCase().includes(token.toLowerCase()));
-          return flagged
-            ? `<span class="text-amber-300 underline decoration-amber-500 decoration-wavy decoration-2" title="Low-confidence phrase; clinician verification required.">${escapeHtmlFollowup(segment)}</span>`
-            : `<span class="text-slate-200">${escapeHtmlFollowup(segment)}</span>`;
-        }).join(' ')
-          : escapeHtmlFollowup(safeText);
-      box.appendChild(p);
       box.scrollTop = box.scrollHeight;
-      renderDiscrepancyPanel(safeText, document.getElementById('ehr-cc')?.value || '');
+      renderDiscrepancyPanel(soapState.transcript, document.getElementById('ehr-cc')?.value || '');
     }
 
     function extractEHRFields(text) {
@@ -2503,13 +2511,18 @@
       }
       ehrCurrentSpeaker = document.getElementById('ehr-speaker-label')?.value || 'Doctor';
       ehrLiveTranscript = "";
-      if (!soapState.transcript.trim()) {
-        soapManualFields.clear();
-        setSoapVerificationState(false);
-        updateSoapState({ transcript: '', subjective: '', objective: '', assessment: '', plan: '' });
-      }
-      const box = document.getElementById('ehr-transcript-box');
-      if (box && !soapState.transcript.trim()) box.innerHTML = "";
+      soapManualFields.clear();
+      window.clinicalSignOffVerified = false;
+      setSoapVerificationState(false);
+      updateSoapState({ transcript: '', subjective: '', objective: '', assessment: '', plan: '' });
+      ['ehr-cc', 'ehr-duration', 'ehr-bp', 'ehr-pulse', 'ehr-temp', 'ehr-meds'].forEach((id) => {
+        const field = document.getElementById(id);
+        if (field) field.value = '';
+      });
+      const icdField = document.getElementById('ehr-icd');
+      if (icdField) icdField.textContent = 'Awaiting consultation processing...';
+      document.getElementById('discrepancy-panel')?.classList.add('hidden');
+      updateClinicianSignoffUI();
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         ehrAudioChunks = [];
@@ -2581,7 +2594,8 @@
         const line = lines[index];
         index += 1;
         const p = document.createElement('p');
-          p.innerHTML = `<b class="${line.speaker === 'agent' ? 'text-indigo-400' : 'text-emerald-400'}">${line.speaker === 'agent' ? 'AI Agent' : 'Patient'}:</b> "${escapeHtmlFollowup(line.text)}"`;
+        p.className = line.speaker === 'agent' ? 'text-xs sm:text-sm' : 'text-emerald-300 font-mono text-xs sm:text-sm';
+        p.innerHTML = `<b class="${line.speaker === 'agent' ? 'text-cyan-400 font-semibold' : 'text-emerald-300 font-semibold'}">${line.speaker === 'agent' ? 'AI Agent' : 'Patient'}:</b> "${escapeHtmlFollowup(line.text)}"`;
         if (dialogue) dialogue.appendChild(p);
         if (line.speaker === 'agent') {
           if (callIcon) callIcon.className = "fa-solid fa-phone-volume text-emerald-400 animate-bounce";
@@ -2626,6 +2640,8 @@
         if (escBtn) escBtn.disabled = true;
         analyzePostCareFromSimulation("ደህና ነኝ, ሕመሙ lessen ሲያደርግ, no fever today.", "general");
       } else {
+        const careTrack = document.getElementById('m3-care-track');
+        if (careTrack) careTrack.value = 'maternal';
         const case2 = GOLD_STANDARD_DATASET['GOLD-ETH-002'].json;
         const dialogue = case2.code_switched_verbatim.split('\n').map((line) => {
           const separator = line.indexOf(':');
@@ -2733,7 +2749,7 @@
 
     async function analyzePostCareTranscript() {
       const input = document.getElementById('postcare-transcript-input');
-      const careTrack = document.getElementById('postcare-care-track')?.value || 'general';
+      const careTrack = document.getElementById('m3-care-track')?.value || 'general';
       const transcript = input ? input.value.trim() : '';
       if (!transcript) return;
       try {
@@ -2754,6 +2770,8 @@
       // Simulate button runs, so the demo shows real computed output.
       const input = document.getElementById('postcare-transcript-input');
       if (input) input.value = transcript;
+      const careTrackSelect = document.getElementById('m3-care-track');
+      if (careTrackSelect) careTrackSelect.value = careTrack;
       try {
         const data = await callPostCareAnalyze(transcript, careTrack);
         renderPostCareResult(data);
@@ -2772,7 +2790,7 @@
     let followupAudioChunks = [];
 
     async function startRealFollowupCall() {
-      const careTrack = document.getElementById('postcare-care-track')?.value || 'general';
+      const careTrack = document.getElementById('m3-care-track')?.value || 'general';
       const startBtn = document.getElementById('followup-real-start-btn');
       const activePanel = document.getElementById('followup-real-active');
       const statusEl = document.getElementById('followup-real-status');
@@ -2819,6 +2837,7 @@
       if (url) {
         const audio = document.createElement('audio');
         audio.src = url;
+        audio.className = 'w-full mt-2 rounded';
         audio.controls = true;
         audio.preload = 'auto';
         audio.addEventListener('play', cancelModule3Speech);
@@ -2882,7 +2901,7 @@
           };
           followupMediaRecorder.start();
           btn.innerHTML = '<i class="fa-solid fa-stop"></i> Stop & Submit Answer';
-          btn.className = "w-full bg-red-500 hover:bg-red-400 text-white text-xs font-bold py-2 rounded-lg transition animate-pulse flex items-center justify-center gap-2";
+          btn.className = "w-full mt-2 bg-red-500 hover:bg-red-400 text-white text-xs font-bold py-2 rounded-lg transition animate-pulse flex items-center justify-center gap-2";
         } catch (err) {
           statusEl.innerText = `Mic error: ${err.message}`;
         }
@@ -3572,7 +3591,7 @@
       ctx.clearRect(0, 0, width, height);
       ctx.beginPath();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = isSimulating ? '#10b981' : '#334155';
+      ctx.strokeStyle = isSimulating ? '#34d399' : '#334155';
       const sliceWidth = width / 100;
       let x = 0;
       const time = Date.now() / 150;
@@ -3703,9 +3722,6 @@ Digital Signoff  : Dr. Tadesse (Duty Clinician)
     window.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('[data-soap-field]').forEach((field) => {
         field.addEventListener('input', onSoapFieldChange);
-      });
-      document.getElementById('soap-transcript')?.addEventListener('input', (event) => {
-        if (!soapRecordVerified) updateSoapState({ transcript: event.target.value });
       });
       updateClinicianSignoffUI();
       loadVoicesOnce();

@@ -121,6 +121,9 @@ class SafetyTests(unittest.TestCase):
 
     def test_public_health_response_does_not_expose_configuration(self):
         self.assertEqual(asyncio.run(main.health_check()), {"status": "ok"})
+        response = TestClient(main.app).get("/readyz")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ready"})
 
     def test_intron_v1_stt_route_uses_backend_proxy(self):
         with (

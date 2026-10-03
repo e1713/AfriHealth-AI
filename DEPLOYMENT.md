@@ -109,15 +109,18 @@ browser assets and benchmark methodology document:
 This allowlist excludes notebook outputs, benchmark audio, Python source,
 configuration, and private evaluation files from the static deployment.
 
-Set `SAHARA_API_ORIGIN` as a public Pages build variable to the HTTPS FastAPI
-origin. For Cloudflare Pages
-Git integration, use this build command and output directory:
+Optionally set `SAHARA_API_ORIGIN` as a public Pages build variable to the HTTPS
+FastAPI origin. If omitted, the frontend uses its current origin; configure a
+same-origin reverse proxy from the static host to FastAPI in that case. For
+Cloudflare Pages Git integration, use this build command and output directory:
 
 ```sh
-if [[ ! "$SAHARA_API_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]; then exit 1; fi
 mkdir -p _site
 cp index.html pcm-processor.js offline-sync-worker.js sw.js BENCHMARK_RESULTS.md _site/
-printf 'window.SAHARA_API_ORIGIN = "%s";\n' "$SAHARA_API_ORIGIN" > _site/api-origin.js
+if [[ -n "$SAHARA_API_ORIGIN" ]]; then
+  if [[ ! "$SAHARA_API_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]; then exit 1; fi
+  printf 'window.SAHARA_API_ORIGIN = "%s";\n' "$SAHARA_API_ORIGIN" > _site/api-origin.js
+fi
 ```
 
 Set the build output directory to `_site` (not `.`). Never embed

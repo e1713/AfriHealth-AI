@@ -31,13 +31,15 @@ jobs:
         env:
           SAHARA_API_ORIGIN: ${{ vars.SAHARA_API_ORIGIN }}
         run: |
-          if [[ ! "$SAHARA_API_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]; then
-            echo "Set the Pages variable SAHARA_API_ORIGIN to the HTTPS FastAPI origin." >&2
-            exit 1
-          fi
           mkdir -p _site
           cp index.html pcm-processor.js offline-sync-worker.js sw.js BENCHMARK_RESULTS.md _site/
-          printf 'window.SAHARA_API_ORIGIN = "%s";\n' "$SAHARA_API_ORIGIN" > _site/api-origin.js
+          if [[ -n "$SAHARA_API_ORIGIN" ]]; then
+            if [[ ! "$SAHARA_API_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]; then
+              echo "SAHARA_API_ORIGIN must be an HTTPS FastAPI origin when configured." >&2
+              exit 1
+            fi
+            printf 'window.SAHARA_API_ORIGIN = "%s";\n' "$SAHARA_API_ORIGIN" > _site/api-origin.js
+          fi
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3

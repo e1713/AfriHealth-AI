@@ -1069,11 +1069,8 @@
         ? window.location.origin
         : isLocalhost
             ? `${window.location.protocol}//${window.location.hostname}:8000`
-            : '';
+            : window.location.origin;
     const apiOrigin = configuredOrigin || defaultOrigin;
-    if (!apiOrigin) {
-      throw new Error('A protected SAHARA_API_ORIGIN must be configured for this deployment.');
-    }
     const apiUrl = new URL(apiOrigin, window.location.origin);
     if (!['http:', 'https:'].includes(apiUrl.protocol)) {
       throw new Error('The configured API origin must use HTTP or HTTPS.');

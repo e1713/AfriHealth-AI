@@ -27,24 +27,10 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Prepare static site allowlist
-        env:
-          SAHARA_API_ORIGIN: ${{ vars.SAHARA_API_ORIGIN }}
-        run: |
-          mkdir -p _site
-          cp index.html pcm-processor.js offline-sync-worker.js sw.js BENCHMARK_RESULTS.md _site/
-          if [[ -n "$SAHARA_API_ORIGIN" ]]; then
-            if [[ ! "$SAHARA_API_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]; then
-              echo "SAHARA_API_ORIGIN must be an HTTPS FastAPI origin when configured." >&2
-              exit 1
-            fi
-            printf 'window.SAHARA_API_ORIGIN = "%s";\n' "$SAHARA_API_ORIGIN" > _site/api-origin.js
-          fi
-
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '_site'
+          path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment

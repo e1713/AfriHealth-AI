@@ -27,9 +27,8 @@ class PCMProcessor extends AudioWorkletProcessor {
     this.ringWriteIndex = 0;
     this.ringSampleCount = 0;
     this.sequenceId = 0;
-    this.lastAckSequence = 0;
+    this.lastAckTimestamp = 0;
     this.packetQueue = [];
-    this.packetQueueSamples = 0;
 
     this.port.onmessage = (event) => {
       if (event.data.command === 'PAUSE') {
@@ -40,11 +39,7 @@ class PCMProcessor extends AudioWorkletProcessor {
         this.flushBuffer();
         this.port.postMessage({ eventType: 'flushed' });
       } else if (event.data.command === 'ACK') {
-        this.lastAckSequence = Math.max(this.lastAckSequence, Number(event.data.ackSequence || 0));
-        while (this.packetQueue.length && this.packetQueue[0].sequence <= this.lastAckSequence) {
-          this.packetQueueSamples -= this.packetQueue.shift().samples.length;
-        }
-      } else if (event.data.command === 'REPLAY') {
+        this.lastAckTimestamp = Number(event.data.ackTimestamp || 0);
         this.replayBufferedPackets();
       }
     };
@@ -101,34 +96,29 @@ class PCMProcessor extends AudioWorkletProcessor {
     return resampled;
   }
 
-  writeSamplesToRingBuffer(samples) {
+  pushToRingBuffer(samples, packetTimestamp) {
     for (let i = 0; i < samples.length; i++) {
       this.ringBuffer[this.ringWriteIndex] = samples[i];
       this.ringWriteIndex = (this.ringWriteIndex + 1) % this.ringBufferSize;
     }
 
     this.ringSampleCount = Math.min(this.ringBufferSize, this.ringSampleCount + samples.length);
-  }
 
-  queueReplayPacket(samples, packetTimestamp) {
-    const packet = {
+    this.packetQueue.push({
       sequence: ++this.sequenceId,
       timestamp: packetTimestamp,
       samples: samples.slice()
-    };
-    this.packetQueue.push(packet);
-    this.packetQueueSamples += packet.samples.length;
+    });
 
-    while (this.packetQueueSamples > this.ringBufferSize && this.packetQueue.length) {
-      this.packetQueueSamples -= this.packetQueue.shift().samples.length;
+    while (this.packetQueue.length > 100) {
+      this.packetQueue.shift();
     }
-    return packet.sequence;
   }
 
   replayBufferedPackets() {
     if (!this.packetQueue.length) return;
 
-    const replayPackets = this.packetQueue.filter((packet) => packet.sequence > this.lastAckSequence);
+    const replayPackets = this.packetQueue.filter((packet) => packet.timestamp > this.lastAckTimestamp);
     if (!replayPackets.length) return;
 
     for (const packet of replayPackets) {
@@ -153,7 +143,8 @@ class PCMProcessor extends AudioWorkletProcessor {
     if (input && input.length > 0) {
       const channelData = input[0];
       const downsampled = this.downsampleTo16k(channelData);
-      this.writeSamplesToRingBuffer(downsampled);
+      const packetTimestamp = Date.now();
+      this.pushToRingBuffer(downsampled, packetTimestamp);
 
       for (let i = 0; i < downsampled.length; i++) {
         this.buffer[this.bufferIndex++] = downsampled[i];
@@ -181,12 +172,12 @@ class PCMProcessor extends AudioWorkletProcessor {
       packetSamples[i] = this.buffer[i];
     }
 
-    const packetSequence = this.queueReplayPacket(packetSamples, packetTimestamp);
+    this.pushToRingBuffer(packetSamples, packetTimestamp);
 
     this.port.postMessage(
       {
         eventType: 'pcmdata',
-        sequence: packetSequence,
+        sequence: this.sequenceId,
         timestamp: packetTimestamp,
         pcmBuffer: pcm16.buffer
       },

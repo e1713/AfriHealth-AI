@@ -153,12 +153,12 @@ cp .env.example .env
 Example variables in `.env.example` include:
 
 ```env
-INTRON_API_KEY="<YOUR_EXISTING_INTRON_API_KEY>"
-SAHARA_API_KEY="<YOUR_GENERATED_API_KEY_SECRET>"
+INTRON_API_KEY=
 INTRON_TTS_VOICE_LANGUAGE=am
 INTRON_TTS_VOICE_ACCENT=amharic
 INTRON_TTS_VOICE_GENDER=female
 ALLOWED_ORIGINS=https://your-project.pages.dev
+REQUIRE_PROXY_AUTH=false
 EHR_FHIR_ENDPOINT=
 EHR_API_KEY=
 DATABASE_URL=sqlite+aiosqlite:///./edge_sync.sqlite3
@@ -168,13 +168,9 @@ GEMINI_API_KEY=
 GEMINI_TRANSCRIBE_MODEL=gemini-2.0-flash
 ```
 
-The FastAPI app loads `.env` automatically for local development. All `/api/*`
-routes require the constant-time checked `SAHARA_API_KEY` bearer token. Enter
-that key when prompted in the browser; it is held only in page memory and is
-never included in the static assets. Browser WebSockets carry the key in an
-encoded WebSocket subprotocol because browser APIs cannot set custom request
-headers. OpenAI and Gemini are optional comparison providers. Keep the Intron
-and provider keys on the backend; never add them to `index.html`.
+The FastAPI app loads `.env` automatically for local development. OpenAI and
+Gemini are optional comparison providers. Keep all provider keys on the
+backend; never add them to `index.html`.
 
 ### 3. Install Python dependencies
 

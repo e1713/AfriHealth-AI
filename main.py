@@ -136,6 +136,10 @@
 #     expects short codes like "am", "en", "yo", "ha" via use_language_asr_input
 #     -- not BCP-47 style tags like "am-ET". Everywhere else in this gateway
 #     (the REST /api/v1/transcribe route, the benchmark route) still takes the
+#     BCP-47-ish "am-ET" form for backward compatibility with the frontend, so
+#     we normalize here rather than pushing this concern out to every caller.
+#     """
+#     if not language_code:
 #         return "am"
 #     return language_code.split("-")[0].lower()
 
@@ -884,15 +888,13 @@ import logging
 import re
 import wave
 import uuid
-import hmac
 from datetime import datetime, timezone
 from html import escape
 from io import BytesIO
 from urllib.parse import urlencode
 from collections import deque
-from typing import Annotated, Any, List, Literal, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends, Request
-from fastapi.security import HTTPBearer
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -931,10 +933,6 @@ app = FastAPI(
 RATE_LIMIT_WINDOW_SECONDS = 60
 RATE_LIMIT_MAX_REQUESTS = 20
 RATE_LIMITED_PATH_PREFIXES = (
-    "/api/v1/process-clinical",
-    "/api/v1/clinical/process-text",
-    "/api/v1/fhir/export",
-    "/api/v1/ehr/commit",
     "/api/v1/transcribe",
     "/api/v1/stt/intron",
     "/api/v1/benchmark/live",
@@ -949,7 +947,17 @@ MAX_ACTIVE_WEBSOCKETS = 100
 _active_websockets = 0
 
 
-api_bearer = HTTPBearer(auto_error=False)
+def _proxy_auth_required() -> bool:
+    if os.getenv("APP_ENV", "development").strip().lower() == "production":
+        return True
+    return os.getenv("REQUIRE_PROXY_AUTH", "false").strip().lower() == "true"
+
+
+REQUIRE_PROXY_AUTH = _proxy_auth_required()
+PROXY_IDENTITY_HEADERS = (
+    "cf-access-authenticated-user-email",
+    "x-authenticated-user",
+)
 
 _request_log: dict[str, deque] = {}
 
@@ -980,43 +988,17 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-def _api_key_matches(token: str | None) -> bool:
-    expected = os.getenv("SAHARA_API_KEY", "").strip()
-    return bool(token and expected and hmac.compare_digest(token, expected))
-
-
-def _websocket_api_key_matches(websocket: WebSocket) -> bool:
-    for protocol in websocket.headers.get("sec-websocket-protocol", "").split(","):
-        protocol = protocol.strip()
-        if not protocol.startswith("sahara-auth."):
-            continue
-        encoded_key = protocol.removeprefix("sahara-auth.")
-        encoded_key += "=" * (-len(encoded_key) % 4)
-        try:
-            token = base64.b64decode(encoded_key, altchars=b"-_", validate=True).decode("utf-8")
-        except (ValueError, UnicodeDecodeError):
-            continue
-        if _api_key_matches(token):
-            return True
-    return False
-
-
-class ClinicalIdentityMiddleware(BaseHTTPMiddleware):
+class ProxyIdentityMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        if request.url.path.startswith("/api/"):
-            credentials = await api_bearer(request)
-            if credentials is None or not _api_key_matches(credentials.credentials):
-                return JSONResponse(
-                    status_code=401,
-                    content={"detail": "Invalid or missing API key"},
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-            request.state.auth_method = "api_key"
+        protected_path = request.url.path.startswith("/api/")
+        if REQUIRE_PROXY_AUTH and protected_path:
+            if not any(request.headers.get(header) for header in PROXY_IDENTITY_HEADERS):
+                return JSONResponse(status_code=401, content={"detail": "Authenticated clinical access is required"})
         return await call_next(request)
 
 
 app.add_middleware(RateLimitMiddleware)
-app.add_middleware(ClinicalIdentityMiddleware)
+app.add_middleware(ProxyIdentityMiddleware)
 
 
 @app.on_event("startup")
@@ -1088,6 +1070,9 @@ def _keyword_is_negated(text: str, keyword: str) -> bool:
     return True
 
 
+def _has_proxy_identity(headers) -> bool:
+    return any(headers.get(header) for header in PROXY_IDENTITY_HEADERS)
+
 # Ethiopian Medical & Local Symptom Phrase Boosting Dictionary
 ETHIOPIAN_MEDICAL_VOCABULARY: List[str] = [
     # Local pharmacological terms
@@ -1115,22 +1100,18 @@ class ICD10Diagnosis(BaseModel):
 class ClinicalSOAPSchema(BaseModel):
     subjective: str = Field(
         ...,
-        max_length=100_000,
         description="Patient chief complaint, history of present illness, and reported symptoms",
     )
     objective: str = Field(
         ...,
-        max_length=100_000,
         description="Vital signs, physical exam findings, and clinical measurements",
     )
     assessment: str = Field(
         ...,
-        max_length=100_000,
         description="Clinical reasoning, differential diagnosis, and primary assessment",
     )
     plan: str = Field(
         ...,
-        max_length=100_000,
         description="Treatment strategy, medications prescribed, and follow-up instructions",
     )
     confidence_score: float = Field(
@@ -1140,11 +1121,11 @@ class ClinicalSOAPSchema(BaseModel):
         description="Joint ASR and LLM confidence score (0.0 to 1.0)",
     )
     icd10_codes: List[ICD10Diagnosis] = Field(
-        default_factory=list, max_length=50,
+        default_factory=list,
         description="List of mapped ICD-10 diagnosis codes",
     )
-    flagged_code_switches: List[Annotated[str, Field(max_length=256)]] = Field(
-        default_factory=list, max_length=100,
+    flagged_code_switches: List[str] = Field(
+        default_factory=list,
         description="Detected code-switched phrases (e.g., Amharic/Oromo terms)",
     )
     requires_manual_review: bool = Field(
@@ -1166,8 +1147,8 @@ class ClinicalSOAPSchema(BaseModel):
 
 
 class ClinicalProcessRequest(BaseModel):
-    transcript: str = Field(..., min_length=1, max_length=100_000, description="Raw code-switched clinical transcript text")
-    language_hint: Optional[str] = Field("auto", max_length=32, description="Primary language pair hint")
+    transcript: str = Field(..., min_length=1, description="Raw code-switched clinical transcript text")
+    language_hint: Optional[str] = Field("auto", description="Primary language pair hint")
 
 
 class ClinicalProcessResponse(BaseModel):
@@ -1180,11 +1161,11 @@ class ClinicalProcessResponse(BaseModel):
 
 
 class SOAPDraftPayload(BaseModel):
-    transcript: str = Field(default="", max_length=100_000)
-    subjective: str = Field(default="", max_length=100_000)
-    objective: str = Field(default="", max_length=100_000)
-    assessment: str = Field(default="", max_length=100_000)
-    plan: str = Field(default="", max_length=100_000)
+    transcript: str = ""
+    subjective: str = ""
+    objective: str = ""
+    assessment: str = ""
+    plan: str = ""
 
 
 class FHIRExportRequest(BaseModel):
@@ -1198,7 +1179,7 @@ class FHIRExportRequest(BaseModel):
     temperature: Optional[str] = Field(default=None, max_length=32)
     diagnosis_code: Optional[str] = Field(default=None, max_length=32)
     diagnosis_display: Optional[str] = Field(default=None, max_length=256)
-    medications: List[Annotated[str, Field(max_length=1000)]] = Field(default_factory=list, max_length=20)
+    medications: List[str] = Field(default_factory=list, max_length=20)
     soap: Optional[SOAPDraftPayload] = None
 
 
@@ -1386,76 +1367,73 @@ async def process_clinical_text(payload: ClinicalProcessRequest) -> ClinicalProc
         scrubbed_transcript=scrubbed_transcript,
         redactions_count=redactions_count,
         discrepancies=discrepancies,
-        sign_off_required=True,
+        sign_off_required=bool(discrepancies) or soap.requires_manual_review or soap.requires_manual_entry,
     )
 
 
-def _fhir_transaction_entry(resource: dict, full_url: str | None = None) -> dict:
-    resource_type = resource["resourceType"]
-    return {
-        "fullUrl": full_url or f"urn:uuid:{uuid.uuid4()}",
-        "resource": resource,
-        "request": {"method": "POST", "url": resource_type},
-    }
-
-
-def _build_fhir_bundle(payload: FHIRExportRequest, *, signed_off: bool = False) -> dict:
-    patient_url = f"urn:uuid:{uuid.uuid4()}"
-    encounter_url = f"urn:uuid:{uuid.uuid4()}"
-    patient_identifier_system = "https://sahara-healthcare-suite.example/identifiers/patient"
-    encounter_identifier_system = "https://sahara-healthcare-suite.example/identifiers/encounter"
+def _build_fhir_bundle(payload: FHIRExportRequest) -> dict:
     entries = [
-        _fhir_transaction_entry(
-            {
+        {
+            "resource": {
                 "resourceType": "Patient",
-                "identifier": [{"system": patient_identifier_system, "value": payload.patient_id}],
+                "id": payload.patient_id,
                 "active": True,
                 **({"gender": payload.gender} if payload.gender else {}),
-            },
-            patient_url,
-        ),
-        _fhir_transaction_entry(
-            {
+            }
+        },
+        {
+            "resource": {
                 "resourceType": "Encounter",
-                "identifier": [{"system": encounter_identifier_system, "value": payload.encounter_id}],
+                "id": payload.encounter_id,
                 "status": "finished",
                 "class": {"code": "AMB", "display": "ambulatory"},
-                "subject": {"reference": patient_url},
+                "subject": {"reference": f"Patient/{payload.patient_id}"},
                 "reasonCode": [{"text": payload.chief_complaint}],
                 **(
                     {"extension": [{"url": "https://sahara-healthcare-suite.example/fhir/duration", "valueString": payload.duration}]}
                     if payload.duration
                     else {}
                 ),
-            },
-            encounter_url,
-        ),
+            }
+        },
     ]
 
     if payload.soap:
-        entries.append(_fhir_transaction_entry({
-            "resourceType": "Composition",
-            "identifier": {"system": "urn:ietf:rfc:3986", "value": f"urn:uuid:{uuid.uuid4()}"},
-            "status": "final" if signed_off else "preliminary",
-            "type": {"text": "Structured SOAP clinical note"},
-            "subject": {"reference": patient_url},
-            "encounter": {"reference": encounter_url},
-            "date": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-            "author": [{"display": "Clinician sign-off recorded (identity not verified)"}]
-            if signed_off
-            else [{"display": "AfriHealth AI (automated draft)"}],
-            "title": "AfriHealth AI clinical note",
-            "section": [
-                {"title": "Subjective", "text": _fhir_narrative(payload.soap.subjective)},
-                {"title": "Objective", "text": _fhir_narrative(payload.soap.objective)},
-                {"title": "Assessment", "text": _fhir_narrative(payload.soap.assessment)},
-                {"title": "Plan", "text": _fhir_narrative(payload.soap.plan)},
-            ],
-            "extension": [{
-                "url": "https://sahara-healthcare-suite.example/fhir/transcript",
-                "valueString": payload.soap.transcript,
-            }],
-        }))
+        clinician_id = getattr(payload, "clinician_id", None)
+        entries.append(
+            {
+                "resource": {
+                    "resourceType": "Composition",
+                    "identifier": {
+                        "system": "urn:ietf:rfc:3986",
+                        "value": f"urn:uuid:{uuid.uuid4()}",
+                    },
+                    "status": "final",
+                    "type": {"text": "Structured SOAP clinical note"},
+                    "subject": {"reference": f"Patient/{payload.patient_id}"},
+                    "encounter": {"reference": f"Encounter/{payload.encounter_id}"},
+                    "date": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                    "author": [
+                        {"reference": f"Practitioner/{clinician_id}"}
+                        if clinician_id
+                        else {"display": "AfriHealth AI (automated draft)"}
+                    ],
+                    "title": "AfriHealth AI clinical note",
+                    "section": [
+                        {"title": "Subjective", "text": _fhir_narrative(payload.soap.subjective)},
+                        {"title": "Objective", "text": _fhir_narrative(payload.soap.objective)},
+                        {"title": "Assessment", "text": _fhir_narrative(payload.soap.assessment)},
+                        {"title": "Plan", "text": _fhir_narrative(payload.soap.plan)},
+                    ],
+                    "extension": [
+                        {
+                            "url": "https://sahara-healthcare-suite.example/fhir/transcript",
+                            "valueString": payload.soap.transcript,
+                        }
+                    ],
+                }
+            }
+        )
 
     vital_components = []
     if payload.blood_pressure:
@@ -1465,38 +1443,54 @@ def _build_fhir_bundle(payload: FHIRExportRequest, *, signed_off: bool = False) 
     if payload.temperature:
         vital_components.append({"code": {"text": "Body temperature"}, "valueString": payload.temperature})
     if vital_components:
-        entries.append(_fhir_transaction_entry({
-            "resourceType": "Observation",
-            "status": "final",
-            "code": {"text": "Vital signs"},
-            "subject": {"reference": patient_url},
-            "encounter": {"reference": encounter_url},
-            "component": vital_components,
-        }))
+        entries.append(
+            {
+                "resource": {
+                    "resourceType": "Observation",
+                    "status": "final",
+                    "code": {"text": "Vital signs"},
+                    "subject": {"reference": f"Patient/{payload.patient_id}"},
+                    "encounter": {"reference": f"Encounter/{payload.encounter_id}"},
+                    "component": vital_components,
+                }
+            }
+        )
 
     if payload.diagnosis_code:
-        entries.append(_fhir_transaction_entry({
-            "resourceType": "Condition",
-            "clinicalStatus": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/condition-clinical", "code": "active"}]},
-            "code": {"coding": [{
-                "system": "http://hl7.org/fhir/sid/icd-10",
-                "code": payload.diagnosis_code,
-                "display": payload.diagnosis_display or payload.diagnosis_code,
-            }]},
-            "subject": {"reference": patient_url},
-            "encounter": {"reference": encounter_url},
-        }))
+        entries.append(
+            {
+                "resource": {
+                    "resourceType": "Condition",
+                    "clinicalStatus": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/condition-clinical", "code": "active"}]},
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/sid/icd-10",
+                                "code": payload.diagnosis_code,
+                                "display": payload.diagnosis_display or payload.diagnosis_code,
+                            }
+                        ]
+                    },
+                    "subject": {"reference": f"Patient/{payload.patient_id}"},
+                    "encounter": {"reference": f"Encounter/{payload.encounter_id}"},
+                }
+            }
+        )
 
     for medication in payload.medications:
-        entries.append(_fhir_transaction_entry({
-            "resourceType": "MedicationStatement",
-            "status": "active",
-            "medicationCodeableConcept": {"text": medication},
-            "subject": {"reference": patient_url},
-            "context": {"reference": encounter_url},
-        }))
+        entries.append(
+            {
+                "resource": {
+                    "resourceType": "MedicationStatement",
+                    "status": "active",
+                    "medicationCodeableConcept": {"text": medication},
+                    "subject": {"reference": f"Patient/{payload.patient_id}"},
+                    "context": {"reference": f"Encounter/{payload.encounter_id}"},
+                }
+            }
+        )
 
-    return {"resourceType": "Bundle", "type": "transaction", "entry": entries}
+    return {"resourceType": "Bundle", "type": "collection", "entry": entries}
 
 
 def _fhir_narrative(value: str) -> dict:
@@ -1513,16 +1507,14 @@ async def export_fhir(payload: FHIRExportRequest) -> dict:
 
 
 @app.post("/api/v1/ehr/commit")
-async def commit_to_ehr(payload: EHRCommitRequest, request: Request) -> dict:
+async def commit_to_ehr(payload: EHRCommitRequest) -> dict:
     """Send a signed-off FHIR bundle to an explicitly configured EHR endpoint."""
-    if getattr(request.state, "auth_method", None) != "api_key":
-        raise HTTPException(status_code=401, detail="API key authorization is required")
     if not payload.clinician_signed_off:
         raise HTTPException(status_code=400, detail="EHR commit requires explicit clinician sign-off")
     if not EHR_FHIR_ENDPOINT:
         raise HTTPException(status_code=503, detail="EHR_FHIR_ENDPOINT is not configured")
 
-    bundle = _build_fhir_bundle(payload, signed_off=True)
+    bundle = _build_fhir_bundle(payload)
     headers = {"Content-Type": "application/fhir+json", "Accept": "application/fhir+json"}
     if EHR_API_KEY:
         headers["Authorization"] = f"Bearer {EHR_API_KEY}"
@@ -1640,8 +1632,8 @@ MATERNAL_LEVEL_KEYWORDS = {
 
 
 class PostCareAnalysisRequest(BaseModel):
-    transcript: str = Field(..., min_length=1, max_length=100_000)
-    care_track: Literal["general", "maternal"] = "general"
+    transcript: str
+    care_track: str = "general"  # "general" or "maternal"
 
 
 NEGATION_WORDS = {"no", "not", "denies", "denying", "without", "never", "none", "negative"}
@@ -1739,7 +1731,14 @@ async def analyze_post_care_checkin(payload: PostCareAnalysisRequest):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok"}
+    return {
+        "status": "online",
+        "service": "AfriHealth AI Gateway",
+        "database": persistence.backend,
+        "intron_configured": bool(INTRON_API_KEY),
+        "ehr_configured": bool(EHR_FHIR_ENDPOINT),
+        "boost_phrases_loaded": len(ETHIOPIAN_MEDICAL_VOCABULARY)
+    }
 
 
 @app.get("/healthz")
@@ -2063,8 +2062,8 @@ async def websocket_stream(websocket: WebSocket):
         logger.warning("Rejecting STT WebSocket: origin is not allowed")
         await websocket.close(code=1008)
         return
-    if not _websocket_api_key_matches(websocket):
-        logger.warning("Rejecting STT WebSocket: API key is missing or invalid")
+    if REQUIRE_PROXY_AUTH and not _has_proxy_identity(websocket.headers):
+        logger.warning("Rejecting STT WebSocket: proxy identity is missing")
         await websocket.close(code=1008)
         return
     if not INTRON_API_KEY:
@@ -2102,18 +2101,18 @@ async def websocket_stream(websocket: WebSocket):
             open_timeout=20,
         ) as intron_ws:
             session_finished = asyncio.Event()
-            acknowledged_sequences: dict[int, int] = {}
+            acknowledged_timestamps: dict[int, float] = {}
             audio_buffer = bytearray()
-            audio_buffer_sequence: int | None = None
-            pending_audio_sequence: int | None = None
+            audio_buffer_timestamp: float | None = None
+            pending_audio_timestamp: float | None = None
             upstream_chunk_id = 0
             last_audio_at = started_at
 
-            async def send_audio_chunk(chunk: bytes, sequence: int | None) -> None:
+            async def send_audio_chunk(chunk: bytes, timestamp: float | None) -> None:
                 nonlocal upstream_chunk_id
                 upstream_chunk_id += 1
-                if sequence is not None:
-                    acknowledged_sequences[upstream_chunk_id] = sequence
+                if timestamp is not None:
+                    acknowledged_timestamps[upstream_chunk_id] = timestamp
                 await intron_ws.send(json.dumps({
                     "message_type": "INPUT_AUDIO_CHUNK",
                     "audio_base_64": base64.b64encode(chunk).decode("ascii"),
@@ -2121,7 +2120,7 @@ async def websocket_stream(websocket: WebSocket):
                 }))
 
             async def forward_browser_to_intron():
-                nonlocal last_audio_at, audio_buffer_sequence, pending_audio_sequence
+                nonlocal last_audio_at, audio_buffer_timestamp, pending_audio_timestamp
                 try:
                     while True:
                         now = time.monotonic()
@@ -2149,20 +2148,15 @@ async def websocket_stream(websocket: WebSocket):
                             if len(audio_bytes) % 2 or len(audio_bytes) > STT_STREAM_MAX_CHUNK_BYTES:
                                 await websocket.send_json({"error": "Audio frames must be even-length PCM16 and no larger than 32 KB"})
                                 return
-                            if pending_audio_sequence is None:
-                                await websocket.send_json({"error": "Audio frame is missing sequential packet metadata"})
-                                return
                             if not audio_bytes:
                                 continue
                             last_audio_at = time.monotonic()
                             audio_buffer.extend(audio_bytes)
-                            audio_buffer_sequence = pending_audio_sequence
-                            pending_audio_sequence = None
+                            audio_buffer_timestamp = pending_audio_timestamp
+                            pending_audio_timestamp = None
                             chunk = _take_stt_audio_chunk(audio_buffer)
                             while chunk is not None:
-                                await send_audio_chunk(chunk, audio_buffer_sequence)
-                                if not audio_buffer:
-                                    audio_buffer_sequence = None
+                                await send_audio_chunk(chunk, audio_buffer_timestamp)
                                 chunk = _take_stt_audio_chunk(audio_buffer)
                         elif data.get("text") is not None:
                             try:
@@ -2170,13 +2164,13 @@ async def websocket_stream(websocket: WebSocket):
                                 if not isinstance(msg, dict):
                                     continue
                                 if msg.get("type") == "audio_meta":
-                                    sequence = msg.get("sequence")
-                                    if isinstance(sequence, int) and not isinstance(sequence, bool) and sequence > 0:
-                                        pending_audio_sequence = sequence
+                                    timestamp_ms = msg.get("timestamp_ms")
+                                    if isinstance(timestamp_ms, (int, float)) and not isinstance(timestamp_ms, bool):
+                                        pending_audio_timestamp = timestamp_ms
                                 elif msg.get("event") == "stop":
                                     chunk = _take_stt_audio_chunk(audio_buffer, final=True)
                                     if chunk is not None:
-                                        await send_audio_chunk(chunk, audio_buffer_sequence)
+                                        await send_audio_chunk(chunk, audio_buffer_timestamp)
                                     await intron_ws.send(json.dumps({"message_type": "COMMIT"}))
                                     remaining = max(0, STT_STREAM_MAX_SESSION_SECONDS - (time.monotonic() - started_at))
                                     try:
@@ -2217,12 +2211,12 @@ async def websocket_stream(websocket: WebSocket):
                                 acknowledged_chunk_id = int(payload.get("chunk_id"))
                             except (TypeError, ValueError):
                                 continue
-                            sequence = acknowledged_sequences.get(acknowledged_chunk_id)
-                            if sequence is not None:
-                                await websocket.send_json({"ack_sequence": sequence})
-                                for chunk_id in tuple(acknowledged_sequences):
+                            timestamp_ms = acknowledged_timestamps.get(acknowledged_chunk_id)
+                            if timestamp_ms is not None:
+                                await websocket.send_json({"ack_ts": timestamp_ms})
+                                for chunk_id in tuple(acknowledged_timestamps):
                                     if chunk_id <= acknowledged_chunk_id:
-                                        acknowledged_sequences.pop(chunk_id, None)
+                                        acknowledged_timestamps.pop(chunk_id, None)
                         elif msg_type == "PARTIAL_TRANSCRIPT":
                             transcript = payload.get("transcript", "")
                             if transcript:
@@ -2339,7 +2333,7 @@ async def intron_tts_stream(websocket: WebSocket):
     if origin not in ALLOWED_ORIGINS:
         await websocket.close(code=1008)
         return
-    if not _websocket_api_key_matches(websocket):
+    if REQUIRE_PROXY_AUTH and not _has_proxy_identity(websocket.headers):
         await websocket.close(code=1008)
         return
     if not INTRON_API_KEY:

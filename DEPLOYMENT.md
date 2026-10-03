@@ -41,10 +41,10 @@ Configure these only on the API host:
 
 ```text
 APP_ENV=production
-INTRON_API_KEY="<YOUR_EXISTING_INTRON_API_KEY>"
-SAHARA_API_KEY="<YOUR_GENERATED_API_KEY_SECRET>"
+INTRON_API_KEY=...
 DATABASE_URL=${{Postgres.DATABASE_URL}}
 ALLOWED_ORIGINS=https://your-project.pages.dev
+REQUIRE_PROXY_AUTH=true
 INTRON_TTS_VOICE_LANGUAGE=am
 INTRON_TTS_VOICE_ACCENT=amharic
 INTRON_TTS_VOICE_GENDER=female
@@ -64,13 +64,12 @@ provider response IDs.
 returns `503` until `EHR_FHIR_ENDPOINT` is configured, and then submits the
 bundle with the optional `EHR_API_KEY`.
 
-Set `SAHARA_API_KEY` on the FastAPI host and provide the same secret to
-authorized browser users out of band. The page prompts for it when a protected
-API is first used, sends it as a Bearer token for REST calls, and keeps it only
-in memory. Native browser WebSockets cannot set an `Authorization` header, so
-WebSocket routes validate an encoded `sahara-auth.*` subprotocol instead.
-Without a valid key, `/api/*` returns 401. A shared API key does not establish
-an individual clinician identity; EHR commit also requires explicit sign-off.
+For production, put the FastAPI service behind an identity-aware gateway such
+as Cloudflare Access. Configure the gateway to strip incoming
+`X-Authenticated-User` and `Cf-Access-Authenticated-User-Email` headers, then
+inject one only after successful clinician authentication. Set
+`REQUIRE_PROXY_AUTH=true` and firewall the FastAPI origin so it is reachable
+only through that gateway. Origin checks alone are not user authentication.
 
 The gateway exposes `POST /api/intron/stt/upload-sync` using the documented
 `audio_file_blob` multipart field; `POST /api/intron/tts/generate` and
@@ -89,8 +88,8 @@ reachable interface:
 ```bash
 python -m pip install -r requirements.txt
 export INTRON_API_KEY="your-key"
-export SAHARA_API_KEY="your-generated-api-key"
 export ALLOWED_ORIGINS="https://your-project.pages.dev"
+export REQUIRE_PROXY_AUTH="true"
 python -m uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
@@ -99,32 +98,24 @@ must be HTTPS, and WebSocket clients must connect through `wss://`.
 
 ## Deploy the frontend to Cloudflare Pages
 
-The repository is a static site. Configure Cloudflare Pages to stage only the
-browser assets and benchmark methodology document:
+The repository is a static site. In Cloudflare Pages, connect the repository
+and use:
 
-- **Build command:** `mkdir -p _site && cp index.html pcm-processor.js offline-sync-worker.js sw.js BENCHMARK_RESULTS.md _site/`
-- **Build output directory:** `_site`
+- **Build command:** none
+- **Build output directory:** `.`
 - **Root directory:** repository root
 
-This allowlist excludes notebook outputs, benchmark audio, Python source,
-configuration, and private evaluation files from the static deployment.
+If the deployment platform requires a command, use a no-op command such as
+`echo "static site"` rather than running a development server. Do not upload
+the private `clinical_validation/` directory or any local audio artifacts.
 
-Optionally set `SAHARA_API_ORIGIN` as a public Pages build variable to the HTTPS
-FastAPI origin. If omitted, the frontend uses its current origin; configure a
-same-origin reverse proxy from the static host to FastAPI in that case. For
-Cloudflare Pages Git integration, use this build command and output directory:
+Set the API origin in the deployed page before the application script loads:
 
-```sh
-mkdir -p _site
-cp index.html pcm-processor.js offline-sync-worker.js sw.js BENCHMARK_RESULTS.md _site/
-if [[ -n "$SAHARA_API_ORIGIN" ]]; then
-  if [[ ! "$SAHARA_API_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]; then exit 1; fi
-  printf 'window.SAHARA_API_ORIGIN = "%s";\n' "$SAHARA_API_ORIGIN" > _site/api-origin.js
-fi
+```html
+<script>
+  window.SAHARA_API_ORIGIN = "https://sahara-healthcare-suite-production-e636.up.railway.app";
+</script>
 ```
-
-Set the build output directory to `_site` (not `.`). Never embed
-`SAHARA_API_KEY` in the static frontend; users enter it at runtime.
 
 For a production deployment, this value should be injected during the
 deployment process rather than edited manually for each environment.
@@ -133,8 +124,7 @@ deployment process rather than edited manually for each environment.
 
 1. Open `https://your-project.pages.dev/` and confirm the page loads.
 2. Request `https://api.example.org/health` and confirm the service is online.
-3. Confirm unauthenticated `/api/*` requests return 401 and authenticated
-   requests pass API-key validation.
+3. Confirm the API reports the expected Intron connection state.
 4. Test one consented, de-identified recording:
    local playback -> explicit upload -> transcript -> clinician review.
 5. Confirm browser developer tools show no API key in source, storage, or
@@ -143,8 +133,8 @@ deployment process rather than edited manually for each environment.
 7. Confirm a request from an unapproved origin is rejected by CORS.
 8. Review hosting logs and retention settings before handling real patient
    information.
-9. Confirm unauthenticated HTTP and WebSocket requests are rejected, and
-   forged identity headers do not authenticate.
+9. Confirm unauthenticated HTTP and WebSocket requests are rejected when
+   `REQUIRE_PROXY_AUTH=true`.
 
 ## Operational boundaries
 

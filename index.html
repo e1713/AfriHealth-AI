@@ -905,17 +905,19 @@
   <footer class="border-t border-slate-800 bg-slate-950 py-4 px-6 text-center text-xs text-slate-500">
     AfriHealth AI &bull; Clinician-reviewed voice documentation &bull; Sahara Code-Switch Africa Challenge
   </footer>
-<script src="./api-origin.js"></script>
 <script>
   if (!window.SAHARA_API_ORIGIN) {
     const hostname = window.location.hostname;
     const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(hostname);
     const forwardedApiHostname = hostname.replace(/-3000(?=\.)/, "-8000");
+    const productionApiOrigin = "https://sahara-healthcare-suite-production.up.railway.app";
 
     if (isLocalhost) {
       window.SAHARA_API_ORIGIN = `${window.location.protocol}//${hostname}:8000`;
     } else if (forwardedApiHostname !== hostname) {
       window.SAHARA_API_ORIGIN = `${window.location.protocol}//${forwardedApiHostname}`;
+    } else {
+      window.SAHARA_API_ORIGIN = productionApiOrigin;
     }
   }
 </script>
@@ -923,15 +925,13 @@
   let mediaStream = null;
   let workletNode = null;
   let websocket = null;
-  const SAHARA_API_KEY = window.SAHARA_API_KEY || localStorage.getItem("SAHARA_API_KEY") || "sahara_sec_demo_2026";
   let audioContext = null;
   let websocketRetryDelayMs = 100;
   let websocketReconnectTimer = null;
   let audioFlushResolver = null;
-  let lastAckSequence = 0;
+  let lastAckTs = 0;
   const pendingAudioFrames = new Map();
-  const MAX_PENDING_AUDIO_SAMPLES = 80000;
-  let pendingAudioSampleCount = 0;
+  const MAX_PENDING_AUDIO_FRAMES = 240;
   const OFFLINE_DB_NAME = 'sahara-healthcare-suite';
   const OFFLINE_STORE_NAME = 'offline-sync-queue';
 
@@ -1069,9 +1069,8 @@
         ? window.location.origin
         : isLocalhost
             ? `${window.location.protocol}//${window.location.hostname}:8000`
-            : window.location.origin;
-    const apiOrigin = configuredOrigin || defaultOrigin;
-    const apiUrl = new URL(apiOrigin, window.location.origin);
+            : 'https://sahara-healthcare-suite-production.up.railway.app';
+    const apiUrl = new URL(configuredOrigin || defaultOrigin, window.location.origin);
     if (!['http:', 'https:'].includes(apiUrl.protocol)) {
       throw new Error('The configured API origin must use HTTP or HTTPS.');
     }
@@ -1079,29 +1078,7 @@
   }
 
   function fetchApi(input, options = {}) {
-    const url = new URL(input, window.location.href);
-    const headers = new Headers(options.headers || {});
-    if (url.pathname.startsWith('/api/')) {
-      headers.set('Authorization', `Bearer ${getSaharaApiKey()}`);
-    }
-    return fetch(input, { ...options, headers, credentials: 'omit' });
-  }
-
-  function getSaharaApiKey() {
-    return SAHARA_API_KEY;
-  }
-
-  function getWebSocketAuthProtocol() {
-    const encodedBytes = new TextEncoder().encode(getSaharaApiKey());
-    let binary = '';
-    for (const byte of encodedBytes) {
-      binary += String.fromCharCode(byte);
-    }
-    const encodedKey = btoa(binary)
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
-    return `sahara-auth.${encodedKey}`;
+    return fetch(input, { ...options, credentials: 'include' });
   }
 
   function showToast(message, variant = 'info') {
@@ -1170,12 +1147,12 @@
       clinic_id: clinicId,
     });
     return new Promise((resolve, reject) => {
-      websocket = new WebSocket(
-        `${protocol}//${apiUrl.host}/ws/stream?${streamQuery.toString()}`,
-        [getWebSocketAuthProtocol()]
-      );
+      websocket = new WebSocket(`${protocol}//${apiUrl.host}/ws/stream?${streamQuery.toString()}`);
       websocket.onopen = () => {
         console.log('WebSocket connected');
+        if (lastAckTs > 0) {
+          websocket.send(JSON.stringify({ type: 'resume', ack_ts: lastAckTs }));
+        }
         const status = document.getElementById('mic-status');
         if (status && (isRecordingTriage || ehrRecording)) {
           status.dataset.baseStatus = 'Connected. Listening to code-switched audio stream...';
@@ -1187,16 +1164,13 @@
       websocket.onmessage = (event) => {
         try {
           const payload = typeof event.data === 'string' ? JSON.parse(event.data) : null;
-          if (payload && Number.isInteger(payload.ack_sequence)) {
-            lastAckSequence = Math.max(lastAckSequence, payload.ack_sequence);
-            for (const [sequence, frame] of pendingAudioFrames) {
-              if (sequence <= lastAckSequence) {
-                pendingAudioFrames.delete(sequence);
-                pendingAudioSampleCount -= frame.pcmBuffer.byteLength / 2;
-              }
+          if (payload && typeof payload.ack_ts === 'number') {
+            lastAckTs = payload.ack_ts;
+            for (const [timestamp] of pendingAudioFrames) {
+              if (timestamp <= lastAckTs) pendingAudioFrames.delete(timestamp);
             }
             if (workletNode) {
-              workletNode.port.postMessage({ command: 'ACK', ackSequence: lastAckSequence });
+              workletNode.port.postMessage({ command: 'ACK', ackTimestamp: lastAckTs });
             }
           }
           if (payload && typeof payload.error === 'string') {
@@ -1341,14 +1315,9 @@
           timestamp_ms: packet.timestamp,
           pcmBuffer: packet.pcmBuffer.slice(0)
         };
-        if (!pendingAudioFrames.has(frame.sequence)) {
-          pendingAudioFrames.set(frame.sequence, frame);
-          pendingAudioSampleCount += frame.pcmBuffer.byteLength / 2;
-        }
-        while (pendingAudioSampleCount > MAX_PENDING_AUDIO_SAMPLES && pendingAudioFrames.size) {
-          const [oldestSequence, oldestFrame] = pendingAudioFrames.entries().next().value;
-          pendingAudioFrames.delete(oldestSequence);
-          pendingAudioSampleCount -= oldestFrame.pcmBuffer.byteLength / 2;
+        pendingAudioFrames.set(frame.timestamp_ms, frame);
+        while (pendingAudioFrames.size > MAX_PENDING_AUDIO_FRAMES) {
+          pendingAudioFrames.delete(pendingAudioFrames.keys().next().value);
         }
         if (currentSocket && currentSocket.readyState === WebSocket.OPEN) {
           if (firstAudioFrameSentAt === null) {
@@ -1360,7 +1329,7 @@
             type: 'audio_meta',
             sequence: frame.sequence,
             timestamp_ms: frame.timestamp_ms,
-            ack_sequence: lastAckSequence
+            ack_ts: lastAckTs
           });
 
           if (!navigator.onLine) {
@@ -1391,16 +1360,13 @@
 
   function replayPendingAudioFrames(socket) {
     if (!socket || socket.readyState !== WebSocket.OPEN) return;
-    if (workletNode) {
-      workletNode.port.postMessage({ command: 'REPLAY' });
-      return;
-    }
     for (const frame of pendingAudioFrames.values()) {
+      if (frame.timestamp_ms <= lastAckTs) continue;
       socket.send(JSON.stringify({
         type: 'audio_meta',
         sequence: frame.sequence,
         timestamp_ms: frame.timestamp_ms,
-        ack_sequence: lastAckSequence
+        ack_ts: lastAckTs
       }));
       socket.send(frame.pcmBuffer);
     }
@@ -1980,9 +1946,7 @@
         resetTriageProcessingState();
         try {
           pendingAudioFrames.clear();
-          lastAckSequence = 0;
-          pendingAudioFrames.clear();
-          pendingAudioSampleCount = 0;
+          lastAckTs = 0;
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           reviewAudioContext = new (window.AudioContext || window.webkitAudioContext)();
           reviewAudioSource = reviewAudioContext.createMediaStreamSource(stream);

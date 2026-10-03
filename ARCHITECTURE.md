@@ -39,7 +39,9 @@ Optional local static server (server.js or npm start :3000)
 
 The browser must not receive or store the Intron API key. Production
 deployments should expose only the FastAPI service through an allowlisted
-origin and configure `ALLOWED_ORIGINS`.
+origin and configure `ALLOWED_ORIGINS`. Browser users enter `SAHARA_API_KEY` at
+runtime; REST calls use Bearer authorization, while native browser WebSockets
+use an encoded subprotocol because they cannot set custom request headers.
 
 ## 3. Main request flows
 
@@ -146,7 +148,9 @@ evaluation and future clinical governance.
 The persistence `session_id` is a stream-session UUID. It is not linked to the
 separate, caller-supplied FHIR `encounter_id`. The repository has no patient or
 clinician tables and no built-in clinician accounts or role-based access
-control. `REQUIRE_PROXY_AUTH` enables only a trusted identity-header check.
+control. API routes fail closed unless they receive the configured
+`SAHARA_API_KEY` bearer token. This shared key does not establish an individual
+clinician identity or role; EHR commits also require explicit clinician sign-off.
 
 ## 6. Known limitations
 

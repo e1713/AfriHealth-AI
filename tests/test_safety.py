@@ -46,13 +46,56 @@ class SafetyTests(unittest.TestCase):
         self.assertTrue(result.soap.requires_manual_review)
         self.assertEqual(result.soap.icd10_codes, [])
 
-    def test_process_clinical_http_route_accepts_transcript_and_returns_200_fallback(self):
-        with patch.object(main, "REQUIRE_PROXY_AUTH", False):
-            response = TestClient(main.app).post(
+    def test_clinical_process_rejects_transcripts_over_maximum_length(self):
+        with self.assertRaises(ValueError):
+            main.ClinicalProcessRequest(transcript="x" * 100_001)
+        with self.assertRaises(ValueError):
+            main.SOAPDraftPayload(transcript="x" * 100_001)
+        with self.assertRaises(ValueError):
+            main.PostCareAnalysisRequest(transcript="x" * 100_001)
+        with self.assertRaises(ValueError):
+            main.FHIRExportRequest(
+                patient_id="synthetic",
+                encounter_id="synthetic",
+                chief_complaint="audit",
+                medications=["x" * 1001],
+            )
+
+    def test_process_clinical_http_requires_sahara_api_key(self):
+        with patch.dict("os.environ", {"SAHARA_API_KEY": "test-sahara-api-key"}):
+            unauthenticated = TestClient(main.app).post(
                 "/api/v1/process-clinical",
                 json={"transcript": "Patient reports headache and fever."},
             )
+            forged_header = TestClient(main.app).post(
+                "/api/v1/process-clinical",
+                headers={"x-authenticated-user": "clinician@example.org"},
+                json={"transcript": "Patient reports headache and fever."},
+            )
+            invalid_key = TestClient(main.app).post(
+                "/api/v1/process-clinical",
+                headers={"Authorization": "Bearer invalid-key"},
+                json={"transcript": "Patient reports headache and fever."},
+            )
+            fhir_export = TestClient(main.app).post(
+                "/api/v1/fhir/export",
+                json={"patient_id": "synthetic", "encounter_id": "synthetic", "chief_complaint": "audit"},
+            )
+            ehr_commit = TestClient(main.app).post(
+                "/api/v1/ehr/commit",
+                json={"patient_id": "synthetic", "encounter_id": "synthetic", "chief_complaint": "audit", "clinician_signed_off": True},
+            )
+            response = TestClient(main.app).post(
+                "/api/v1/process-clinical",
+                headers={"Authorization": "Bearer test-sahara-api-key"},
+                json={"transcript": "Patient reports headache and fever."},
+            )
 
+        self.assertEqual(unauthenticated.status_code, 401)
+        self.assertEqual(forged_header.status_code, 401)
+        self.assertEqual(invalid_key.status_code, 401)
+        self.assertEqual(fhir_export.status_code, 401)
+        self.assertEqual(ehr_commit.status_code, 401)
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertTrue(payload["sign_off_required"])
@@ -60,9 +103,28 @@ class SafetyTests(unittest.TestCase):
         self.assertEqual(payload["soap"]["icd10_codes"], [])
         self.assertEqual(payload["scrubbed_transcript"], "Patient reports headache and fever.")
 
+    def test_sahara_api_key_uses_constant_time_comparison(self):
+        with patch.dict("os.environ", {"SAHARA_API_KEY": "test-sahara-api-key"}):
+            self.assertTrue(main._api_key_matches("test-sahara-api-key"))
+            self.assertFalse(main._api_key_matches("incorrect-key"))
+            self.assertFalse(main._api_key_matches(None))
+
+            encoded_key = base64.urlsafe_b64encode(b"test-sahara-api-key").decode("ascii").rstrip("=")
+            websocket = Mock()
+            websocket.headers = {"sec-websocket-protocol": f"sahara-auth.{encoded_key}"}
+            self.assertTrue(main._websocket_api_key_matches(websocket))
+
+            websocket.headers = {"sec-websocket-protocol": "sahara-auth.invalid"}
+            self.assertFalse(main._websocket_api_key_matches(websocket))
+            websocket.headers = {}
+            self.assertFalse(main._websocket_api_key_matches(websocket))
+
+    def test_public_health_response_does_not_expose_configuration(self):
+        self.assertEqual(asyncio.run(main.health_check()), {"status": "ok"})
+
     def test_intron_v1_stt_route_uses_backend_proxy(self):
         with (
-            patch.object(main, "REQUIRE_PROXY_AUTH", False),
+            patch.dict("os.environ", {"SAHARA_API_KEY": "test-sahara-api-key"}),
             patch.object(main, "INTRON_API_KEY", "server-side-test-key"),
             patch.object(
                 main,
@@ -73,6 +135,7 @@ class SafetyTests(unittest.TestCase):
         ):
             response = TestClient(main.app).post(
                 "/api/v1/stt/intron",
+                headers={"Authorization": "Bearer test-sahara-api-key"},
                 files={"audio_file_blob": ("test.wav", b"audio", "audio/wav")},
                 data={"audio_file_name": "test.wav", "use_language_asr_input": "am"},
             )
@@ -275,7 +338,7 @@ class SafetyTests(unittest.TestCase):
 
         asyncio.run(exercise())
 
-    def test_stt_websocket_logs_missing_proxy_identity(self):
+    def test_stt_websocket_rejects_missing_api_key(self):
         async def exercise():
             browser = Mock()
             browser.headers = {"origin": "https://sahara-healthcare-suite.pages.dev"}
@@ -283,24 +346,27 @@ class SafetyTests(unittest.TestCase):
             browser.close = AsyncMock()
             with (
                 patch.object(main, "ALLOWED_ORIGINS", ["https://sahara-healthcare-suite.pages.dev"]),
-                patch.object(main, "REQUIRE_PROXY_AUTH", True),
                 patch.object(main.logger, "warning") as warning,
             ):
                 await main.websocket_stream(browser)
             browser.close.assert_awaited_once_with(code=1008)
-            warning.assert_called_once_with("Rejecting STT WebSocket: proxy identity is missing")
+            warning.assert_called_once_with("Rejecting STT WebSocket: API key is missing or invalid")
 
         asyncio.run(exercise())
 
     def test_stt_websocket_logs_missing_intron_key(self):
         async def exercise():
             browser = Mock()
-            browser.headers = {"origin": "https://sahara-healthcare-suite.pages.dev"}
+            encoded_key = base64.urlsafe_b64encode(b"test-sahara-api-key").decode("ascii").rstrip("=")
+            browser.headers = {
+                "origin": "https://sahara-healthcare-suite.pages.dev",
+                "sec-websocket-protocol": f"sahara-auth.{encoded_key}",
+            }
             browser.query_params = {}
             browser.close = AsyncMock()
             with (
                 patch.object(main, "ALLOWED_ORIGINS", ["https://sahara-healthcare-suite.pages.dev"]),
-                patch.object(main, "REQUIRE_PROXY_AUTH", False),
+                patch.dict("os.environ", {"SAHARA_API_KEY": "test-sahara-api-key"}),
                 patch.object(main, "INTRON_API_KEY", ""),
                 patch.object(main.logger, "error") as error,
             ):
@@ -327,7 +393,13 @@ class SafetyTests(unittest.TestCase):
     def test_stt_websocket_translates_audio_ack_and_commit_messages(self):
         class BrowserSocket:
             def __init__(self):
-                self.headers = {"origin": "http://localhost:3000"}
+                self.headers = {
+                    "origin": "http://localhost:3000",
+                    "sec-websocket-protocol": (
+                        "sahara-auth."
+                        + base64.urlsafe_b64encode(b"test-sahara-api-key").decode("ascii").rstrip("=")
+                    ),
+                }
                 self.query_params = {"use_language_asr_input": "en"}
                 self.incoming = asyncio.Queue()
                 self.outgoing = []
@@ -384,9 +456,9 @@ class SafetyTests(unittest.TestCase):
             first_audio = b"\x01\x00" * 300
             second_audio = b"\x02\x00" * 212
             for event in (
-                {"type": "websocket.receive", "text": json.dumps({"type": "audio_meta", "timestamp_ms": 1000})},
+                {"type": "websocket.receive", "text": json.dumps({"type": "audio_meta", "sequence": 1, "timestamp_ms": 1000})},
                 {"type": "websocket.receive", "bytes": first_audio},
-                {"type": "websocket.receive", "text": json.dumps({"type": "audio_meta", "timestamp_ms": 1100})},
+                {"type": "websocket.receive", "text": json.dumps({"type": "audio_meta", "sequence": 2, "timestamp_ms": 1100})},
                 {"type": "websocket.receive", "bytes": second_audio},
                 {"type": "websocket.receive", "text": json.dumps({"event": "stop"})},
             ):
@@ -395,7 +467,7 @@ class SafetyTests(unittest.TestCase):
             intron = IntronSocket()
             with (
                 patch.object(main, "ALLOWED_ORIGINS", ["http://localhost:3000"]),
-                patch.object(main, "REQUIRE_PROXY_AUTH", False),
+                patch.dict("os.environ", {"SAHARA_API_KEY": "test-sahara-api-key"}),
                 patch.object(main, "INTRON_API_KEY", "test-key"),
                 patch.object(main.persistence, "start_session", new_callable=AsyncMock, return_value="local-session"),
                 patch.object(main.persistence, "record_transcript", new_callable=AsyncMock) as record_transcript,
@@ -412,7 +484,7 @@ class SafetyTests(unittest.TestCase):
                 first_audio + second_audio,
             )
             self.assertEqual(intron.sent[-1], {"message_type": "COMMIT"})
-            self.assertIn({"ack_ts": 1100}, browser.outgoing)
+            self.assertIn({"ack_sequence": 2}, browser.outgoing)
             self.assertIn(
                 {"transcript": "test transcript", "session_id": "local-session"},
                 browser.outgoing,
@@ -465,27 +537,13 @@ class SafetyTests(unittest.TestCase):
             main._followup_sessions.clear()
             main._followup_sessions.update(original_sessions)
 
-    def test_proxy_identity_header_is_recognized(self):
-        self.assertTrue(main._has_proxy_identity({"x-authenticated-user": "clinician@example.org"}))
-        self.assertTrue(main._has_proxy_identity({"cf-access-authenticated-user-email": "clinician@example.org"}))
-        self.assertFalse(main._has_proxy_identity({}))
-
-    def test_production_environment_requires_proxy_auth(self):
-        with patch.dict("os.environ", {"APP_ENV": "production", "REQUIRE_PROXY_AUTH": "false"}, clear=True):
-            self.assertTrue(main._proxy_auth_required())
-        with patch.dict("os.environ", {"APP_ENV": "development"}, clear=True):
-            self.assertFalse(main._proxy_auth_required())
-
-    def test_proxy_auth_middleware_rejects_missing_identity(self):
-        original_setting = main.REQUIRE_PROXY_AUTH
-        try:
-            main.REQUIRE_PROXY_AUTH = True
-            middleware = main.ProxyIdentityMiddleware(main.app)
+    def test_unconfigured_api_key_fails_closed_in_api_middleware(self):
+        with patch.dict("os.environ", {"SAHARA_API_KEY": ""}):
+            middleware = main.ClinicalIdentityMiddleware(main.app)
             request = Request({"type": "http", "method": "POST", "path": "/api/v1/post-care/analyze", "headers": []})
             response = asyncio.run(middleware.dispatch(request, lambda _: PlainTextResponse("ok")))
             self.assertEqual(response.status_code, 401)
-        finally:
-            main.REQUIRE_PROXY_AUTH = original_setting
+            self.assertEqual(response.headers["www-authenticate"], "Bearer")
 
     def test_fhir_export_contains_patient_and_encounter_references(self):
         payload = main.FHIRExportRequest(
@@ -498,11 +556,17 @@ class SafetyTests(unittest.TestCase):
         bundle = asyncio.run(main.export_fhir(payload))
         resources = [entry["resource"] for entry in bundle["entry"]]
         self.assertEqual(bundle["resourceType"], "Bundle")
-        self.assertEqual(resources[0]["id"], "patient-1")
-        self.assertEqual(resources[1]["subject"]["reference"], "Patient/patient-1")
+        self.assertEqual(bundle["type"], "transaction")
+        self.assertEqual(resources[1]["subject"]["reference"], bundle["entry"][0]["fullUrl"])
+        self.assertTrue(all(entry["fullUrl"].startswith("urn:uuid:") for entry in bundle["entry"]))
+        self.assertEqual(len({entry["fullUrl"] for entry in bundle["entry"]}), len(bundle["entry"]))
+        self.assertTrue(all(
+            entry["request"] == {"method": "POST", "url": entry["resource"]["resourceType"]}
+            for entry in bundle["entry"]
+        ))
         self.assertEqual(resources[-1]["code"]["coding"][0]["code"], "R07.9")
 
-    def test_fhir_export_contains_signed_soap_composition(self):
+    def test_fhir_export_keeps_soap_composition_preliminary(self):
         payload = main.FHIRExportRequest(
             patient_id="patient-1",
             encounter_id="encounter-1",
@@ -523,6 +587,9 @@ class SafetyTests(unittest.TestCase):
         ]
         self.assertEqual(len(compositions), 1)
         composition = compositions[0]
+        self.assertEqual(composition["status"], "preliminary")
+        self.assertEqual(composition["subject"]["reference"], bundle["entry"][0]["fullUrl"])
+        self.assertEqual(composition["encounter"]["reference"], bundle["entry"][1]["fullUrl"])
         self.assertTrue(composition["identifier"]["value"].startswith("urn:uuid:"))
         self.assertTrue(composition["date"].endswith("Z"))
         self.assertTrue(composition["author"])
@@ -531,15 +598,51 @@ class SafetyTests(unittest.TestCase):
         self.assertEqual(narrative.tag, "{http://www.w3.org/1999/xhtml}div")
         self.assertEqual(narrative.text, "Chest pain for two days.")
 
+    def test_verified_commit_builder_marks_composition_final(self):
+        payload = main.EHRCommitRequest(
+            patient_id="patient-1",
+            encounter_id="encounter-1",
+            chief_complaint="Chest pain",
+            clinician_id="clinician@example.org",
+            clinician_signed_off=True,
+            soap=main.SOAPDraftPayload(assessment="Clinician reviewed."),
+        )
+        bundle = main._build_fhir_bundle(payload, signed_off=True)
+        composition = next(
+            entry["resource"]
+            for entry in bundle["entry"]
+            if entry["resource"]["resourceType"] == "Composition"
+        )
+        self.assertEqual(composition["status"], "final")
+        self.assertEqual(
+            composition["author"][0]["display"],
+            "Clinician sign-off recorded (identity not verified)",
+        )
+
     def test_ehr_commit_requires_explicit_signoff(self):
+        request = Mock()
+        request.state = Mock(auth_method="api_key")
         payload = main.EHRCommitRequest(
             patient_id="patient-1",
             encounter_id="encounter-1",
             chief_complaint="Chest pain",
         )
         with self.assertRaises(HTTPException) as context:
-            asyncio.run(main.commit_to_ehr(payload))
+            asyncio.run(main.commit_to_ehr(payload, request))
         self.assertEqual(context.exception.status_code, 400)
+
+    def test_ehr_commit_requires_api_key_authentication(self):
+        request = Mock()
+        request.state = Mock(auth_method="legacy_token")
+        payload = main.EHRCommitRequest(
+            patient_id="patient-1",
+            encounter_id="encounter-1",
+            chief_complaint="Chest pain",
+            clinician_signed_off=True,
+        )
+        with self.assertRaises(HTTPException) as context:
+            asyncio.run(main.commit_to_ehr(payload, request))
+        self.assertEqual(context.exception.status_code, 401)
 
     def test_live_benchmark_reports_unconfigured_providers(self):
         upload = UploadFile(file=io.BytesIO(b"audio"), filename="sample.wav")
@@ -565,6 +668,8 @@ class SafetyTests(unittest.TestCase):
         self.assertEqual(result["scoring_status"], "transcript_only")
 
     def test_ehr_commit_fails_closed_without_endpoint(self):
+        request = Mock()
+        request.state = Mock(auth_method="api_key")
         payload = main.EHRCommitRequest(
             patient_id="patient-1",
             encounter_id="encounter-1",
@@ -575,7 +680,7 @@ class SafetyTests(unittest.TestCase):
         try:
             main.EHR_FHIR_ENDPOINT = ""
             with self.assertRaises(HTTPException) as context:
-                asyncio.run(main.commit_to_ehr(payload))
+                asyncio.run(main.commit_to_ehr(payload, request))
             self.assertEqual(context.exception.status_code, 503)
         finally:
             main.EHR_FHIR_ENDPOINT = original_endpoint

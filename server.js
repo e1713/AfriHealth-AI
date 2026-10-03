@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { URL } = require('url');
 
 const PORT = process.env.PORT || 3000;
@@ -47,6 +48,18 @@ function readJsonBody(req) {
 }
 
 async function handleIntronTranscription(req, res) {
+  const expectedToken = process.env.SAHARA_API_KEY || '';
+  const authorization = req.headers.authorization || '';
+  const suppliedToken = authorization.match(/^Bearer\s+(.+)$/i)?.[1] || '';
+  const expectedBytes = Buffer.from(expectedToken);
+  const suppliedBytes = Buffer.from(suppliedToken);
+  const authorized = expectedBytes.length > 0
+    && expectedBytes.length === suppliedBytes.length
+    && crypto.timingSafeEqual(expectedBytes, suppliedBytes);
+  if (!authorized) {
+    return sendJson(res, 401, { error: 'Authenticated clinical access is required.' });
+  }
+
   const apiKey = process.env.INTRON_API_KEY;
   if (!apiKey) {
     return sendJson(res, 401, {
@@ -103,7 +116,7 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'http://localhost:3000',
       'Vary': 'Origin',
-      'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept',
+      'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
     });
     return res.end();

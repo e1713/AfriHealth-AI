@@ -1780,6 +1780,23 @@
       return Boolean(audio && !audio.paused && !audio.ended);
     }
 
+    const AMHARIC_TTS_PHONETIC_MAP = [
+      ['ጤና ይስጥልኝ', 'Tena Yistilign'],
+      ['ጤናይስጥልኝ', 'Tena Yistilign'],
+      ['ደህና ነዎት', 'Dehna Newot'],
+      ['ደም መፍሰስ', 'Dem Mefses'],
+      ['ሕፃኑ', 'Hitsanu'],
+      ['ህመም', 'Hmem'],
+      ['አለዎት', 'Alewot']
+    ];
+
+    function transliterateKnownAmharic(text) {
+      return AMHARIC_TTS_PHONETIC_MAP.reduce(
+        (result, [phrase, phonetic]) => result.split(phrase).join(phonetic),
+        text
+      );
+    }
+
     function speakText(text, { lang = 'en-US', onstart, onend } = {}) {
       if (!voiceOutputEnabled || !text) return;
       if (!('speechSynthesis' in window)) {
@@ -1788,15 +1805,42 @@
       }
       if (isModule3ServerAudioPlaying()) return;
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      const voice = pickVoice(lang);
-      if (voice) utterance.voice = voice;
-      utterance.lang = voice ? voice.lang : lang;
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      if (onstart) utterance.onstart = onstart;
-      if (onend) { utterance.onend = onend; utterance.onerror = onend; }
-      window.speechSynthesis.speak(utterance);
+      const availableVoices = window.speechSynthesis.getVoices();
+      if (availableVoices.length) cachedVoices = availableVoices;
+      const amharicVoice = cachedVoices.find(voice => /^am(?:-|_|$)/i.test(voice.lang || '')) || null;
+      const segments = String(text).match(/[\u1200-\u137F]+(?:[\s\u1361-\u1368]+[\u1200-\u137F]+)*|[^\u1200-\u137F]+/g) || [];
+      const utterances = segments.map((segment) => {
+        const isEthiopic = /[\u1200-\u137F]/.test(segment);
+        const segmentText = isEthiopic && !amharicVoice
+          ? transliterateKnownAmharic(segment)
+          : segment;
+        const utterance = new SpeechSynthesisUtterance(segmentText);
+        const voice = isEthiopic && amharicVoice ? amharicVoice : pickVoice(isEthiopic ? 'en-US' : lang);
+        if (voice) utterance.voice = voice;
+        utterance.lang = isEthiopic && amharicVoice ? 'am-ET' : 'en-US';
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        return utterance;
+      }).filter(utterance => utterance.text.trim());
+
+      const speakSegment = (index) => {
+        if (index >= utterances.length) {
+          if (onend) onend();
+          return;
+        }
+        const utterance = utterances[index];
+        let advanced = false;
+        const advance = () => {
+          if (advanced) return;
+          advanced = true;
+          speakSegment(index + 1);
+        };
+        if (index === 0 && onstart) utterance.onstart = onstart;
+        utterance.onend = advance;
+        utterance.onerror = advance;
+        window.speechSynthesis.speak(utterance);
+      };
+      speakSegment(0);
     }
 
     function toggleVoiceOutput() {
@@ -2601,7 +2645,7 @@
           if (callIcon) callIcon.className = "fa-solid fa-phone-volume text-emerald-400 animate-bounce";
           if (callStatus) callStatus.innerText = "Speaking...";
           if (callSub) callSub.innerText = "Sahara Voice Agent speaking in Amharic-English...";
-          speakText(line.text.replace(/[\u1200-\u137F]/g, ''), {
+          speakText(line.text, {
             lang: 'en-US',
             onend: () => setTimeout(next, 350)
           });

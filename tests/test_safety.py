@@ -44,6 +44,7 @@ class SafetyTests(unittest.TestCase):
         )
         self.assertTrue(result.sign_off_required)
         self.assertTrue(result.soap.requires_manual_review)
+        self.assertIsNone(result.soap.confidence_score)
         self.assertEqual(result.soap.icd10_codes, [])
 
     def test_process_clinical_http_route_accepts_transcript_and_returns_200_fallback(self):
@@ -57,6 +58,7 @@ class SafetyTests(unittest.TestCase):
         payload = response.json()
         self.assertTrue(payload["sign_off_required"])
         self.assertTrue(payload["soap"]["requires_manual_review"])
+        self.assertIsNone(payload["soap"]["confidence_score"])
         self.assertEqual(payload["soap"]["icd10_codes"], [])
         self.assertEqual(payload["scrubbed_transcript"], "Patient reports headache and fever.")
 
@@ -492,6 +494,7 @@ class SafetyTests(unittest.TestCase):
             patient_id="patient-1",
             encounter_id="encounter-1",
             chief_complaint="Chest pain",
+            clinician_signed_off=True,
             diagnosis_code="R07.9",
             diagnosis_display="Chest pain, unspecified",
         )
@@ -507,6 +510,7 @@ class SafetyTests(unittest.TestCase):
             patient_id="patient-1",
             encounter_id="encounter-1",
             chief_complaint="Chest pain",
+            clinician_signed_off=True,
             soap=main.SOAPDraftPayload(
                 transcript="Chest pain for two days.",
                 subjective="Chest pain for two days.",
@@ -530,6 +534,29 @@ class SafetyTests(unittest.TestCase):
         narrative = ElementTree.fromstring(composition["section"][0]["text"]["div"])
         self.assertEqual(narrative.tag, "{http://www.w3.org/1999/xhtml}div")
         self.assertEqual(narrative.text, "Chest pain for two days.")
+
+    def test_fhir_export_requires_explicit_signoff(self):
+        payload = main.FHIRExportRequest(
+            patient_id="patient-1",
+            encounter_id="encounter-1",
+            chief_complaint="Chest pain",
+        )
+        with self.assertRaises(HTTPException) as context:
+            asyncio.run(main.export_fhir(payload))
+        self.assertEqual(context.exception.status_code, 400)
+
+    def test_fhir_export_http_route_requires_explicit_signoff(self):
+        with patch.object(main, "REQUIRE_PROXY_AUTH", False):
+            response = TestClient(main.app).post(
+                "/api/v1/fhir/export",
+                json={
+                    "patient_id": "patient-1",
+                    "encounter_id": "encounter-1",
+                    "chief_complaint": "Chest pain",
+                },
+            )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("explicit clinician sign-off", response.json()["detail"])
 
     def test_ehr_commit_requires_explicit_signoff(self):
         payload = main.EHRCommitRequest(

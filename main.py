@@ -1093,8 +1093,8 @@ class TranscriptionRequest(BaseModel):
 
 
 class ICD10Diagnosis(BaseModel):
-    code: str = Field(..., description="Standard ICD-10 diagnostic code (e.g., R51, R50.9)")
-    description: str = Field(..., description="Official ICD-10 diagnostic description")
+    code: str = Field(..., description="Clinical reference code requiring clinician verification")
+    description: str = Field(..., description="Clinical reference description requiring clinician verification")
 
 
 class ClinicalSOAPSchema(BaseModel):
@@ -1108,17 +1108,17 @@ class ClinicalSOAPSchema(BaseModel):
     )
     assessment: str = Field(
         ...,
-        description="Clinical reasoning, differential diagnosis, and primary assessment",
+        description="Unverified clinical reference assessment for clinician review",
     )
     plan: str = Field(
         ...,
-        description="Treatment strategy, medications prescribed, and follow-up instructions",
+        description="Unverified clinician-support draft; not a treatment or medication order",
     )
-    confidence_score: float = Field(
-        ...,
+    confidence_score: Optional[float] = Field(
+        default=None,
         ge=0.0,
         le=1.0,
-        description="Joint ASR and LLM confidence score (0.0 to 1.0)",
+        description="Backend inference confidence score when verified metadata is available; null otherwise",
     )
     icd10_codes: List[ICD10Diagnosis] = Field(
         default_factory=list,
@@ -1171,6 +1171,7 @@ class SOAPDraftPayload(BaseModel):
 class FHIRExportRequest(BaseModel):
     patient_id: str = Field(..., min_length=1, max_length=128)
     encounter_id: str = Field(..., min_length=1, max_length=128)
+    clinician_signed_off: bool = False
     gender: Optional[str] = Field(default=None, max_length=32)
     chief_complaint: str = Field(..., min_length=1, max_length=1000)
     duration: Optional[str] = Field(default=None, max_length=128)
@@ -1185,7 +1186,6 @@ class FHIRExportRequest(BaseModel):
 
 class EHRCommitRequest(FHIRExportRequest):
     clinician_id: Optional[str] = Field(default=None, max_length=256)
-    clinician_signed_off: bool = False
 
 
 CLINICAL_SYMPTOM_MAP = {
@@ -1253,7 +1253,7 @@ def _fallback_soap(raw_transcript: str, *, reason: str = "structured output vali
         objective="Pending clinician-entered vitals, physical exam, and objective findings.",
         assessment=f"Automatic structured SOAP parsing was not valid. Reason: {reason}. Manual review required before documentation is finalized.",
         plan="1. Verify transcript against patient encounter.\n2. Document vital signs and physical exam.\n3. Confirm assessment, medications, and follow-up plan before EMR commit.",
-        confidence_score=0.0,
+        confidence_score=None,
         icd10_codes=[],
         flagged_code_switches=[],
         requires_manual_review=True,
@@ -1503,6 +1503,8 @@ def _fhir_narrative(value: str) -> dict:
 @app.post("/api/v1/fhir/export")
 async def export_fhir(payload: FHIRExportRequest) -> dict:
     """Build a FHIR bundle server-side after the clinician review gate."""
+    if not payload.clinician_signed_off:
+        raise HTTPException(status_code=400, detail="FHIR export requires explicit clinician sign-off")
     return _build_fhir_bundle(payload)
 
 

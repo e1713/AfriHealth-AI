@@ -28,6 +28,7 @@
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
     .pulse-ring { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); animation: pulse-ring 1.5s infinite cubic-bezier(0.66, 0, 0, 1); }
     @keyframes pulse-ring { to { box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); } }
+    clinical-safety-banner, human-review-status-badge, confidence-tier-card { display: block; }
   </style>
 </head>
 <body class="h-full flex flex-col font-sans bg-slate-950 text-slate-100 overflow-x-hidden">
@@ -164,7 +165,7 @@
           <div>
             <div class="flex items-center gap-2">
               <span class="bg-emerald-500/20 text-emerald-400 text-xs px-2.5 py-1 rounded-md font-bold">MODULE 1</span>
-              <h2 class="text-xl font-bold text-white">Frontline Community Triage Agent</h2>
+              <h2 class="text-xl font-bold text-white">Frontline Triage Support</h2>
             </div>
             <p class="text-sm text-slate-400 mt-1">Supporting community health workers (CHWs) with voice-driven Amharic-English triage documentation.</p>
           </div>
@@ -258,30 +259,36 @@
           </div>
           <div class="lg:col-span-7 space-y-4">
             <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+              <clinical-safety-banner class="mb-3"></clinical-safety-banner>
               <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-bold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-file-audio text-emerald-400"></i> Intron Sahara v2.5 Code-Switched ASR Stream</span>
-                <span id="asr-confidence" class="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Confidence: --%</span>
+                <human-review-status-badge status="pending"></human-review-status-badge>
               </div>
               <div id="triage-transcript" class="p-3 bg-slate-900 rounded-lg border border-slate-800/80 text-sm font-mono text-slate-200 min-h-[90px] leading-relaxed">
                 <span class="text-slate-500 italic">Click a preset above or tap the microphone to begin code-switched speech recognition...</span>
               </div>
+              <confidence-tier-card class="mt-3" tier="pending"></confidence-tier-card>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
-                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2"><i class="fa-solid fa-tags text-teal-400"></i> Extracted Medical Entities</h4>
+                <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2"><i class="fa-solid fa-tags text-teal-300"></i> Extracted Clinical Reference Entities</h4>
+                <clinical-safety-banner class="mb-3"></clinical-safety-banner>
+                <human-review-status-badge status="pending" class="mb-2"></human-review-status-badge>
                 <div id="triage-symptoms" class="flex flex-wrap gap-1.5 min-h-[60px] items-start pt-1">
                   <span class="text-xs text-slate-500 italic">Awaiting audio processing...</span>
                 </div>
               </div>
               <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col justify-between">
                 <div>
-                  <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1"><i class="fa-solid fa-triangle-exclamation text-yellow-400"></i> Triage Classification</h4>
+                  <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-1"><i class="fa-solid fa-triangle-exclamation text-yellow-300"></i> Triage Reference Category (Unverified)</h4>
+                  <clinical-safety-banner class="mt-3"></clinical-safety-banner>
+                  <human-review-status-badge status="pending" class="mt-2"></human-review-status-badge>
                   <div id="triage-level-badge" class="mt-2 text-sm font-extrabold px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 inline-block">
                     Pending Processing
                   </div>
                 </div>
                 <div id="triage-recommendation" class="text-xs text-slate-400 mt-2">
-                  Actionable referral recommendation will be generated automatically.
+                  Clinical Reference Suggestion: Pending Verification.
                 </div>
                 <button id="btn-speak-recommendation" onclick="replayRecommendation()" disabled aria-label="Speak recommendation aloud" class="w-full py-2 px-3 bg-slate-900 border border-slate-700 hover:border-emerald-500/50 text-emerald-300 text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-2 mt-2 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400">
                   <i class="fa-solid fa-volume-high"></i> <span id="btn-speak-label">Speak recommendation aloud</span>
@@ -309,6 +316,9 @@
         </div>
         <div class="space-y-4">
           <section class="bg-slate-950 p-4 rounded-xl border border-slate-800" aria-labelledby="ehr-transcript-title">
+            <clinical-safety-banner class="mb-3"></clinical-safety-banner>
+            <human-review-status-badge status="pending" class="mb-2"></human-review-status-badge>
+            <confidence-tier-card class="mb-3" tier="pending"></confidence-tier-card>
             <div class="flex flex-wrap items-center gap-2 mb-3">
               <button id="btn-ehr-record" onclick="toggleEHRRecording()" class="h-10 px-4 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold flex items-center gap-2 transition">
                 <i class="fa-solid fa-microphone"></i> Start Consultation Recording
@@ -328,21 +338,23 @@
               <p class="text-slate-500 italic">Click "Start Consultation Recording" to capture live audio, or "Load Consultation Demo" for a scripted example...</p>
             </div>
             <p id="ehr-record-status" class="text-[11px] text-slate-300 mt-2">Record the live doctor-patient conversation; the chart auto-fills as fields are recognized.</p>
-            <p class="text-[10px] text-amber-400/80 mt-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Auto-extracted fields require clinician verification before committing to EHR.</p>
+            <p class="text-[10px] text-amber-200 mt-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Extracted fields are clinical reference suggestions and require clinician review before any record action.</p>
           </section>
 
           <section class="bg-[#10192d] rounded-xl border border-slate-800 p-5" aria-labelledby="soap-panel-title">
+            <clinical-safety-banner class="mb-3"></clinical-safety-banner>
+            <confidence-tier-card class="mb-3" tier="pending"></confidence-tier-card>
             <div class="flex flex-col gap-3 border-b border-slate-800 pb-3">
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h3 id="soap-panel-title" class="text-sm font-bold text-white">Structured SOAP Encounter &amp; Diagnostic Output</h3>
-                  <p class="text-[11px] text-slate-500 mt-1">Editable clinical draft. Streaming updates fill fields that have not been manually changed.</p>
+                  <h3 id="soap-panel-title" class="text-sm font-bold text-white">Structured SOAP Clinical Reference Draft</h3>
+                  <p class="text-[11px] text-slate-300 mt-1">Editable clinician-support draft. Streaming updates fill fields that have not been manually changed; all content requires clinician verification.</p>
                 </div>
-                <span id="soap-status-badge" class="inline-flex items-center w-fit rounded-md bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300">Draft (Pending Verification)</span>
+                <human-review-status-badge id="soap-status-badge" status="pending"></human-review-status-badge>
               </div>
               <div class="flex flex-wrap items-center gap-2">
                 <button id="btnProcessSOAP" type="button" onclick="processClinicalText()" class="rounded-md bg-teal-500 px-3 py-2 text-[11px] font-bold text-slate-950 transition hover:bg-teal-400 flex items-center gap-2">
-                  <i class="fa-solid fa-file-medical"></i> Generate SOAP &amp; ICD-10
+                  <i class="fa-solid fa-file-medical"></i> Validate Structured SOAP Draft
                 </button>
                 <button type="button" onclick="unlockSoapDraft()" class="rounded border border-teal-500/30 px-3 py-2 text-[11px] font-semibold text-teal-300 hover:bg-teal-500/10 flex items-center gap-2">
                   <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Edit SOAP Draft
@@ -360,18 +372,18 @@
                 <textarea id="soap-objective" data-soap-field="objective" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Vitals and examination observations..."></textarea>
               </div>
               <div>
-                <label for="soap-assessment" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">A - Assessment (ICD-10 Code):</label>
-                <textarea id="soap-assessment" data-soap-field="assessment" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Diagnosis, ICD-10 mapping, and confidence..."></textarea>
+                <label for="soap-assessment" class="text-[10px] font-bold uppercase tracking-wider text-slate-300">A - Assessment (Clinical Reference Suggestion):</label>
+                <textarea id="soap-assessment" data-soap-field="assessment" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Clinician-entered assessment or code reference; requires verification..."></textarea>
               </div>
               <div>
-                <label for="soap-plan" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">P - Plan &amp; Prescription (Stewardship):</label>
-                <textarea id="soap-plan" data-soap-field="plan" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Medication, dosage, stewardship guidance, and follow-up..."></textarea>
+                <label for="soap-plan" class="text-[10px] font-bold uppercase tracking-wider text-slate-300">P - Clinician-Entered Plan (Unverified Draft):</label>
+                <textarea id="soap-plan" data-soap-field="plan" rows="4" class="mt-1 w-full resize-y rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs text-slate-200 focus:border-teal-500 focus:outline-none" placeholder="Clinical plan text for clinician verification; not an order..."></textarea>
               </div>
             </div>
             <div class="mt-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-t border-slate-800 pt-4">
               <div class="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
                 <i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-300"></i>
-                <span>Human-In-The-Loop Safeguard Required | AI-generated draft. Physician verification is required before FHIR EMR sync.</span>
+                <span>Human review required. This clinical reference draft must be verified before any FHIR export or EHR commit.</span>
               </div>
               <div class="flex flex-wrap items-center gap-2">
                 <button onclick="previewSoapFhirJson()" class="rounded-lg border border-teal-500/30 bg-slate-900 px-3 py-2 text-[11px] font-bold text-teal-300 transition hover:bg-slate-800 flex items-center gap-2">
@@ -385,13 +397,14 @@
           </section>
 
           <section class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-4" aria-labelledby="ehr-chart-title">
+            <clinical-safety-banner class="mb-3"></clinical-safety-banner>
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-2">
               <h3 id="ehr-chart-title" class="text-xs font-bold text-slate-400 uppercase tracking-wider"><i class="fa-solid fa-file-medical text-emerald-400"></i> Auto-Filled EHR Medical Chart</h3>
               <div class="flex flex-wrap items-center gap-2">
-                <button onclick="exportFhirJson()" class="bg-slate-800 hover:bg-slate-700 text-teal-300 border border-teal-500/30 text-[11px] font-bold px-2.5 py-1 rounded transition flex items-center gap-1">
+                <button id="btn-export-fhir" onclick="exportFhirJson()" disabled aria-disabled="true" title="Review Required before FHIR Commit" class="bg-slate-800 text-slate-400 border border-slate-700 disabled:opacity-60 disabled:cursor-not-allowed text-[11px] font-bold px-2.5 py-1 rounded transition flex items-center gap-1">
                   <i class="fa-solid fa-file-code text-teal-400"></i> Export FHIR JSON
                 </button>
-                <button onclick="downloadClinicalSummary()" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-1 rounded transition flex items-center gap-1">
+                <button id="btn-download-clinical-summary" onclick="downloadClinicalSummary()" disabled aria-disabled="true" title="Clinician review required before export" class="bg-slate-800 text-slate-400 border border-slate-700 disabled:opacity-60 disabled:cursor-not-allowed text-[11px] font-bold px-2.5 py-1 rounded transition flex items-center gap-1">
                   <i class="fa-solid fa-file-arrow-down text-emerald-400"></i> Summary PDF/Text
                 </button>
                 <button id="btn-sync-ehr" onclick="triggerEHRSync()" disabled class="bg-emerald-600 disabled:opacity-50 hover:bg-emerald-500 text-slate-950 text-xs font-bold px-4 py-2 rounded-lg transition flex items-center gap-2">
@@ -399,11 +412,17 @@
                 </button>
               </div>
             </div>
-            <div id="clinical-signoff-panel" class="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-100">
+            <div id="clinical-signoff-panel" class="p-3 rounded-lg border border-indigo-500/50 bg-indigo-950/60 text-indigo-100">
+              <clinical-safety-banner class="mb-3"></clinical-safety-banner>
               <div class="flex items-center justify-between gap-2 mb-2">
-                <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">Clinician Verification Gate</span>
-                <span id="signoff-status" class="text-[10px] font-medium text-amber-200">Awaiting sign-off</span>
+                <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-100">Clinician Verification Gate</span>
+                <human-review-status-badge id="ehr-review-status" status="pending"></human-review-status-badge>
               </div>
+              <p id="fhir-review-required" class="mb-3 text-sm font-bold text-indigo-100" role="status">Review Required before FHIR Commit</p>
+              <label class="mb-3 flex items-start gap-2 text-[11px] leading-relaxed text-indigo-100">
+                <input id="clinician-review-confirmation" type="checkbox" class="mt-0.5 h-4 w-4 shrink-0 accent-indigo-400">
+                <span>I reviewed the source transcript and clinical reference draft. I confirm this review for this encounter; this does not replace patient-context checks or clinical judgment.</span>
+              </label>
               <button id="btn-signoff-clinician" onclick="verifyClinicianSignOff()" class="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-[11px] font-bold px-3 py-2 rounded transition">
                 <i class="fa-solid fa-user-check mr-2"></i>Verify &amp; Sign Off
               </button>
@@ -434,16 +453,20 @@
               </div>
             </div>
             <div>
-              <label class="text-slate-500 text-xs block mb-1">Prescribed Medications &amp; Dosage</label>
-              <textarea id="ehr-meds" readonly rows="2" class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 text-xs font-mono" placeholder="Prescription details will appear here..."></textarea>
+              <label class="text-slate-300 text-xs block mb-1">Medication details captured (unverified draft)</label>
+              <textarea id="ehr-meds" readonly rows="2" class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 text-xs font-mono" placeholder="Unverified medication text, if present in the transcript..."></textarea>
             </div>
             <div>
-              <label class="text-slate-500 text-xs block mb-1">ICD-10 Clinical Diagnosis Suggestion</label>
+              <label class="text-slate-300 text-xs block mb-1">ICD-10 Clinical Reference Suggestion</label>
+              <confidence-tier-card class="mb-2" tier="pending"></confidence-tier-card>
+              <human-review-status-badge status="pending" class="mb-2"></human-review-status-badge>
               <div id="ehr-icd" class="p-2 bg-slate-900 border border-slate-800 rounded text-xs font-semibold text-emerald-400">Awaiting consultation processing...</div>
             </div>
           </section>
 
           <section id="fhir-preview-panel" class="hidden rounded-lg border border-teal-500/30 bg-[#080d19] p-3" aria-live="polite">
+            <clinical-safety-banner class="mb-3"></clinical-safety-banner>
+            <p class="mb-2 text-xs font-bold text-indigo-100">Review Required before FHIR Commit</p>
             <div class="flex items-center justify-between mb-2">
               <span class="text-[10px] font-bold uppercase tracking-wider text-teal-300">FHIR JSON Preview</span>
               <button onclick="document.getElementById('fhir-preview-panel').classList.add('hidden')" class="text-slate-500 hover:text-white" title="Close FHIR preview"><i class="fa-solid fa-xmark"></i></button>
@@ -462,12 +485,12 @@
               <span class="bg-indigo-500/20 text-indigo-400 text-xs px-2.5 py-1 rounded-md font-bold">MODULE 3</span>
               <h2 class="text-xl font-bold text-white">Post-Care Voice Follow-up</h2>
             </div>
-            <p class="text-sm text-slate-400 mt-1">Simulating automated voice call check-ins post-discharge with automated risk escalation.</p>
+            <p class="text-sm text-slate-300 mt-1">Clinician-support voice follow-up simulations with risk indicators for human review.</p>
             <p class="text-xs text-slate-300 mt-1">Post-care demo focus: Case 2 of 5 Gold Standard Cases.</p>
           </div>
           <div class="flex items-center gap-2">
-            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Auto-Dialer Ready
+            <span class="bg-indigo-950 text-indigo-100 border border-indigo-700 text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-indigo-300"></span> Voice Follow-up Demo
             </span>
           </div>
         </div>
@@ -507,7 +530,8 @@
               <h3 class="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-2">
                 <i class="fa-solid fa-clipboard-check text-indigo-400"></i> Live Post-Care Protocol Analyzer
               </h3>
-              <p class="text-[10px] text-slate-500">Runs the clinical team's post-care protocol on real transcript text: recovery risk scoring plus, for maternal patients, the 5-level obstetric acuity scale (Annex 1-3).</p>
+              <clinical-safety-banner></clinical-safety-banner>
+              <p class="text-[10px] text-slate-300">Applies the configured post-care protocol to supplied transcript text. Risk and acuity results are clinical reference suggestions and require clinician review.</p>
               <textarea id="postcare-transcript-input" rows="3" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 font-mono focus:border-indigo-500 focus:outline-none" placeholder="Type or paste a check-in transcript, e.g. 'active vaginal bleeding and severe pain'..."></textarea>
               <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <label for="m3-care-track" class="shrink-0 text-[11px] font-semibold text-slate-300">Care track</label>
@@ -520,11 +544,14 @@
                 </button>
               </div>
               <div id="postcare-result-panel" class="hidden space-y-2 pt-2 border-t border-slate-800">
+                <clinical-safety-banner></clinical-safety-banner>
+                <human-review-status-badge status="pending"></human-review-status-badge>
+                <p id="postcare-error" class="hidden text-[11px] text-red-200" role="alert"></p>
                 <div id="postcare-acuity-banner" class="hidden p-2.5 rounded-lg border text-[11px] font-semibold"></div>
                 <div class="flex flex-wrap items-center gap-2">
                   <span id="postcare-risk-badge" class="text-[11px] font-bold px-2.5 py-1 rounded-lg border"></span>
                   <span id="postcare-nurse-badge" class="hidden text-[11px] font-bold px-2.5 py-1 rounded-lg border border-red-500/40 bg-red-500/10 text-red-300">
-                    <i class="fa-solid fa-user-nurse mr-1"></i> Nurse escalation required
+                    <i class="fa-solid fa-user-nurse mr-1"></i> Nurse review suggested
                   </span>
                 </div>
                 <p id="postcare-indicators-text" class="text-[11px] text-slate-400"></p>
@@ -537,14 +564,16 @@
               <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-2">
                 <i class="fa-solid fa-phone-volume text-emerald-400"></i> Real Voice Follow-up Call
               </h3>
-              <p class="text-[10px] text-slate-500">Not a simulation: Intron speaks each question aloud, you answer by mic, Intron transcribes it, and the protocol engine decides the next question -- or escalates immediately if it hears an emergency. No LLM involved anywhere in this loop.</p>
+              <p class="text-[10px] text-slate-300">Interactive voice session: Intron speaks each prompt, you answer by microphone, and the service transcribes the response. Returned questions and risk indicators are clinical reference suggestions for clinician review; this panel does not automatically contact clinical staff.</p>
 
               <button onclick="startRealFollowupCall()" id="followup-real-start-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 rounded-lg transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-play"></i> Start Real Follow-up Call
+                <i class="fa-solid fa-play"></i> Start Interactive Voice Session
               </button>
 
               <div id="followup-real-active" class="hidden space-y-2">
-                <p id="followup-real-status" class="text-[11px] text-slate-400 font-semibold"></p>
+                <clinical-safety-banner></clinical-safety-banner>
+                <human-review-status-badge status="pending"></human-review-status-badge>
+                <p id="followup-real-status" class="text-[11px] text-slate-300 font-semibold"></p>
                 <div id="followup-real-question" class="p-3 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-200 text-sm font-medium"></div>
                 <div id="followup-real-audio-player"></div>
                 <button onclick="toggleFollowupRecording()" id="followup-real-record-btn" class="hidden w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-2 rounded-lg transition flex items-center justify-center gap-2">
@@ -567,6 +596,8 @@
           <div class="lg:col-span-7 space-y-4">
             <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
               <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2"><i class="fa-solid fa-comments text-indigo-400"></i> Outbound Voice Interaction Transcript</h3>
+              <clinical-safety-banner class="mb-3"></clinical-safety-banner>
+              <human-review-status-badge status="pending" class="mb-2"></human-review-status-badge>
               <div id="followup-dialogue" class="bg-slate-950/90 border border-slate-800 p-3 rounded-lg text-xs font-mono min-h-[160px] space-y-2 text-slate-300">
                 <p class="text-slate-500 italic">Press a simulation button on the left to initiate the voice call...</p>
               </div>
@@ -574,18 +605,22 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2"><i class="fa-solid fa-heart-pulse text-red-400"></i> Parsed Status</h4>
+                <clinical-safety-banner class="mb-3"></clinical-safety-banner>
+                <human-review-status-badge status="pending" class="mb-2"></human-review-status-badge>
                 <div id="followup-risk-badge" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-900 text-slate-500 inline-block border border-slate-800">
                   No Active Call
                 </div>
-                <p id="followup-risk-desc" class="text-xs text-slate-400 mt-2">Recovery status is parsed from code-switched transcript in real time.</p>
+                <p id="followup-risk-desc" class="text-xs text-slate-300 mt-2">Clinical reference indicators are derived from the supplied transcript and require clinician review.</p>
               </div>
               <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col justify-between">
                 <div>
                   <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1"><i class="fa-solid fa-user-nurse text-emerald-400"></i> Escalation Queue</h4>
+                  <clinical-safety-banner class="mb-3"></clinical-safety-banner>
+                  <human-review-status-badge status="pending" class="mb-2"></human-review-status-badge>
                   <p id="nurse-escalation-text" class="text-xs text-slate-400">Monitoring outpatient recovery telemetry...</p>
                 </div>
                 <button id="btn-escalate" disabled onclick="triggerNurseEscalation()" class="mt-3 w-full bg-rose-600 hover:bg-rose-700 disabled:opacity-40 text-white text-xs font-semibold py-2 px-4 rounded transition-colors flex items-center justify-center gap-2">
-                  <i class="fa-solid fa-bell"></i> Dispatch Nurse Alert
+                  <i class="fa-solid fa-bell"></i> Flag for Nurse Review
                 </button>
               </div>
             </div>
@@ -646,6 +681,8 @@
             </div>
           </div>
           <div class="overflow-x-auto">
+            <clinical-safety-banner class="mb-3"></clinical-safety-banner>
+            <human-review-status-badge status="pending" class="mb-2"></human-review-status-badge>
             <table class="w-full text-left text-[11px]">
               <thead class="border-b border-slate-800 text-slate-400"><tr><th class="py-2">Baseline</th><th>Normalized WER</th><th>Target recall</th><th>M-WER</th></tr></thead>
               <tbody class="divide-y divide-slate-800/60 text-slate-300">
@@ -712,7 +749,7 @@
             </div>
             <div id="evaluator-comment-box" class="mt-4 p-3 bg-slate-900 rounded-lg border border-slate-800/80 text-xs space-y-1 text-slate-400">
               <p class="font-semibold text-amber-400"><i class="fa-solid fa-user-doctor mr-1"></i> Clinician Review Notes:</p>
-              <p id="evaluator-comment-text" class="leading-relaxed">Intron Sahara v2.5 maintains accurate phonetic grounding for local disease descriptions without hallucinatory translations.</p>
+              <p id="evaluator-comment-text" class="leading-relaxed">No case-level clinician ratings or hallucination analysis are available for this fixture; displayed scores are transcript metrics only.</p>
             </div>
           </div>
         </div>
@@ -922,6 +959,75 @@
   }
 </script>
 <script>
+  const CLINICAL_SAFETY_COPY = 'Clinical Workflow Assistant — Pending Clinician Approval. Generated transcripts, SOAP notes, and codes are clinical reference suggestions for clinician verification only. Not an autonomous diagnosis or prescription.';
+
+  class ClinicalSafetyBanner extends HTMLElement {
+    connectedCallback() {
+      this.setAttribute('role', 'note');
+      this.setAttribute('aria-label', 'Clinical safety disclaimer');
+      this.innerHTML = `<div class="rounded-lg border border-indigo-500/50 bg-indigo-950/70 px-3 py-2 text-[11px] leading-relaxed text-indigo-100"><i class="fa-solid fa-shield-halved mr-1.5 text-indigo-300" aria-hidden="true"></i>${CLINICAL_SAFETY_COPY}</div>`;
+    }
+  }
+
+  class HumanReviewStatusBadge extends HTMLElement {
+    connectedCallback() {
+      this.render();
+    }
+
+    static get observedAttributes() {
+      return ['status'];
+    }
+
+    attributeChangedCallback() {
+      if (this.isConnected) this.render();
+    }
+
+    render() {
+      const approved = this.getAttribute('status') === 'approved';
+      const label = approved ? 'Clinician Review Confirmed' : 'Pending Verification';
+      const colors = approved
+        ? 'border-emerald-700 bg-emerald-950 text-emerald-100'
+        : 'border-indigo-700 bg-indigo-950 text-indigo-100';
+      this.setAttribute('role', 'status');
+      this.setAttribute('aria-label', label);
+      this.innerHTML = `<span class="inline-flex items-center rounded-md border px-2 py-1 text-[10px] font-bold ${colors}"><i class="fa-solid ${approved ? 'fa-user-check' : 'fa-hourglass-half'} mr-1.5" aria-hidden="true"></i>${label}</span>`;
+    }
+  }
+
+  class ConfidenceTierCard extends HTMLElement {
+    connectedCallback() {
+      // TODO: Populate tier and estimate only from verified backend inference metadata.
+      const tiers = {
+        high: { label: 'High Confidence', colors: 'border-emerald-700 bg-emerald-950 text-emerald-100' },
+        medium: { label: 'Medium Confidence', colors: 'border-amber-700 bg-amber-950 text-amber-100' },
+        low: { label: 'Low Confidence', colors: 'border-rose-700 bg-rose-950 text-rose-100' },
+        pending: { label: 'Pending Verification', colors: 'border-indigo-700 bg-indigo-950 text-indigo-100' }
+      };
+      const tier = tiers[this.getAttribute('tier')] || tiers.pending;
+      const estimate = this.getAttribute('estimate');
+      const source = this.getAttribute('source');
+      const details = source === 'backend' && estimate
+        ? `Backend-reported confidence: ${estimate}`
+        : 'No backend confidence metadata is available; no confidence score is inferred.';
+      this.setAttribute('role', 'note');
+      this.setAttribute('aria-label', `Estimated confidence: ${tier.label}. ${details}`);
+      const card = document.createElement('div');
+      card.className = `rounded-lg border ${tier.colors} px-3 py-2 text-[11px]`;
+      const heading = document.createElement('div');
+      heading.className = 'font-bold';
+      heading.textContent = `Estimated Confidence: ${tier.label}`;
+      const description = document.createElement('p');
+      description.className = 'mt-1 leading-relaxed';
+      description.textContent = `${details} Verify the transcript and source audio.`;
+      card.replaceChildren(heading, description);
+      this.replaceChildren(card);
+    }
+  }
+
+  customElements.define('clinical-safety-banner', ClinicalSafetyBanner);
+  customElements.define('human-review-status-badge', HumanReviewStatusBadge);
+  customElements.define('confidence-tier-card', ConfidenceTierCard);
+
   let mediaStream = null;
   let workletNode = null;
   let websocket = null;
@@ -1261,7 +1367,7 @@
     const recEl = document.getElementById('triage-recommendation');
     if (symptomsEl) {
       symptomsEl.innerHTML = (symptoms.length ? symptoms : ['Transcript requires clinician review']).map(symptom =>
-        `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-xs font-semibold">${symptom}</span>`
+        `<span class="bg-indigo-950 text-indigo-100 border border-indigo-700 px-2 py-0.5 rounded text-xs font-semibold">${symptom}</span>`
       ).join('');
     }
 
@@ -1275,8 +1381,8 @@
       badgeEl.innerText = emergency ? 'URGENT - CLINICIAN REVIEW REQUIRED' : urgent ? 'URGENT REVIEW' : 'REVIEW REQUIRED';
     }
     const recommendationText = emergency
-      ? 'Seek urgent clinical assessment; do not rely on automated triage alone.'
-      : 'Clinician review required before diagnosis, treatment, or referral.';
+      ? 'Clinical Reference Suggestion: seek urgent clinician assessment. Do not rely on automated triage alone.'
+      : 'Clinical Reference Suggestion: clinician review is required before any diagnosis, treatment, or referral.';
     if (recEl) {
       recEl.innerText = recommendationText;
     }
@@ -1894,15 +2000,13 @@
       if (!caseData) return;
       resetTriageProcessingState();
       const transcriptEl = document.getElementById('triage-transcript');
-      const confEl = document.getElementById('asr-confidence');
       const symptomsEl = document.getElementById('triage-symptoms');
       const badgeEl = document.getElementById('triage-level-badge');
       const recEl = document.getElementById('triage-recommendation');
       if (transcriptEl) renderGuardedTranscript(`"${caseData.json.code_switched_verbatim}"`, 'triage-transcript');
-      if (confEl) confEl.innerText = `Confidence: ${(96.2 + presetNum * 0.8).toFixed(1)}%`;
       if (symptomsEl) {
         symptomsEl.innerHTML = caseData.json.symptoms.map(s =>
-          `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-xs font-semibold"><i class="fa-solid fa-circle-check mr-1 text-[10px]"></i>${s}</span>`
+          `<span class="bg-indigo-950 text-indigo-100 border border-indigo-700 px-2 py-0.5 rounded text-xs font-semibold">${s}</span>`
         ).join('');
       }
       const category = caseData.json.urgency;
@@ -1915,7 +2019,7 @@
         badgeEl.className = `mt-2 text-xs font-extrabold px-3 py-1.5 rounded-lg border inline-block ${badgeStyle}`;
         badgeEl.innerText = category;
       }
-      const recommendationText = `Clinician review required. ${caseData.json.plan}`;
+      const recommendationText = `Clinical Reference Suggestion: Pending Verification. ${caseData.json.plan}`;
       if (recEl) recEl.innerText = recommendationText;
       speakRecommendation(recommendationText);
     }
@@ -1925,7 +2029,6 @@
       const symptomsEl = document.getElementById('triage-symptoms');
       const badgeEl = document.getElementById('triage-level-badge');
       const recommendationEl = document.getElementById('triage-recommendation');
-      const confidenceEl = document.getElementById('asr-confidence');
       const speechButton = document.getElementById('btn-speak-recommendation');
       if (transcriptEl) transcriptEl.innerHTML = '<span class="text-slate-500 italic">Transcribing code-switched speech via Intron Sahara v2.5...</span>';
       if (symptomsEl) symptomsEl.innerHTML = '<span class="text-xs text-slate-500 italic">Extracting clinical entities...</span>';
@@ -1933,8 +2036,7 @@
         badgeEl.className = 'mt-2 text-sm font-extrabold px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 inline-block';
         badgeEl.textContent = 'Pending Processing';
       }
-      if (recommendationEl) recommendationEl.textContent = 'Actionable referral recommendation will be generated automatically.';
-      if (confidenceEl) confidenceEl.textContent = 'Confidence: --%';
+      if (recommendationEl) recommendationEl.textContent = 'Clinical Reference Suggestion: Pending Verification.';
       if (speechButton) speechButton.disabled = true;
     }
 
@@ -2071,6 +2173,8 @@
 
     function populateEHRDemo() {
       window.clinicalSignOffVerified = false;
+      const reviewConfirmation = document.getElementById('clinician-review-confirmation');
+      if (reviewConfirmation) reviewConfirmation.checked = false;
       const caseData = GOLD_STANDARD_DATASET['GOLD-ETH-001'].json;
       const box = document.getElementById('ehr-transcript-box');
       if (box) {
@@ -2088,7 +2192,7 @@
       document.getElementById('ehr-temp').value = "37.8";
       document.getElementById('ehr-meds').value = caseData.plan;
       const icd = document.getElementById('ehr-icd');
-      if (icd) icd.innerText = `ICD-10: ${caseData.target_icd10}`;
+      if (icd) icd.innerText = `Clinical Reference Suggestion (unverified): ICD-10: ${caseData.target_icd10}`;
       soapManualFields.clear();
       setSoapVerificationState(false);
       updateSoapState({
@@ -2100,18 +2204,24 @@
     }
 
     function buildFhirRequest() {
+      const icdText = document.getElementById('ehr-icd')?.innerText || '';
+      const diagnosisCode = icdText.match(/\b[A-Z]\d{2}(?:\.\d+)?\b/i)?.[0] || null;
+      const diagnosisDisplay = diagnosisCode
+        ? icdText.replace(/Clinical Reference Suggestion \(unverified\):\s*/i, '').replace(/ICD-10(?: Code)?:\s*/i, '').replace(diagnosisCode, '').replace(/[():-]/g, '').trim() || null
+        : null;
       return {
         patient_id: 'ETH-PATIENT-90412',
         encounter_id: 'ENC-90412',
         gender: 'female',
-        chief_complaint: document.getElementById('ehr-cc')?.value || 'Chest Pain & Headache',
+        chief_complaint: document.getElementById('ehr-cc')?.value || soapState.transcript.trim(),
         duration: document.getElementById('ehr-duration')?.value || null,
         blood_pressure: document.getElementById('ehr-bp')?.value || null,
         pulse: document.getElementById('ehr-pulse')?.value || null,
         temperature: document.getElementById('ehr-temp')?.value || null,
-        diagnosis_code: 'R07.9',
-        diagnosis_display: 'Chest pain, unspecified',
+        diagnosis_code: diagnosisCode,
+        diagnosis_display: diagnosisDisplay,
         soap: { ...soapState },
+        clinician_signed_off: Boolean(window.clinicalSignOffVerified),
         medications: (document.getElementById('ehr-meds')?.value || '')
           .split('\n')
           .map((item) => item.replace(/^\d+\.\s*/, '').trim())
@@ -2121,7 +2231,7 @@
 
     async function triggerEHRSync() {
       if (!window.clinicalSignOffVerified) {
-        showToast('Clinician sign-off is required before committing patient data to the EHR or exporting HL7 FHIR records.', 'warning');
+        showToast('Review Required before FHIR Commit. Confirm clinician review before any EHR or FHIR action.', 'warning');
         return;
       }
       const syncBtn = document.getElementById('btn-sync-ehr');
@@ -2142,12 +2252,8 @@
           syncBtn.disabled = true;
         }
       } catch (error) {
-        if (syncBtn) {
-          syncBtn.innerHTML = `<i class="fa-solid fa-file-code"></i> FHIR Demo Export Ready`;
-          syncBtn.className = 'bg-slate-800 text-sky-300 border border-sky-500/30 text-xs font-bold px-4 py-2 rounded-lg';
-          syncBtn.disabled = false;
-        }
-        showToast('FHIR v4.0.1 Bundle Signed & Validated (Demo Mode). Local JSON export ready.', 'success');
+        updateClinicianSignoffUI();
+        showToast(`EHR commit was not completed: ${error.message || error}`, 'error');
       }
     }
 
@@ -2171,7 +2277,9 @@
       Object.entries(patch).forEach(([key, value]) => {
         if (!(key in soapState)) return;
         if (fromStream && key !== 'transcript' && soapManualFields.has(key)) return;
-        soapState[key] = String(value || '');
+        const nextValue = String(value || '');
+        if (soapState[key] !== nextValue) invalidateClinicianSignOff();
+        soapState[key] = nextValue;
         if (key === 'transcript') {
           const transcriptBox = document.getElementById('ehr-transcript-box');
           if (transcriptBox) transcriptBox.textContent = soapState.transcript || 'Waiting for live ASR transcript...';
@@ -2226,8 +2334,8 @@
         const diagnosisField = document.getElementById('ehr-icd');
         if (diagnosisField) {
           diagnosisField.textContent = diagnoses.length
-            ? diagnoses.map((item) => `${item.code}: ${item.description}`).join('\n')
-            : 'No ICD-10 mapping returned. Clinician selection and verification required.';
+            ? `Clinical Reference Suggestion (unverified):\n${diagnoses.map((item) => `${item.code}: ${item.description}`).join('\n')}`
+            : 'No ICD-10 clinical reference suggestion returned. Clinician selection and verification required.';
         }
 
         window.clinicalSignOffVerified = false;
@@ -2267,15 +2375,15 @@
       soapRecordVerified = verified;
       const status = document.getElementById('soap-status-badge');
       const button = document.getElementById('soap-signoff-button');
+      const reviewConfirmation = document.getElementById('clinician-review-confirmation');
       document.querySelectorAll('[data-soap-field]').forEach((field) => {
         field.disabled = verified;
         field.classList.toggle('opacity-70', verified);
       });
-      if (status) {
-        status.innerText = verified ? 'Verified & Signed' : 'Draft (Pending Verification)';
-        status.className = verified
-          ? 'inline-flex items-center w-fit rounded-md bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300'
-          : 'inline-flex items-center w-fit rounded-md bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300';
+      if (status) status.setAttribute('status', verified ? 'approved' : 'pending');
+      if (reviewConfirmation) {
+        reviewConfirmation.disabled = verified;
+        if (!verified) reviewConfirmation.checked = false;
       }
       if (button) {
         button.disabled = verified;
@@ -2286,23 +2394,26 @@
     }
 
     function unlockSoapDraft() {
-      window.clinicalSignOffVerified = false;
+      invalidateClinicianSignOff();
       setSoapVerificationState(false);
       updateClinicianSignoffUI();
       document.getElementById('soap-subjective')?.focus();
       showToast('SOAP draft unlocked. Review your edits and sign off again before exporting.', 'info');
     }
 
-    async function verifySoapRecord() {
+    function verifySoapRecord() {
       if (!soapState.transcript.trim() && !soapState.subjective.trim()) {
         showToast('A transcript or subjective note is required before sign-off.', 'warning');
+        return;
+      }
+      if (!document.getElementById('clinician-review-confirmation')?.checked) {
+        showToast('Confirm that you reviewed the transcript and draft before signing off.', 'warning');
         return;
       }
       window.clinicalSignOffVerified = true;
       setSoapVerificationState(true);
       updateClinicianSignoffUI();
       renderDiscrepancyPanel(soapState.transcript, soapState.subjective);
-      await triggerEHRSync();
     }
 
     function previewSoapFhirJson() {
@@ -2336,15 +2447,28 @@
 
     window.clinicalSignOffVerified = false;
 
+    function invalidateClinicianSignOff() {
+      const confirmation = document.getElementById('clinician-review-confirmation');
+      if (confirmation) confirmation.checked = false;
+      if (window.clinicalSignOffVerified || soapRecordVerified) {
+        window.clinicalSignOffVerified = false;
+        setSoapVerificationState(false);
+      }
+      updateClinicianSignoffUI();
+    }
+
     function updateClinicianSignoffUI() {
-      const signoffStatus = document.getElementById('signoff-status');
       const signoffButton = document.getElementById('btn-signoff-clinician');
       const commitButton = document.getElementById('btn-sync-ehr');
-      if (signoffStatus) {
-        signoffStatus.innerText = window.clinicalSignOffVerified ? 'Verified & signed' : 'Awaiting sign-off';
-        signoffStatus.className = window.clinicalSignOffVerified
-          ? 'text-[10px] font-medium text-emerald-200'
-          : 'text-[10px] font-medium text-amber-200';
+      const reviewStatus = document.getElementById('ehr-review-status');
+      const exportButton = document.getElementById('btn-export-fhir');
+      const summaryButton = document.getElementById('btn-download-clinical-summary');
+      const reviewRequired = document.getElementById('fhir-review-required');
+      if (reviewStatus) reviewStatus.setAttribute('status', window.clinicalSignOffVerified ? 'approved' : 'pending');
+      if (reviewRequired) {
+        reviewRequired.textContent = window.clinicalSignOffVerified
+          ? 'Clinician review confirmed. EHR commit remains a separate action.'
+          : 'Review Required before FHIR Commit';
       }
       if (signoffButton) {
         signoffButton.innerHTML = window.clinicalSignOffVerified
@@ -2356,52 +2480,37 @@
           : 'w-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-[11px] font-bold px-3 py-2 rounded transition';
       }
       if (commitButton) {
-        commitButton.innerHTML = '<i class="fa-solid fa-database"></i> Commit to EHR';
+        commitButton.innerHTML = window.clinicalSignOffVerified
+          ? '<i class="fa-solid fa-database"></i> Commit to EHR'
+          : '<i class="fa-solid fa-lock"></i> Review Required before FHIR Commit';
         commitButton.disabled = !window.clinicalSignOffVerified;
+        commitButton.setAttribute('aria-disabled', String(!window.clinicalSignOffVerified));
+        commitButton.title = window.clinicalSignOffVerified
+          ? 'Clinician review confirmed; commit remains a separate action'
+          : 'Review Required before FHIR Commit';
         commitButton.className = window.clinicalSignOffVerified
           ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-lg shadow-emerald-500/20'
-          : 'bg-emerald-600 disabled:opacity-50 hover:bg-emerald-500 text-slate-950 text-xs font-bold px-4 py-2 rounded-lg transition flex items-center gap-2';
+          : 'bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-emerald-500 text-slate-950 text-xs font-bold px-4 py-2 rounded-lg transition flex items-center gap-2';
       }
-    }
-
-    function getLowConfidenceTranscriptSpans(text) {
-      const normalized = String(text || '').trim();
-      if (!normalized) return [];
-      const phrases = normalized.split(/(\s+)/);
-      const flagged = [];
-      const ambiguousTerms = ['syamenagn', 'saye', 'al', 'ቁርጠት', 'honesal', 'asthma', 'gall', 'wound', 'amoxicillin', 'paracetamol'];
-      let buffer = '';
-      let index = 0;
-      phrases.forEach((phrase) => {
-        if (!phrase) return;
-        buffer += phrase;
-        const phraseText = buffer.trim();
-        if (phraseText && ambiguousTerms.some(term => phraseText.toLowerCase().includes(term.toLowerCase()))) {
-          flagged.push({ index, text: phraseText, confidence: 0.68 });
-          buffer = '';
-        }
-        index += 1;
+      [exportButton, summaryButton].forEach((button) => {
+        if (!button) return;
+        button.disabled = !window.clinicalSignOffVerified;
+        button.setAttribute('aria-disabled', String(!window.clinicalSignOffVerified));
+        button.title = window.clinicalSignOffVerified
+          ? 'Clinician review confirmed'
+          : 'Review Required before FHIR Commit';
       });
-      return flagged;
     }
 
     function renderGuardedTranscript(text, targetId = 'triage-transcript') {
       const container = document.getElementById(targetId);
       if (!container) return;
       const source = String(text || '').trim();
-      const segments = source ? source.split(/\s+/) : [];
-      if (!segments.length) {
+      if (!source) {
         container.innerHTML = '<span class="text-slate-500">Transcript waiting...</span>';
         return;
       }
-      const lowConfidence = getLowConfidenceTranscriptSpans(source);
-      container.innerHTML = segments.map((segment) => {
-        const token = segment.replace(/[.,!?]/g, '');
-        const flagged = lowConfidence.some(({ text }) => text.toLowerCase().includes(token.toLowerCase()));
-        return flagged
-          ? `<span class="text-amber-300 underline decoration-amber-500 decoration-wavy decoration-2" title="Low-confidence phrase; clinician must verify before export.">${escapeHtmlFollowup(segment)}</span>`
-          : `<span class="text-slate-200">${escapeHtmlFollowup(segment)}</span>`;
-      }).join(' ');
+      container.textContent = source;
     }
 
     function validateTranscriptSoapDiscrepancy(transcriptText, soapText = '') {
@@ -2450,16 +2559,7 @@
     }
 
     function verifyClinicianSignOff() {
-      window.clinicalSignOffVerified = true;
-      setSoapVerificationState(true);
-      updateClinicianSignoffUI();
-      const transcriptBox = document.getElementById('ehr-transcript-box');
-      const transcriptText = transcriptBox ? transcriptBox.innerText : '';
-      renderDiscrepancyPanel(transcriptText, document.getElementById('ehr-cc')?.value || '');
-      const syncBtn = document.getElementById('btn-sync-ehr');
-      if (syncBtn) {
-        syncBtn.disabled = false;
-      }
+      verifySoapRecord();
     }
 
     function ehrSetStatus(text) {
@@ -2519,14 +2619,10 @@
       }
       if (icdMatch) {
         const icdEl = document.getElementById('ehr-icd');
-        if (icdEl) icdEl.innerText = `ICD-10 Code: ${icdMatch.code} (${icdMatch.label})`;
+        if (icdEl) icdEl.innerText = `Clinical Reference Suggestion (unverified): ICD-10 Code: ${icdMatch.code} (${icdMatch.label})`;
       }
       populateSoapFromClinicalFields(soapState.transcript || raw);
-      const syncBtn = document.getElementById('btn-sync-ehr');
-      if (syncBtn && chiefComplaint) {
-        syncBtn.disabled = false;
-        syncBtn.className = "bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-lg shadow-emerald-500/20";
-      }
+      updateClinicianSignoffUI();
     }
 
     function setEHRRecordButtonState(isRecording) {
@@ -2639,12 +2735,12 @@
         index += 1;
         const p = document.createElement('p');
         p.className = line.speaker === 'agent' ? 'text-xs sm:text-sm' : 'text-emerald-300 font-mono text-xs sm:text-sm';
-        p.innerHTML = `<b class="${line.speaker === 'agent' ? 'text-cyan-400 font-semibold' : 'text-emerald-300 font-semibold'}">${line.speaker === 'agent' ? 'AI Agent' : 'Patient'}:</b> "${escapeHtmlFollowup(line.text)}"`;
+        p.innerHTML = `<b class="${line.speaker === 'agent' ? 'text-cyan-200 font-semibold' : 'text-emerald-300 font-semibold'}">${line.speaker === 'agent' ? 'Voice Assistant (Demo)' : 'Patient'}:</b> "${escapeHtmlFollowup(line.text)}"`;
         if (dialogue) dialogue.appendChild(p);
         if (line.speaker === 'agent') {
           if (callIcon) callIcon.className = "fa-solid fa-phone-volume text-emerald-400 animate-bounce";
           if (callStatus) callStatus.innerText = "Speaking...";
-          if (callSub) callSub.innerText = "Sahara Voice Agent speaking in Amharic-English...";
+          if (callSub) callSub.innerText = "Playing the sample voice prompt in Amharic-English...";
           speakText(line.text, {
             lang: 'en-US',
             onend: () => setTimeout(next, 350)
@@ -2668,19 +2764,19 @@
       const callIcon = document.getElementById('call-icon');
       stopModule3Audio();
       if (callIcon) callIcon.className = "fa-solid fa-phone-volume text-emerald-400 animate-bounce";
-      if (callStatus) callStatus.innerText = "Outbound Call Active (Connected)";
+      if (callStatus) callStatus.innerText = "Follow-up simulation active";
       if (callSub) callSub.innerText = "Case 2 maternal post-op follow-up in Amharic-English...";
       if (type === 'stable') {
         playDialogueSequence([
           { speaker: 'agent', text: "ጤና ይስጥልኝ Lemlem, post-op ሕመሙ ደህና ነው? Lemlem, how is the post-op pain today?" },
           { speaker: 'patient', text: "ደህና ነኝ, ሕመሙ lessen ሲያደርግ, no fever today." },
-          { speaker: 'agent', text: "Very good. Remember to take your prescribed medications as scheduled." }
+          { speaker: 'agent', text: "Very good. Please follow the medication instructions provided by your clinician." }
         ], { fallbackMessage });
         if (badge) {
-          badge.className = "text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 inline-block";
-          badge.innerText = "STABLE RECOVERY (NORMAL)";
+          badge.className = "text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-950 text-indigo-100 border border-indigo-700 inline-block";
+          badge.innerText = "LOWER-RISK INDICATORS — REVIEW REQUIRED";
         }
-        if (desc) desc.innerText = "Patient reports reduced pain and absence of fever. No intervention required.";
+        if (desc) desc.innerText = "The sample reports reduced pain and no fever. A clinician must verify this against current symptoms, vital signs, and examination.";
         if (escBtn) escBtn.disabled = true;
         analyzePostCareFromSimulation("ደህና ነኝ, ሕመሙ lessen ሲያደርግ, no fever today.", "general");
       } else {
@@ -2710,10 +2806,10 @@
     function triggerNurseEscalation() {
       const escText = document.getElementById('nurse-escalation-text');
       const escBtn = document.getElementById('btn-escalate');
-      if (escText) escText.innerHTML = `<span class="text-red-400 font-bold"><i class="fa-solid fa-bell mr-1"></i> HIGH PRIORITY ALERT SENT TO DUTY NURSE DISPATCH!</span>`;
+      if (escText) escText.innerHTML = `<span class="text-red-200 font-bold"><i class="fa-solid fa-bell mr-1"></i> Flagged for nurse review. Clinical staff must complete any actual escalation.</span>`;
       if (escBtn) {
         escBtn.disabled = true;
-        escBtn.innerText = "Escalation Sent to Nurse";
+        escBtn.innerText = "Flagged for Nurse Review";
       }
     }
 
@@ -2745,6 +2841,7 @@
 
     function renderPostCareResult(data) {
       const panel = document.getElementById('postcare-result-panel');
+      const errorMessage = document.getElementById('postcare-error');
       const acuityBanner = document.getElementById('postcare-acuity-banner');
       const riskBadge = document.getElementById('postcare-risk-badge');
       const nurseBadge = document.getElementById('postcare-nurse-badge');
@@ -2752,6 +2849,10 @@
       if (!panel) return;
 
       panel.classList.remove('hidden');
+      if (errorMessage) {
+        errorMessage.classList.add('hidden');
+        errorMessage.textContent = '';
+      }
 
       const riskColors = {
         on_track: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
@@ -2802,9 +2903,13 @@
       } catch (error) {
         console.error('Post-care analysis failed:', error);
         const panel = document.getElementById('postcare-result-panel');
+        const errorMessage = document.getElementById('postcare-error');
         if (panel) {
           panel.classList.remove('hidden');
-          panel.innerHTML = `<p class="text-[11px] text-red-400">Analysis failed: ${error.message}. Is the gateway backend running?</p>`;
+          if (errorMessage) {
+            errorMessage.textContent = `Analysis failed: ${error.message}. Is the gateway backend running?`;
+            errorMessage.classList.remove('hidden');
+          }
         }
       }
     }
@@ -2997,7 +3102,9 @@
     function renderFollowupFinal(data) {
       document.getElementById('followup-real-record-btn').classList.add('hidden');
       const statusEl = document.getElementById('followup-real-status');
-      statusEl.innerText = data.emergency ? 'EMERGENCY DETECTED' : 'Follow-up call complete';
+      statusEl.innerText = data.emergency
+        ? 'Potential emergency indicator — clinician review required'
+        : 'Follow-up complete — clinician review required';
       playFollowupAudio(data.narration_audio_url, data.narration_text);
 
       const summary = document.getElementById('followup-real-summary');
@@ -3006,7 +3113,7 @@
         (data.emergency ? 'border-red-500/50 bg-red-500/15 text-red-200' : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300');
       let html = `Risk: ${data.recovery_risk_score}/100 (${data.recovery_risk_level.replace('_', ' ')})`;
       if (data.maternal_acuity) html += `<br>${data.maternal_acuity.label}`;
-      if (data.nurse_escalated) html += '<br><span class="text-red-300">Nurse escalation required -- decision support only, confirm with real vitals.</span>';
+      if (data.nurse_escalated) html += '<br><span class="text-red-200">Nurse review suggested. Clinical staff must assess real vitals and complete any escalation.</span>';
       summary.innerHTML = html;
 
       document.getElementById('followup-real-start-btn').classList.remove('hidden');
@@ -3698,7 +3805,7 @@
 
     async function exportFhirJson() {
       if (!window.clinicalSignOffVerified) {
-        showToast('A signed clinician review is required before exporting HL7 FHIR records.', 'warning');
+        showToast('Review Required before FHIR Commit. Confirm clinician review before exporting.', 'warning');
         return;
       }
       try {
@@ -3717,48 +3824,48 @@
 
     function downloadClinicalSummary() {
       if (!window.clinicalSignOffVerified) {
-        showToast('A signed clinician review is required before saving or exporting a clinical summary.', 'warning');
+        showToast('Clinician review is required before exporting a clinical summary.', 'warning');
         return;
       }
-      const cc = document.getElementById('ehr-cc')?.value || "Chest Pain & Headache";
-      const duration = document.getElementById('ehr-duration')?.value || "2 Days";
-      const bp = document.getElementById('ehr-bp')?.value || "140/90";
-      const pulse = document.getElementById('ehr-pulse')?.value || "88 bpm";
-      const temp = document.getElementById('ehr-temp')?.value || "37.8 C";
-      const meds = document.getElementById('ehr-meds')?.value || "Amoxicillin 500mg, Paracetamol 500mg";
+      const cc = document.getElementById('ehr-cc')?.value || 'Not supplied';
+      const duration = document.getElementById('ehr-duration')?.value || 'Not supplied';
+      const bp = document.getElementById('ehr-bp')?.value || 'Not supplied';
+      const pulse = document.getElementById('ehr-pulse')?.value || 'Not supplied';
+      const temp = document.getElementById('ehr-temp')?.value || 'Not supplied';
+      const meds = document.getElementById('ehr-meds')?.value || 'No medication details supplied';
+      const icd = document.getElementById('ehr-icd')?.innerText || 'No code suggestion supplied';
       const summaryText = `=======================================================
-AFRIHEALTH AI - CLINICAL ENCOUNTER SUMMARY REPORT
+AFRIHEALTH AI - CLINICAL REFERENCE SUMMARY
 =======================================================
 Encounter ID : #EHR-90412
 Date/Time    : ${new Date().toLocaleString()}
-Standard     : HL7 FHIR v4.0.1 Compliant
-Engine       : Intron Sahara v2.5 Code-Switching ASR
+Review status: Clinician review confirmed in this browser session
 
 -------------------------------------------------------
-CHIEF COMPLAINT & HISTORY
+CLINICAL REFERENCE SUGGESTIONS (VERIFY AGAINST SOURCE)
 -------------------------------------------------------
-Chief Complaint : ${cc}
-Symptom Duration: ${duration}
+Chief complaint text: ${cc}
+Symptom duration: ${duration}
 
 -------------------------------------------------------
-PHYSICAL EXAMINATION & VITALS
+VITALS (VERIFY)
 -------------------------------------------------------
-Blood Pressure  : ${bp} mmHg
-Pulse / HR      : ${pulse}
-Temperature     : ${temp}
+Blood pressure: ${bp}
+Pulse: ${pulse}
+Temperature: ${temp}
 
 -------------------------------------------------------
-DIAGNOSIS & MEDICATIONS PRESCRIBED
+CODE AND MEDICATION TEXT (UNVERIFIED REFERENCE; NOT AN ORDER)
 -------------------------------------------------------
-ICD-10 Diagnosis : R07.9 (Chest Pain, Unspecified) & Pyrexia
-Prescription     :
+ICD-10 reference: ${icd}
+Medication details captured:
 ${meds}
 
 -------------------------------------------------------
-CLINICIAN AUDIT & SIGN-OFF
+CLINICAL SAFETY
 -------------------------------------------------------
-Status           : Transcribed & Verified via Sahara v2.5
-Digital Signoff  : Dr. Tadesse (Duty Clinician)
+Generated content is for clinician verification only.
+This is not an autonomous diagnosis or prescription.
 =======================================================`;
       helperDownloadFile("Clinical_Summary_EHR-90412.txt", summaryText, "text/plain");
     }

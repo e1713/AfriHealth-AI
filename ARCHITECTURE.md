@@ -77,6 +77,29 @@ describe the current endpoint as an agentic SOAP/ICD-10 generator. Any medicatio
 safety gate must be verified in the specific workflow before describing it as
 enforced end to end.
 
+### Clinician review and record export gates
+
+The browser displays a persistent clinical safety disclaimer and marks
+transcripts and derived artifacts as pending verification. The EHR workflow
+requires a separate review-confirmation checkbox and sign-off action. Approval
+does not automatically commit data; FHIR export, clinical summary export, and
+EHR commit controls remain unavailable until the reviewer signs off. Editing
+the current SOAP draft invalidates its approval.
+
+Both `/api/v1/fhir/export` and `/api/v1/ehr/commit` require the
+`clinician_signed_off` request field. This is a caller-supplied assertion, not
+authenticated clinician identity or an auditable digital signature. The
+prototype still requires deployment-level authentication, authorization, and
+audit controls before identifiable patient data can be used.
+
+The UI does not synthesize ASR confidence values. When confidence is
+unavailable, the clinical SOAP response carries `null` rather than a synthetic
+zero. Until verified backend inference metadata provides a confidence tier, the
+UI shows a pending-verification placeholder. A score supplied inside
+structured SOAP input is not independently verified and must not be treated as
+inference metadata. Frontend heuristics must not be presented as model
+confidence.
+
 ## 4. Evidence and evaluation layers
 
 The repository contains separate evidence types:

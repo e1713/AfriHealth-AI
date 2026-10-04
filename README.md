@@ -45,8 +45,8 @@ The system is built around a static frontend and a secure FastAPI gateway that k
 - Amharic-English code-switched speech support for clinical settings
 - Secure backend transcription proxy with server-side API key handling
 - Human-in-the-loop clinical review workflow for transcripts and structured outputs
-- Editable SOAP encounter panel with clinician sign-off and FHIR Composition output
-- FHIR-ready export generation for interoperability
+- Editable SOAP clinical-reference draft panel and structured SOAP validation
+- FHIR-compatible export and EHR commit actions gated on explicit clinician review
 - Optional EHR submission when configured by deployment
 - Intron-focused live audio benchmark with transcript-only or reference-scored WER/CER
 - PostgreSQL stream persistence in production with a local SQLite development fallback
@@ -218,9 +218,19 @@ This uses the static server configuration defined in `package.json` and serves t
 
 ## Clinical safety principles
 
-This project is designed as a decision-support system, not an autonomous clinical authority. Generated notes, diagnoses, and treatment suggestions should be reviewed by a licensed clinician before being used in patient care or transmitted to an EMR.
+This project is designed as a clinician-support workflow, not an autonomous clinical authority. Generated transcripts, SOAP notes, codes, triage labels, and risk indicators are clinical reference suggestions. They require clinician verification against source audio and patient context and must not be treated as a diagnosis, treatment order, or prescription.
 
-The application includes handling for clinician review gating and requires explicit authorization for downstream EHR commit workflows.
+## Clinical safety features
+
+- **Persistent UI disclaimer:** Clinical transcript, triage, extracted-entity, SOAP, ICD-10, post-care, benchmark-transcript, and FHIR surfaces display: “Clinical Workflow Assistant — Pending Clinician Approval. Generated transcripts, SOAP notes, and codes are clinical reference suggestions for clinician verification only. Not an autonomous diagnosis or prescription.”
+- **Reusable UI elements:** `ClinicalSafetyBanner`, `HumanReviewStatusBadge`, and `ConfidenceTierCard` are implemented as native custom elements in the static frontend and reused across the clinical result surfaces.
+- **Human review status:** Clinical results are labeled **Pending Verification** until review is completed. The EHR workflow requires the reviewer to confirm that the source transcript and draft were reviewed, then explicitly select **Verify & Sign Off**. Changes to the draft revoke the current approval and require review again.
+- **FHIR/EHR protection:** FHIR export, clinical-summary export, and EHR commit controls are disabled until approval; the page identifies the gate as **Review Required before FHIR Commit**. Approval and committing are separate actions. The `/api/v1/fhir/export` and `/api/v1/ehr/commit` endpoints also reject requests without the `clinician_signed_off` assertion.
+- **No automatic commit on approval:** Signing off a draft does not submit it to an EHR. The reviewer must separately invoke the commit action.
+- **Confidence transparency:** The UI does not calculate or fabricate ASR confidence. No verified inference-confidence metadata is currently wired into these views, so confidence panels show **Estimated Confidence: Pending Verification** and state that no backend confidence metadata is available. The API returns `null` when confidence is unavailable rather than a synthetic zero. A score supplied inside structured SOAP input is not independently verified and is not used to assign a tier. No high/medium/low tier is assigned without an explicit backend-supplied tier.
+- **Accessible tier colors:** If supported backend metadata is integrated in the future, high, medium, low, and pending tiers are styled green, amber, red, and indigo respectively, with text labels so color is not the only indicator.
+
+These UI and endpoint gates do not establish reviewer identity or provide an auditable digital signature: `clinician_signed_off` is a caller-supplied assertion, and the project has no built-in clinician accounts or role-based access control. Do not use identifiable patient data or treat this prototype as a production clinical system until authentication, authorization, audit, retention, and deletion controls are implemented and verified.
 
 ---
 

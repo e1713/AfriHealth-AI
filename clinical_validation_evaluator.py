@@ -1,20 +1,10 @@
 """Score private clinical ASR results and emit a privacy-safe aggregate report."""
 
 import argparse
+import csv
 import json
 import re
 from pathlib import Path
-
-
-CRITICAL_TERMS = {
-    "CS-02": ["Amoxicillin", "500mg", "TID"],
-    "CS-05": ["125mg/5mL", "PO TID"],
-    "CS-06": ["Metformin", "BID"],
-    "CS-09": ["38 weeks", "ruptured membranes"],
-    "CS-11": ["GeneXpert", "TB"],
-    "CS-14": ["Ceftriaxone"],
-    "CS-15": ["meningitis"],
-}
 
 
 CLINICAL_ALIASES = {
@@ -125,27 +115,57 @@ def calculate_mwer(reference: str, hypothesis: str, target_terms: list[str]) -> 
     return 1.0 - calculate_target_term_recall(reference, hypothesis, target_terms)
 
 
-def evaluate(results_path: Path, model_name: str) -> dict:
+def evaluate(
+    results_path: Path,
+    model_name: str,
+    manifest_path: Path | None = None,
+    dictionary_path: Path | None = None,
+) -> dict:
     private_results = json.loads(results_path.read_text(encoding="utf-8"))
+    project_root = Path(__file__).resolve().parent
+    manifest_path = manifest_path or (
+        project_root / "benchmark" / "metadata" / "BENCHMARK_MANIFEST.csv"
+    )
+    dictionary_path = dictionary_path or (
+        project_root / "dictionaries" / "medical_terms.json"
+    )
+    with manifest_path.open(encoding="utf-8", newline="") as manifest_file:
+        manifest_rows = {
+            row["case_id"]: row
+            for row in csv.DictReader(manifest_file)
+            if row.get("case_id")
+        }
+    vocabulary = json.loads(dictionary_path.read_text(encoding="utf-8"))
+    critical_terms = (
+        vocabulary.get("categories", {})
+        .get("critical_terms", {})
+        .get("terms", [])
+    )
     cases = []
     for item in private_results:
+        case_id = str(item.get("case_id", "")).strip()
+        if case_id not in manifest_rows:
+            raise ValueError(f"Result case is not in the master benchmark manifest: {case_id}")
         response_data = item.get("response", {}).get("data", {})
         hypothesis = item.get("transcript") or response_data.get("audio_transcript", "")
-        reference = item.get("reference_transcript", "")
+        reference_row = manifest_rows[case_id]
+        reference = reference_row.get("reference_transcript", "")
         target_terms = [
             term.strip().strip('"')
-            for term in item.get("target_terms", "").split(";")
+            for term in reference_row.get("focus_terms", "").split(";")
             if term.strip()
         ]
         target_recall = calculate_target_term_recall(reference, hypothesis, target_terms)
         mwer = calculate_mwer(reference, hypothesis, target_terms)
-        critical_terms = CRITICAL_TERMS.get(item["case_id"], [])
+        reference_critical_terms = [
+            term for term in critical_terms if contains_term(reference, term)
+        ]
         critical_misses = [
-            term for term in critical_terms if not contains_term(hypothesis, term)
+            term for term in reference_critical_terms if not contains_term(hypothesis, term)
         ]
         cases.append(
             {
-                "case_id": item["case_id"],
+                "case_id": case_id,
                 "wer": round(wer(reference, hypothesis), 4),
                 "target_term_recall": round(target_recall, 4),
                 "mwer": round(mwer, 4),
@@ -154,12 +174,13 @@ def evaluate(results_path: Path, model_name: str) -> dict:
         )
 
     if not cases:
-        raise ValueError("The private result file contains no cases.")
+        raise ValueError("The result file contains no cases.")
     return {
         "report_type": "clinical_asr_validation_aggregate",
-        "report_version": "1.2",
+        "report_version": "2.0",
         "evaluation_method": "normalized token-level WER, clinical alias target-term recall, and M-WER (1 - target-term recall)",
-        "source": "reviewed simulated clinical recording results",
+        "reference_source": str(manifest_path),
+        "source": "authoritative 100-case benchmark manifest",
         "cases_evaluated": len(cases),
         "models": {
             model_name: {
@@ -188,7 +209,7 @@ def evaluate(results_path: Path, model_name: str) -> dict:
         "interpretation": {
             "status": "baseline_for_clinician_review",
             "autonomous_clinical_use": False,
-            "note": "Critical-term misses require clinician review and must not be silently corrected by the application.",
+            "note": "Critical-term misses are derived from the shared medical vocabulary and require clinician review; this report does not establish clinical safety.",
         },
     }
 
@@ -210,8 +231,30 @@ def main() -> None:
         default="intron_sahara_v2.5",
         help="Stable model identifier for the aggregate report.",
     )
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=Path(__file__).resolve().parent
+        / "benchmark"
+        / "metadata"
+        / "BENCHMARK_MANIFEST.csv",
+        help="Authoritative reference manifest.",
+    )
+    parser.add_argument(
+        "--dictionary",
+        type=Path,
+        default=Path(__file__).resolve().parent
+        / "dictionaries"
+        / "medical_terms.json",
+        help="Shared medical vocabulary.",
+    )
     args = parser.parse_args()
-    report = evaluate(Path(args.results).resolve(), args.model_name)
+    report = evaluate(
+        Path(args.results).resolve(),
+        args.model_name,
+        args.manifest.resolve(),
+        args.dictionary.resolve(),
+    )
     output_path = Path(args.output).resolve()
     output_path.write_text(
         json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"

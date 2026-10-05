@@ -1,6 +1,8 @@
 {
   "report_type": "clinical_asr_validation_aggregate",
   "report_version": "1.0",
+  "evidence_status": "historical_archived_not_current_benchmark_metrics",
+  "active_reference_manifest": "benchmark/metadata/BENCHMARK_MANIFEST.csv",
   "evaluation_date": "2026-09-13",
   "language_pair": "Amharic-English",
   "cases_evaluated": 15,

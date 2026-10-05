@@ -6,7 +6,9 @@
 - [ ] Assign pseudonymous speaker IDs.
 - [ ] Confirm consent and simulated/de-identified content.
 - [ ] Create a private folder for audio and consent records.
-- [ ] Verify the approved scripts in [CLINICAL_REFERENCE_TRANSCRIPTS.csv](./CLINICAL_REFERENCE_TRANSCRIPTS.csv).
+- [ ] Verify each recorded script against the reference in
+      [BENCHMARK_MANIFEST.csv](./benchmark/metadata/BENCHMARK_MANIFEST.csv);
+      update the manifest review status only after audio review/adjudication.
 
 ## During recording
 
@@ -19,7 +21,7 @@
 ## During clinical audit
 
 - [ ] Run each recording through the app.
-- [ ] Complete the 15 terminology reviews.
+- [ ] Complete terminology review for each benchmark case.
 - [ ] Complete the three safety scenarios.
 - [ ] Score the SOAP output.
 - [ ] Complete the Responsible AI sign-off.

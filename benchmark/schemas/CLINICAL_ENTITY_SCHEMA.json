@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://afrihealth.example/schemas/clinical-entity.schema.json",
+  "title": "AfriHealth Clinical Entity Annotation",
+  "description": "Human-reviewable entity annotation for an Amharic-English clinical transcript. This schema does not imply automated diagnosis or validated clinical coding.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "transcript_source",
+    "entities",
+    "review_status"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^CS-(0[1-9]|[1-9][0-9]|100)$"
+    },
+    "transcript_source": {
+      "type": "string",
+      "description": "Identifier/version of the exact transcript being annotated."
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entity"
+      }
+    },
+    "review_status": {
+      "type": "string",
+      "enum": [
+        "unreviewed",
+        "in_review",
+        "adjudicated"
+      ]
+    },
+    "reviewer_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Pseudonymous reviewer code only; never a personal identifier."
+    }
+  },
+  "$defs": {
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entity_type",
+        "surface_text",
+        "normalized_concept",
+        "start_char",
+        "end_char",
+        "assertion",
+        "criticality",
+        "review_status"
+      ],
+      "properties": {
+        "entity_type": {
+          "type": "string",
+          "enum": [
+            "symptom",
+            "diagnosis",
+            "medication",
+            "procedure",
+            "lab_test",
+            "vital_sign"
+          ]
+        },
+        "surface_text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "normalized_concept": {
+          "type": "string",
+          "minLength": 1
+        },
+        "start_char": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_char": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "language": {
+          "type": "string",
+          "enum": [
+            "am",
+            "en",
+            "mixed",
+            "uncertain"
+          ]
+        },
+        "assertion": {
+          "type": "string",
+          "enum": [
+            "present",
+            "negated",
+            "uncertain",
+            "historical"
+          ]
+        },
+        "criticality": {
+          "type": "string",
+          "enum": [
+            "not_assessed",
+            "non_critical",
+            "critical"
+          ]
+        },
+        "attributes": {
+          "type": "object",
+          "description": "Optional source-grounded details such as dose, route, frequency, value, unit, or laterality.",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "review_status": {
+          "type": "string",
+          "enum": [
+            "unreviewed",
+            "in_review",
+            "adjudicated"
+          ]
+        }
+      }
+    }
+  }
+}

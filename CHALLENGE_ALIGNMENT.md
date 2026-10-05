@@ -1,40 +1,39 @@
 # Sahara CodeSwitch Africa Challenge Alignment
 
-This page maps challenge-relevant project requirements to the current
-prototype and repository evidence. “Implemented” means present in this
-checkout; it does not imply clinical validation, production readiness, or
-challenge compliance certification.
+This maps challenge-relevant requirements to the current prototype and
+repository evidence. Implementation evidence does not imply clinical
+validation, production readiness, or challenge certification.
 
 | Requirement | Project implementation | Evidence location |
 | --- | --- | --- |
-| Healthcare category focus | Clinician-support voice documentation prototype for Amharic-English code-switched workflows, including triage support, intake, transcript review, and post-care follow-up. Ordinary prose is not automatically converted into a SOAP note or ICD-10 code. | [README.md](README.md), [ARCHITECTURE.md](ARCHITECTURE.md), [`index.html`](index.html), [`main.py`](main.py) |
-| Voice downstream clinical workflows | Browser audio capture/transcription, clinician-review triage and intake, structured SOAP validation, post-care analysis/session APIs, and FHIR-compatible export with review gates. The dedicated VoiceBot workflow state machine on the Impact/Follow-up views is a UI-only simulation; it does not schedule calls, contact patients, or send alerts. | [`index.html`](index.html), [`main.py`](main.py) (`/api/v1/process-clinical`, `/api/v1/post-care/analyze`, `/api/v1/post-care/session/start`, `/api/v1/post-care/session/answer`, `/api/v1/fhir/export`, `/api/v1/ehr/commit`), [DEMO_SCRIPT.md](DEMO_SCRIPT.md) |
-| Three-or-more speech model comparisons | Four complete saved transcript sets are scored on 15 simulated Amharic-English cases: Intron Sahara v2.5, OpenAI Whisper Tiny, Meta Wav2Vec2 Base 960h (English-only), and Google Gemini Flash. Scores are not fresh inference, raw audio is not in the repository, and this small dataset does not support population-level conclusions. | [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md), [benchmark_report.json](benchmark_report.json), [evaluation_report_summary.json](evaluation_report_summary.json), [`benchmark_data/manifest.csv`](benchmark_data/manifest.csv), [`benchmark_suite.py`](benchmark_suite.py) |
-| Responsible AI and human review | Clinical-safety banners, pending-review status, explicit browser review confirmation, FHIR/EHR sign-off assertions, and server-side FHIR/EHR checks. The caller-supplied sign-off is not authenticated clinician identity or an auditable digital signature; identifiable-patient production use remains blocked on additional controls. | [RESPONSIBLE_AI.md](RESPONSIBLE_AI.md), [README.md](README.md#clinical-safety-features), [`index.html`](index.html), [`main.py`](main.py), [`tests/test_safety.py`](tests/test_safety.py) |
-| Working prototype / judge demonstration | Static single-page application with a one-click Impact Dashboard, Challenge Alignment view, VoiceBot Workflow Simulation, clinical modules, and benchmark matrix. The walkthrough link and readiness checklist require confirmation against the currently deployed build. | [`index.html`](index.html), [DEMO_SCRIPT.md](DEMO_SCRIPT.md#60-second-judge-walkthrough), [SUBMISSION_READINESS.md](SUBMISSION_READINESS.md), [README.md](README.md#judge-ready-views) |
-| Projected workflow impact | The dashboard displays ~5 minutes/patient, ~200 minutes/clinician-day, ~70% documentation burden reduction, and ~15% patient-support capacity as illustrative pilot projections only. The 200-minute arithmetic assumes 40 consultations at five minutes each. These are not measured or clinically validated results. | [`index.html`](index.html) (`sec-impact`), [README.md](README.md#judge-ready-views) |
-| Optional consented, de-identified audio evidence | Recording protocol, metadata template, and reference/manifest materials are present. Raw benchmark audio is not committed in this repository; consent/provenance evidence must be maintained and submitted according to the protocol. | [CLINICAL_RECORDING_PROTOCOL.md](CLINICAL_RECORDING_PROTOCOL.md), [BENCHMARK_METADATA_TEMPLATE.csv](BENCHMARK_METADATA_TEMPLATE.csv), [`benchmark_data/README.md`](benchmark_data/README.md), [`benchmark_data/manifest.csv`](benchmark_data/manifest.csv) |
+| Healthcare category focus | Clinician-support voice documentation prototype focused on Amharic-English workflows. Clinical artifacts require human verification. | [README.md](README.md), [ARCHITECTURE.md](ARCHITECTURE.md), [`index.html`](index.html), [`main.py`](main.py) |
+| Voice downstream clinical workflows | Browser audio capture, transcription, clinician-review triage/intake, post-care workflows, and FHIR-compatible export gates. The VoiceBot state machine is a UI simulation; it does not contact patients or schedule calls. | [`index.html`](index.html), [`main.py`](main.py) (`/api/v1/post-care/analyze`, `/api/v1/fhir/export`, `/api/v1/ehr/commit`), [DEMO_SCRIPT.md](DEMO_SCRIPT.md) |
+| Three-or-more speech model comparisons | Six model adapters and a common inference/output schema are implemented. Mock mode verifies data flow only. Live accuracy is unavailable because no eligible, audio-verified benchmark run is established; four local-model adapters remain placeholders. | [benchmark/metadata/BENCHMARK_MANIFEST.csv](benchmark/metadata/BENCHMARK_MANIFEST.csv), [inference_engine.py](inference_engine.py), [evaluator.py](evaluator.py), [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) |
+| Single benchmark source | The 100-case manifest is the sole active reference source. Its text came from the cited source export; it is not independently verified against audio. | [benchmark/metadata/BENCHMARK_MANIFEST.csv](benchmark/metadata/BENCHMARK_MANIFEST.csv), [benchmark/DATASET_CARD.md](benchmark/DATASET_CARD.md), [benchmark/BENCHMARK_LIMITATIONS.md](benchmark/BENCHMARK_LIMITATIONS.md) |
+| Responsible AI and human review | Consent/de-identification/hosted-inference gates, safety banners, explicit client review before export, and backend review assertions. Caller-supplied review is not authenticated identity or an auditable signature. | [RESPONSIBLE_AI.md](RESPONSIBLE_AI.md), [tests/test_safety.py](tests/test_safety.py), [`index.html`](index.html), [`main.py`](main.py) |
+| Equity-conscious benchmark design | Proposed CEAS combines overall WER-derived accuracy with worst-speaker and worst-code-switch-category accuracy. It is not calculable until references and subgroup labels are adjudicated and minimum coverage is met. | [benchmark/EVALUATION_METRICS.md](benchmark/EVALUATION_METRICS.md), [benchmark/SCORING_RUBRIC_ALIGNMENT.md](benchmark/SCORING_RUBRIC_ALIGNMENT.md) |
+| Working prototype / judge demonstration | Single-page application with one-click Impact Dashboard, Challenge Alignment, simulated follow-up, clinical modules, and benchmark view. Confirm the recording reflects this build. | [`index.html`](index.html), [DEMO_SCRIPT.md](DEMO_SCRIPT.md), [SUBMISSION_READINESS.md](SUBMISSION_READINESS.md), [README.md](README.md) |
+| Projected workflow impact | Dashboard values are illustrative pilot projections only, not measured outcomes or validated clinical study findings. | [`index.html`](index.html), [README.md](README.md) |
+| Optional consented, de-identified audio | Protocol and metadata template are provided. Raw audio, consent, provenance, and provider approval must be handled in restricted storage and verified per case before inference. | [CLINICAL_RECORDING_PROTOCOL.md](CLINICAL_RECORDING_PROTOCOL.md), [BENCHMARK_METADATA_TEMPLATE.csv](BENCHMARK_METADATA_TEMPLATE.csv), [benchmark/metadata/BENCHMARK_MANIFEST.csv](benchmark/metadata/BENCHMARK_MANIFEST.csv) |
 
 ## Fast navigation
 
-- In the app, open **Impact Dashboard** for pilot projections and prototype
-  trust indicators.
-- Open **VoiceBot Workflow Simulation** for the four-step interactive demo.
-- Open **Challenge Alignment** for the in-app requirement-to-evidence map.
-- Open **4-Model Benchmark Matrix** and [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md)
-  for evaluation results and limitations.
+- Open **Impact Dashboard** for pilot projections and prototype trust indicators.
+- Open **VoiceBot Workflow Simulation** for the four-step demonstration.
+- Open **Challenge Alignment** for this evidence map.
+- Open the benchmark view and [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md)
+  for current pipeline status and limitations.
 
-## Important interpretation limits
+## Interpretation limits
 
-- Pilot projections are illustrative assumptions, not measured time savings,
-  throughput, adoption, safety, or efficacy outcomes.
-- The VoiceBot workflow state machine is a simulation. Do not present it as a
-  completed outbound calling integration.
-- The model report is based on saved transcripts for 15 simulated cases. It is
-  not a demographic fairness assessment, a population estimate, or proof of
-  clinical performance.
-- The prototype's review gate does not establish clinician authentication,
-  authorization, or auditability. Do not use identifiable patient data until
-  the controls described in [RESPONSIBLE_AI.md](RESPONSIBLE_AI.md) and
-  [SUBMISSION_READINESS.md](SUBMISSION_READINESS.md) are implemented and
-  verified.
+- Mock transcripts and simulated latency are not model-performance evidence.
+- The source manifest has not been audio-verified; speaker assignments are
+  absent and code-switch labels are provisional.
+- CEAS is a project-proposed research metric, not a validated fairness score or
+  an exact reproduction of a published framework.
+- Pilot projections and the VoiceBot workflow must not be presented as
+  measured outcomes or a live patient-contact service.
+- Review gates do not establish clinician authentication, authorization, or
+  auditability. Identifiable-patient use remains blocked on the controls
+  described in [RESPONSIBLE_AI.md](RESPONSIBLE_AI.md) and
+  [SUBMISSION_READINESS.md](SUBMISSION_READINESS.md).

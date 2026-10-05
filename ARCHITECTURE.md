@@ -106,19 +106,18 @@ The repository contains separate evidence types:
 
 | Evidence | Purpose | Interpretation |
 | --- | --- | --- |
-| `benchmark_suite.py` fixture | Reproducible UI/scoring demonstration | Not a population performance claim |
-| AfriSwitch pilot scripts | General code-switched ASR import/inference | Not clinical validation |
-| `clinical_validation_report.json` | Aggregate result from 15 reviewed simulated clinical recordings | Benchmark and error-analysis baseline; not real-patient evidence |
+| `benchmark/metadata/BENCHMARK_MANIFEST.csv` | Sole active 100-case clinical reference source | Source text only; audio alignment and adjudication remain pending |
+| `inference_engine.py` + `evaluator.py` | Resumable ASR attempts and manifest-based metrics | Mock mode is synthetic; validated live comparison is not currently available |
+| Embedded application fixture | Reproducible UI/scoring demonstration | Not a population performance claim or benchmark result |
+| AfriSwitch pilot scripts | Separate general-purpose code-switched ASR experiment | Not clinical validation and not part of this clinical benchmark |
 | Review protocols and safety documentation | Human review, safety scenarios, SOAP scoring | Maintained outside the public demo flow |
 
-Do not combine fixture metrics, AfriSwitch results, and the clinical
-validation baseline into one model ranking.
+Do not combine application-fixture metrics or AfriSwitch results with the
+clinical benchmark.
 
-`clinical_validation_evaluator.py` scores provider results using the same
-simulated reference cases and emits only aggregate metrics plus critical-term
-miss counts. The recordings may be reused for benchmarking, error analysis,
-and terminology improvement, but the evaluator does not train a model or
-support autonomous clinical decisions.
+`clinical_validation_evaluator.py` is a compatibility scorer that resolves
+references and vocabulary from the same master manifest and medical dictionary.
+It does not train a model or support autonomous clinical decisions.
 
 ### Stream session metadata
 

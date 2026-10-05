@@ -30,20 +30,17 @@ dispatch care.
 
 ## Evidence strategy
 
-The project keeps four evidence layers separate:
+The project keeps evidence types separate:
 
 1. **Fixture benchmark:** a reproducible software test using embedded
    hypotheses. It is not independent audio inference.
-2. **15-case transcript comparison:** saved outputs from Intron Sahara v2.5,
-   Whisper Tiny, English-only Wav2Vec2 Base 960h, and Gemini are scored against
-   verified Amharic-English references using normalized WER, alias-aware
-   target-term recall, and M-WER. See `BENCHMARK_RESULTS.md`; these simulated-set
-   scores are not demographic fairness or population-performance evidence.
-3. **AfriSwitch pilot:** real general-purpose Amharic/Oromo code-switched audio
+2. **Clinical benchmark pipeline:** the single active source is
+   `benchmark/metadata/BENCHMARK_MANIFEST.csv`, with 100 source-text cases.
+   References are not yet audio-verified, speaker assignments are missing,
+   categories are provisional, and mock outputs are not accuracy evidence.
+   Current validated clinical metrics and CEAS are unavailable.
+3. **AfriSwitch pilot:** general-purpose Amharic/Oromo code-switched audio
    used for exploratory ASR evaluation, not clinical validation.
-4. **Clinical review baseline:** 15 reviewed Amharic-English recordings with
-   56.38% mean WER, 44.33% target-term recall, and critical-term misses in six
-   cases. This is evidence for clinician review, not autonomous care.
 
 Clinical validation materials are maintained as private evaluation and
 governance artifacts. They are not presented as a patient-facing product

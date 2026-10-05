@@ -34,6 +34,7 @@ class DashboardContentTests(unittest.TestCase):
         cls.parser.feed(cls.html)
         cls.alignment = (REPOSITORY_ROOT / "CHALLENGE_ALIGNMENT.md").read_text(encoding="utf-8")
         cls.readme = (REPOSITORY_ROOT / "README.md").read_text(encoding="utf-8")
+        cls.submission = (REPOSITORY_ROOT / "SUBMISSION_SUMMARY.md").read_text(encoding="utf-8")
 
     def test_primary_navigation_has_matching_dashboard_and_challenge_views(self):
         self.assertIn("impact", self.parser.nav_tab_ids)
@@ -87,6 +88,39 @@ class DashboardContentTests(unittest.TestCase):
                 self.assertIn(requirement, self.alignment)
         self.assertIn("CHALLENGE_ALIGNMENT.md", self.readme)
         self.assertIn("VoiceBot Follow-Up Workflow Demo", self.readme)
+
+    def test_branding_and_official_documentation_links_are_present(self):
+        documentation_url = "https://afri-health-ai.mintlify.site/"
+        logo = REPOSITORY_ROOT / "assets" / "logo.svg"
+        self.assertTrue(logo.is_file())
+        self.assertIn('id="primary-logo-svg"', logo.read_text(encoding="utf-8"))
+        self.assertIn("assets/logo.svg", self.html)
+        self.assertIn(documentation_url, self.html)
+        self.assertIn(documentation_url, self.readme)
+        self.assertIn(documentation_url, self.submission)
+        self.assertIn(
+            "fetch('./benchmark/metadata/BENCHMARK_MANIFEST.csv'",
+            self.html,
+        )
+        self.assertIn("<footer", self.html)
+
+    def test_demo_fixtures_are_not_presented_as_gold_standard_results(self):
+        self.assertNotIn("Gold Standard", self.html)
+        self.assertIn("5 illustrative UI fixtures", self.html)
+        self.assertIn("100 cases (CS-01 to CS-100)", self.html)
+        self.assertIn("Mock outputs are synthetic", self.html)
+        self.assertIn("performance claims require audio verification", self.html)
+
+    def test_readme_does_not_claim_unverified_accuracy_or_ceas_values(self):
+        self.assertIn("BENCHMARK_RESULTS.md", self.readme)
+        self.assertIn("MODEL_RECOMMENDATION.md", self.readme)
+        self.assertIn(
+            "Mock transcripts and simulated latency are pipeline fixtures",
+            self.readme,
+        )
+        self.assertIn("CEAS", self.readme)
+        self.assertIn("not a Next.js app", self.readme)
+        self.assertIn("no Streamlit interface", self.readme)
 
 
 if __name__ == "__main__":

@@ -3,3 +3,5 @@ jiwer>=3.0,<4
 soundfile>=0.12,<1
 torch
 transformers>=4.45,<5
+matplotlib>=3.8,<4
+seaborn>=0.13,<1

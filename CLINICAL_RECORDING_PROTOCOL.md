@@ -1,14 +1,15 @@
 # Clinical validation recording protocol
 
-This protocol prepares the 15 cases in the Clinical Validation Audit for
-reproducible speech-model evaluation. Use simulated or de-identified clinical
-content only.
+This protocol prepares audio corresponding to cases CS-01–CS-100 in the
+authoritative benchmark manifest for reproducible speech-model evaluation.
+Use simulated or de-identified clinical content only.
 
 ## Pilot target
 
-Start with one trained clinical speaker per case. The preferred pilot is three
-speakers, producing 45 recordings total. Expand speaker and accent coverage
-after the pilot passes the consent and quality checks.
+The project aims to cover five pseudonymous speakers. Record the true
+case-to-speaker mapping in the manifest only after it is verified; do not
+fabricate speaker assignments or demographics. Expand accent and recording
+condition coverage after consent and quality checks pass.
 
 ## Recording settings
 

@@ -1,20 +1,41 @@
-# Clinical Audio Dataset Benchmark Report
+# AfriHealth AI Benchmark Results
 
-> **Evidence status:** Results were scored from 15 manifest-selected recordings against verified references. Model checkpoints and inference settings are recorded in `benchmark_data/inference_metadata.json`.
+## Current evidence status
 
-| Model | Normalized WER ↓ | Mean Target-Term Recall ↑ | M-WER ↓ | Status |
-| :--- | :---: | :---: | :---: | :--- |
-| Intron Sahara v2.5 | 34.91% | 57.78% | 42.22% | Measured hosted ASR |
-| OpenAI Whisper Tiny | 99.56% | 23.67% | 76.33% | Measured local ASR |
-| Meta Wav2Vec2 Base 960h (English) | 108.23% | 2.22% | 97.78% | English-only local baseline; checkpoint in inference metadata |
-| Google Gemini gemini-flash-latest | 11.46% | 93.33% | 6.67% | Measured hosted ASR |
+The active benchmark source is the 100-case manifest at
+[`benchmark/metadata/BENCHMARK_MANIFEST.csv`](benchmark/metadata/BENCHMARK_MANIFEST.csv).
+It contains source reference text and focus terms, but references have not
+been independently verified against audio. Speaker assignments are missing,
+and code-switch labels are provisional.
 
-### Evaluation Methodology
-1. **Normalized WER**: Clinical text normalization standardizes punctuation, common units, and selected transliterations before whitespace-token Levenshtein scoring (using `jiwer` when installed).
-2. **Mean Target-Term Recall**: For each recording, the fraction of semicolon-separated manifest target terms matched by normalized tokens; parenthetical bilingual alternatives are accepted. Clinical aliases may match English, Amharic, and transliterated variants.
-3. **M-WER**: `1 - target-term recall`, calculated per sample then averaged; lower is better.
-4. **Fairness**: No demographic or subgroup fairness metric is computed in this benchmark.
+No validated live ASR accuracy comparison or Clinical Equity-Adjusted ASR
+Score (CEAS) is currently available. Mock runs produce synthetic transcripts
+and simulated latency for pipeline testing only. Mock accuracy metrics are
+intentionally unscored.
 
-The separate 15-case clinical validation baseline reported 56.38% mean WER,
-44.33% target-term recall, and critical-term misses in 6 cases. That result is
-for clinician review only and does not support autonomous clinical use.
+The embedded five-case application fixture is demo content, not a speech
+benchmark.
+
+See [benchmark/EVALUATION_METRICS.md](benchmark/EVALUATION_METRICS.md) for
+metric definitions and CEAS prerequisites, and
+[benchmark/BENCHMARK_LIMITATIONS.md](benchmark/BENCHMARK_LIMITATIONS.md) for
+the corpus limitations.
+
+<!-- BEGIN AUTO-GENERATED EVALUATION SUMMARY -->
+## Current Evaluation Pipeline Summary
+
+> Generated from `results/final_evaluation_metrics.csv` at 2026-10-05 21:47 UTC. The authoritative source corpus contains 100 cases; references and labels remain under review.
+
+| Model | Status | Live outputs | Mock outputs | Failed | Mean WER | Medical-term recall | Critical miss rate | Live mean latency (s) | Simulated mean latency (s) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Sahara | mock_only_accuracy_not_scored | 0 | 100 | 0 | N/A | N/A | N/A | N/A | 1.321 |
+| Gemini | mock_only_accuracy_not_scored | 0 | 100 | 0 | N/A | N/A | N/A | N/A | 1.225 |
+| Whisper | mock_only_accuracy_not_scored | 0 | 100 | 0 | N/A | N/A | N/A | N/A | 1.280 |
+| Wav2Vec2 | mock_only_accuracy_not_scored | 0 | 100 | 0 | N/A | N/A | N/A | N/A | 1.214 |
+| SpeechBrain | mock_only_accuracy_not_scored | 0 | 100 | 0 | N/A | N/A | N/A | N/A | 1.292 |
+| NeMo | mock_only_accuracy_not_scored | 0 | 100 | 0 | N/A | N/A | N/A | N/A | 1.282 |
+
+**Interpretation:** Mock outputs are synthetic pipeline fixtures. Accuracy and critical-term metrics are intentionally `N/A` for mock-only runs; simulated latency is not measured inference latency.
+
+Code-switch category breakdown is available in `results/figures/codeswitch_breakdown.png` only when live outputs can be joined to manifest categories. Those categories are provisional script-share estimates until human confirmation.
+<!-- END AUTO-GENERATED EVALUATION SUMMARY -->

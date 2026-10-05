@@ -24,7 +24,7 @@ the corpus limitations.
 <!-- BEGIN AUTO-GENERATED EVALUATION SUMMARY -->
 ## Current Evaluation Pipeline Summary
 
-> Generated from `results/final_evaluation_metrics.csv` at 2026-10-05 21:47 UTC. The authoritative source corpus contains 100 cases; references and labels remain under review.
+> Generated from `results/final_evaluation_metrics.csv` at 2026-10-05 23:00 UTC. The authoritative source corpus contains 100 cases; references and labels remain under review.
 
 | Model | Status | Live outputs | Mock outputs | Failed | Mean WER | Medical-term recall | Critical miss rate | Live mean latency (s) | Simulated mean latency (s) |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |

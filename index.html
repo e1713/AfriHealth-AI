@@ -64,14 +64,20 @@
 
   <nav class="bg-slate-900 border-b border-slate-800 px-4 sm:px-8 py-2.5">
     <div class="max-w-7xl mx-auto flex flex-nowrap items-center justify-start gap-2 overflow-x-auto whitespace-nowrap">
-      <button id="tab-triage" onclick="switchTab('triage')" class="nav-tab shrink-0 text-emerald-400 bg-slate-800 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-emerald-500/30">
+      <button id="tab-impact" onclick="switchTab('impact')" class="nav-tab shrink-0 text-emerald-400 bg-slate-800 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-emerald-500/30" aria-current="page">
+        <i class="fa-solid fa-chart-line text-cyan-300"></i> Impact Dashboard
+      </button>
+      <button id="tab-challenge" onclick="switchTab('challenge')" class="nav-tab shrink-0 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-transparent">
+        <i class="fa-solid fa-list-check text-teal-300"></i> Challenge Alignment
+      </button>
+      <button id="tab-triage" onclick="switchTab('triage')" class="nav-tab shrink-0 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-transparent">
         <i class="fa-solid fa-notes-medical"></i> Module 1: Frontline Triage
       </button>
       <button id="tab-ehr" onclick="switchTab('ehr')" class="nav-tab shrink-0 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-transparent">
         <i class="fa-solid fa-file-waveform"></i> Module 2: Voice EHR Intake
       </button>
       <button id="tab-followup" onclick="switchTab('followup')" class="nav-tab shrink-0 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-transparent">
-        <i class="fa-solid fa-phone-volume"></i> Module 3: Post-Care Voice Agent
+        <i class="fa-solid fa-phone-volume"></i> VoiceBot Workflow Simulation
       </button>
       <button id="tab-benchmark" onclick="switchTab('benchmark')" class="nav-tab shrink-0 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-transparent">
         <i class="fa-solid fa-chart-column text-amber-400"></i> 4-Model Benchmark Matrix
@@ -159,7 +165,73 @@
 
   <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 gap-6">
 
-    <section id="sec-triage" class="tab-content block space-y-6">
+    <section id="sec-impact" class="tab-content block space-y-6" aria-labelledby="impact-title">
+      <div class="rounded-2xl border border-cyan-700/50 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/50 p-5 sm:p-7 shadow-xl">
+        <div class="flex flex-col gap-4 border-b border-slate-700/70 pb-5 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <span class="inline-flex rounded-md border border-cyan-700 bg-cyan-950 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-100">Prototype impact view</span>
+            <h2 id="impact-title" class="mt-3 text-2xl font-extrabold text-white">Clinical Impact &amp; Efficiency Dashboard</h2>
+            <p class="mt-2 max-w-3xl text-sm leading-relaxed text-slate-200">Illustrative workflow-value assumptions for discussion and pilot planning. These figures are not observed results, validated clinical outcomes, or findings from a clinical study.</p>
+          </div>
+          <a href="CHALLENGE_ALIGNMENT.md" class="inline-flex shrink-0 items-center gap-2 rounded-lg border border-cyan-700 bg-slate-950 px-3 py-2 text-xs font-semibold text-cyan-100 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">
+            <i class="fa-solid fa-list-check" aria-hidden="true"></i> Challenge alignment
+          </a>
+        </div>
+
+        <div role="note" class="mt-5 rounded-xl border-2 border-amber-600 bg-amber-950 px-4 py-3 text-sm font-bold leading-relaxed text-amber-100">
+          Estimated Clinical Workflow Impact (Pilot Projections). Not validated clinical study findings.
+        </div>
+
+        <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <article class="rounded-xl border border-cyan-700/60 bg-slate-950 p-4">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-cyan-100">Illustrative pilot projection</p>
+            <p class="mt-2 text-3xl font-extrabold text-white">~5 minutes</p>
+            <h3 class="mt-1 text-sm font-bold text-slate-100">Average consultation time saved</h3>
+            <p class="mt-2 text-xs leading-relaxed text-slate-300">Planning assumption per patient; not measured in a clinical study.</p>
+          </article>
+          <article class="rounded-xl border border-cyan-700/60 bg-slate-950 p-4">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-cyan-100">Illustrative pilot projection</p>
+            <p class="mt-2 text-3xl font-extrabold text-white">~200 minutes</p>
+            <h3 class="mt-1 text-sm font-bold text-slate-100">Estimated daily time saved per clinician</h3>
+            <p class="mt-2 text-xs leading-relaxed text-slate-300">Illustrates 5 minutes across an assumed 40 consultations per workday; neither input is a measured outcome.</p>
+          </article>
+          <article class="rounded-xl border border-cyan-700/60 bg-slate-950 p-4">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-cyan-100">Illustrative pilot projection</p>
+            <p class="mt-2 text-3xl font-extrabold text-white">~70%</p>
+            <h3 class="mt-1 text-sm font-bold text-slate-100">Documentation burden reduction</h3>
+            <p class="mt-2 text-xs leading-relaxed text-slate-300">Hypothesis for future evaluation; not yet validated or measured.</p>
+          </article>
+          <article class="rounded-xl border border-cyan-700/60 bg-slate-950 p-4">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-cyan-100">Illustrative pilot projection</p>
+            <p class="mt-2 text-3xl font-extrabold text-white">~15%</p>
+            <h3 class="mt-1 text-sm font-bold text-slate-100">Scaled patient support</h3>
+            <p class="mt-2 text-xs leading-relaxed text-slate-300">Projected daily capacity contribution; definition and real-world impact require prospective measurement.</p>
+          </article>
+        </div>
+
+        <section class="mt-6" aria-labelledby="trust-indicators-title">
+          <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <h3 id="trust-indicators-title" class="text-sm font-bold text-white">Production-readiness &amp; trust indicators</h3>
+            <p class="text-[11px] text-slate-300">Prototype controls only; these badges are not production certification.</p>
+          </div>
+          <ul class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <li class="rounded-lg border border-emerald-800 bg-emerald-950 px-3 py-2 text-xs font-semibold leading-relaxed text-emerald-100"><span aria-hidden="true">✅</span> Responsible AI Guardrails</li>
+            <li class="rounded-lg border border-emerald-800 bg-emerald-950 px-3 py-2 text-xs font-semibold leading-relaxed text-emerald-100"><span aria-hidden="true">✅</span> Clinician Approval Required</li>
+            <li class="rounded-lg border border-emerald-800 bg-emerald-950 px-3 py-2 text-xs font-semibold leading-relaxed text-emerald-100"><span aria-hidden="true">✅</span> FHIR Export Protected by Review Gate</li>
+            <li class="rounded-lg border border-emerald-800 bg-emerald-950 px-3 py-2 text-xs font-semibold leading-relaxed text-emerald-100"><span aria-hidden="true">✅</span> Benchmark-Driven Model Evaluation</li>
+          </ul>
+          <p class="mt-3 text-xs leading-relaxed text-amber-100">Not ready for identifiable patient data: authentication/RBAC, transcript retention and deletion controls, auditability, and production deployment configuration still require implementation and verification. Benchmark findings are limited to their documented dataset and methods.</p>
+        </section>
+
+        <div class="mt-6 flex flex-wrap gap-2 border-t border-slate-700/70 pt-5">
+          <button onclick="switchTab('followup')" class="rounded-lg bg-indigo-700 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-200">Open VoiceBot workflow simulation</button>
+          <button onclick="switchTab('challenge')" class="rounded-lg border border-slate-600 bg-slate-900 px-4 py-2 text-xs font-bold text-slate-100 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">View challenge alignment</button>
+          <button onclick="switchTab('benchmark')" class="rounded-lg border border-slate-600 bg-slate-900 px-4 py-2 text-xs font-bold text-slate-100 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">View benchmark evidence</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec-triage" class="tab-content hidden space-y-6">
       <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-800/80 pb-4">
           <div>
@@ -479,6 +551,46 @@
 
     <section id="sec-followup" class="tab-content hidden space-y-6">
       <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <section id="voicebot-workflow-demo" class="mb-6 rounded-xl border-2 border-indigo-700 bg-indigo-950/70 p-4 sm:p-5" aria-labelledby="voicebot-workflow-title">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <span class="inline-flex rounded-md border border-indigo-600 bg-indigo-950 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-indigo-100">Workflow Simulation</span>
+              <h2 id="voicebot-workflow-title" class="mt-2 text-lg font-extrabold text-white">VoiceBot Follow-Up Workflow Demo</h2>
+              <p class="mt-1 max-w-3xl text-xs leading-relaxed text-slate-200">Prototype demonstration only. This state machine does not schedule or place a real call, contact a patient, or submit an alert to clinical staff.</p>
+            </div>
+            <button id="voicebot-reset" type="button" onclick="resetVoicebotWorkflow()" class="rounded-lg border border-indigo-500 bg-slate-950 px-3 py-2 text-xs font-semibold text-indigo-100 hover:bg-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-200">Reset demo</button>
+          </div>
+          <ol id="voicebot-workflow-steps" class="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4" aria-label="Simulated VoiceBot workflow steps">
+            <li data-workflow-step="0" class="rounded-lg border border-indigo-300 bg-indigo-900/70 p-3 text-xs text-indigo-50" aria-current="step">
+              <span class="block text-[10px] font-bold uppercase tracking-wider text-indigo-200">Step 1</span>
+              <span class="mt-1 block font-bold">Patient Discharged / Intake Completed</span>
+              <span data-step-status class="mt-1 block text-indigo-100">Current simulated state.</span>
+            </li>
+            <li data-workflow-step="1" class="rounded-lg border border-slate-700 bg-slate-950 p-3 text-xs text-slate-300">
+              <span class="block text-[10px] font-bold uppercase tracking-wider">Step 2</span>
+              <span class="mt-1 block font-bold">Post-Treatment Reminder Scheduled</span>
+              <span data-step-status class="mt-1 block">Pending in simulation.</span>
+            </li>
+            <li data-workflow-step="2" class="rounded-lg border border-slate-700 bg-slate-950 p-3 text-xs text-slate-300">
+              <span class="block text-[10px] font-bold uppercase tracking-wider">Step 3</span>
+              <span class="mt-1 block font-bold">VoiceBot Adherence Check Triggered</span>
+              <span data-step-status class="mt-1 block">Pending in simulation.</span>
+            </li>
+            <li data-workflow-step="3" class="rounded-lg border border-slate-700 bg-slate-950 p-3 text-xs text-slate-300">
+              <span class="block text-[10px] font-bold uppercase tracking-wider">Step 4</span>
+              <span class="mt-1 block font-bold">Follow-Up Status &amp; Flagged Adverse Reactions Log</span>
+              <span data-step-status class="mt-1 block">Pending in simulation.</span>
+            </li>
+          </ol>
+          <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p id="voicebot-workflow-status" class="text-xs font-semibold text-indigo-100" role="status" aria-live="polite">Workflow Simulation: Patient Discharged / Intake Completed.</p>
+            <button id="voicebot-advance" type="button" onclick="advanceVoicebotWorkflow()" class="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-200">Advance simulation</button>
+          </div>
+          <div id="voicebot-simulated-log" class="mt-3 hidden rounded-lg border border-amber-700 bg-amber-950 p-3 text-xs leading-relaxed text-amber-100" role="note">
+            <strong>Workflow Simulation — Example adverse-reaction flag:</strong>
+            Patient-reported rash after medication in this fictional scenario. Flagged for clinician review only; not clinically verified, not a diagnosis, and no clinical action has been taken.
+          </div>
+        </section>
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-800/80 pb-4">
           <div>
             <div class="flex items-center gap-2">
@@ -625,6 +737,60 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec-challenge" class="tab-content hidden space-y-6" aria-labelledby="challenge-alignment-title">
+      <div class="rounded-2xl border border-teal-700/50 bg-slate-900 p-5 sm:p-7 shadow-xl">
+        <div class="border-b border-slate-700 pb-4">
+          <span class="inline-flex rounded-md border border-teal-700 bg-teal-950 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-teal-100">Judge reference</span>
+          <h2 id="challenge-alignment-title" class="mt-3 text-2xl font-extrabold text-white">Sahara CodeSwitch Africa Challenge Alignment</h2>
+          <p class="mt-2 max-w-4xl text-sm leading-relaxed text-slate-200">Requirement-to-evidence map for a fast review. Evidence claims below describe repository contents and prototype behavior; they are not a claim of clinical efficacy or production readiness.</p>
+        </div>
+        <div class="mt-5 overflow-x-auto rounded-xl border border-slate-700">
+          <table class="min-w-[860px] w-full border-collapse text-left text-xs">
+            <caption class="sr-only">Sahara CodeSwitch Africa challenge requirements mapped to project implementation and repository evidence</caption>
+            <thead class="bg-slate-950 text-slate-100">
+              <tr>
+                <th scope="col" class="p-3 font-bold">Requirement</th>
+                <th scope="col" class="p-3 font-bold">Project Implementation</th>
+                <th scope="col" class="p-3 font-bold">Evidence Location</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-700 text-slate-200">
+              <tr class="bg-slate-900/60 align-top">
+                <th scope="row" class="p-3 font-bold text-white">Voice downstream clinical workflows</th>
+                <td class="p-3 leading-relaxed">Browser audio capture and transcription, clinician-review triage and intake surfaces, FHIR-compatible export with review gate, and post-care API workflows. The added VoiceBot state machine is a separate local workflow simulation; it does not place or schedule calls.</td>
+                <td class="p-3 leading-relaxed"><a class="text-cyan-200 underline underline-offset-2" href="#sec-triage" onclick="switchTab('triage')">Triage and intake modules</a>; <a class="text-cyan-200 underline underline-offset-2" href="#voicebot-workflow-demo" onclick="switchTab('followup')">VoiceBot simulation</a>; <a class="text-cyan-200 underline underline-offset-2" href="ARCHITECTURE.md">ARCHITECTURE.md</a>; <code>main.py</code> routes `/api/v1/post-care/analyze`, `/api/v1/fhir/export`, `/api/v1/ehr/commit`.</td>
+              </tr>
+              <tr class="bg-slate-950/40 align-top">
+                <th scope="row" class="p-3 font-bold text-white">Three-or-more speech model comparison</th>
+                <td class="p-3 leading-relaxed">Four complete model transcript outputs are reported on a 15-case simulated Amharic-English set: Intron Sahara v2.5, Whisper Tiny, English-only Wav2Vec2, and Gemini. These are saved-transcript scores, not fresh inference, and the dataset does not support population claims.</td>
+                <td class="p-3 leading-relaxed"><a class="text-cyan-200 underline underline-offset-2" href="BENCHMARK_RESULTS.md">BENCHMARK_RESULTS.md</a>; <a class="text-cyan-200 underline underline-offset-2" href="benchmark_report.json">benchmark_report.json</a>; <a class="text-cyan-200 underline underline-offset-2" href="evaluation_report_summary.json">evaluation_report_summary.json</a>; <code>benchmark_data/manifest.csv</code>.</td>
+              </tr>
+              <tr class="bg-slate-900/60 align-top">
+                <th scope="row" class="p-3 font-bold text-white">Health category focus</th>
+                <td class="p-3 leading-relaxed">Healthcare documentation and voice-support prototype focused on clinician-reviewed Amharic-English code-switching. SOAP/ICD output is not automatically generated from ordinary prose; clinical artifacts require human verification.</td>
+                <td class="p-3 leading-relaxed"><a class="text-cyan-200 underline underline-offset-2" href="README.md">README.md</a>; <a class="text-cyan-200 underline underline-offset-2" href="ARCHITECTURE.md">ARCHITECTURE.md</a>; <a class="text-cyan-200 underline underline-offset-2" href="CLINICAL_RECORDING_PROTOCOL.md">CLINICAL_RECORDING_PROTOCOL.md</a>.</td>
+              </tr>
+              <tr class="bg-slate-950/40 align-top">
+                <th scope="row" class="p-3 font-bold text-white">Responsible AI, safety, and human review</th>
+                <td class="p-3 leading-relaxed">UI disclaimers and review badges; explicit client review confirmation before export; backend sign-off assertion required by FHIR/EHR endpoints. Reviewer identity/RBAC, auditability, retention/deletion, subgroup fairness, and clinical efficacy are not established by this prototype.</td>
+                <td class="p-3 leading-relaxed"><a class="text-cyan-200 underline underline-offset-2" href="RESPONSIBLE_AI.md">RESPONSIBLE_AI.md</a>; <a class="text-cyan-200 underline underline-offset-2" href="tests/test_safety.py">tests/test_safety.py</a>; <code>index.html</code>; <code>main.py</code>.</td>
+              </tr>
+              <tr class="bg-slate-900/60 align-top">
+                <th scope="row" class="p-3 font-bold text-white">Working prototype and judge-ready demonstration</th>
+                <td class="p-3 leading-relaxed">Single-page browser prototype with one-click impact dashboard, VoiceBot workflow simulation, challenge map, clinical modules, and benchmark view. Confirm the linked video matches this build before submission.</td>
+                <td class="p-3 leading-relaxed"><a class="text-cyan-200 underline underline-offset-2" href="DEMO_SCRIPT.md">DEMO_SCRIPT.md</a>; <a class="text-cyan-200 underline underline-offset-2" href="SUBMISSION_READINESS.md">SUBMISSION_READINESS.md</a>; <a class="text-cyan-200 underline underline-offset-2" href="README.md">README.md</a>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-4 rounded-lg border border-amber-700 bg-amber-950 px-3 py-2 text-xs leading-relaxed text-amber-100">Evidence note: model comparisons use 15 simulated cases and saved outputs; raw audio is not present in the repository. Do not present the VoiceBot simulation or projected impact values as measured or live patient outcomes.</p>
+        <div class="mt-5 flex flex-wrap gap-2">
+          <button onclick="switchTab('impact')" class="rounded-lg border border-slate-600 bg-slate-950 px-4 py-2 text-xs font-bold text-slate-100 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">Impact dashboard</button>
+          <button onclick="switchTab('benchmark')" class="rounded-lg border border-slate-600 bg-slate-950 px-4 py-2 text-xs font-bold text-slate-100 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">Benchmark evidence</button>
         </div>
       </div>
     </section>
@@ -1751,16 +1917,89 @@
       };
     })();
 
+    const VOICEBOT_WORKFLOW_STATES = [
+      {
+        label: 'Patient Discharged / Intake Completed',
+        detail: 'Simulation begins with a completed intake state.'
+      },
+      {
+        label: 'Post-Treatment Reminder Scheduled',
+        detail: 'A reminder is marked scheduled in this local demonstration only.'
+      },
+      {
+        label: 'VoiceBot Adherence Check Triggered (Simulation Workflow)',
+        detail: 'A simulated adherence check is shown; no patient is contacted.'
+      },
+      {
+        label: 'Follow-Up Status & Flagged Adverse Reactions Log',
+        detail: 'Fictional patient-reported concern is displayed for clinician review only.'
+      }
+    ];
+    let voicebotWorkflowStep = 0;
+
+    function renderVoicebotWorkflow() {
+      const steps = document.querySelectorAll('[data-workflow-step]');
+      steps.forEach((stepElement) => {
+        const stepNumber = Number(stepElement.getAttribute('data-workflow-step'));
+        const status = stepElement.querySelector('[data-step-status]');
+        const isCurrent = stepNumber === voicebotWorkflowStep;
+        const isComplete = stepNumber < voicebotWorkflowStep;
+        stepElement.className = isCurrent
+          ? 'rounded-lg border border-indigo-300 bg-indigo-900/70 p-3 text-xs text-indigo-50'
+          : isComplete
+            ? 'rounded-lg border border-teal-700 bg-teal-950/70 p-3 text-xs text-teal-100'
+            : 'rounded-lg border border-slate-700 bg-slate-950 p-3 text-xs text-slate-300';
+        if (isCurrent) {
+          stepElement.setAttribute('aria-current', 'step');
+        } else {
+          stepElement.removeAttribute('aria-current');
+        }
+        if (status) {
+          status.textContent = isCurrent
+            ? VOICEBOT_WORKFLOW_STATES[stepNumber].detail
+            : isComplete
+              ? 'Completed in workflow simulation.'
+              : 'Pending in simulation.';
+        }
+      });
+
+      const workflowStatus = document.getElementById('voicebot-workflow-status');
+      if (workflowStatus) {
+        workflowStatus.textContent = `Workflow Simulation: ${VOICEBOT_WORKFLOW_STATES[voicebotWorkflowStep].label}. ${VOICEBOT_WORKFLOW_STATES[voicebotWorkflowStep].detail}`;
+      }
+      const exampleLog = document.getElementById('voicebot-simulated-log');
+      if (exampleLog) exampleLog.classList.toggle('hidden', voicebotWorkflowStep < VOICEBOT_WORKFLOW_STATES.length - 1);
+      const advanceButton = document.getElementById('voicebot-advance');
+      if (advanceButton) {
+        const isComplete = voicebotWorkflowStep >= VOICEBOT_WORKFLOW_STATES.length - 1;
+        advanceButton.disabled = isComplete;
+        advanceButton.textContent = isComplete ? 'Simulation complete' : 'Advance simulation';
+      }
+    }
+
+    function advanceVoicebotWorkflow() {
+      if (voicebotWorkflowStep >= VOICEBOT_WORKFLOW_STATES.length - 1) return;
+      voicebotWorkflowStep += 1;
+      renderVoicebotWorkflow();
+    }
+
+    function resetVoicebotWorkflow() {
+      voicebotWorkflowStep = 0;
+      renderVoicebotWorkflow();
+    }
+
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.nav-tab').forEach(btn => {
         btn.className = "nav-tab text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-transparent";
+        btn.removeAttribute('aria-current');
       });
       const targetSec = document.getElementById('sec-' + tabId);
       const targetTab = document.getElementById('tab-' + tabId);
       if (targetSec) targetSec.classList.remove('hidden');
       if (targetTab) {
         targetTab.className = "nav-tab text-emerald-400 bg-slate-800 px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap border border-emerald-500/30";
+        targetTab.setAttribute('aria-current', 'page');
       }
       if (tabId === 'benchmark' && !benchmarkChartInstance) {
         initBenchmarkChart();
@@ -3881,6 +4120,7 @@ This is not an autonomous diagnosis or prescription.
       onCaseSelectChange();
       checkSecureContext();
       drawWaveform(false);
+      renderVoicebotWorkflow();
     });
   </script>
 </body>

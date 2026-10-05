@@ -3,6 +3,21 @@
 Target duration: 2–3 minutes. Use only built-in judge-mode samples or audio
 for which consent and de-identification have been documented.
 
+## 60-second judge walkthrough
+
+1. **0:00–0:10 — Impact Dashboard:** Open the first navigation tab. Point out
+   the pilot-projection disclaimer and say these figures are illustrative,
+   not measured or clinically validated outcomes.
+2. **0:10–0:25 — VoiceBot Workflow Simulation:** Use **VoiceBot Workflow
+   Simulation**, advance through the four states, and show the fictional
+   adverse-reaction log. State that no patient is called or contacted.
+3. **0:25–0:40 — Challenge Alignment:** Open the mapping view to show the
+   implementation and evidence locations for voice workflows, health focus,
+   model comparison, and Responsible AI.
+4. **0:40–1:00 — Benchmark and review gate:** Open the benchmark evidence,
+   name the four-model, 15-case saved-transcript comparison and its limitations,
+   then show the pending clinician review / FHIR gate.
+
 ## 0:00–0:20 — Problem and users
 
 Say: “AfriHealth AI v1.0 focuses on clinician-reviewed English-Amharic

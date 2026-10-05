@@ -51,6 +51,38 @@ The system is built around a static frontend and a secure FastAPI gateway that k
 - Intron-focused live audio benchmark with transcript-only or reference-scored WER/CER
 - PostgreSQL stream persistence in production with a local SQLite development fallback
 - Safety-oriented design with physician verification requirements
+- One-click **Clinical Impact & Efficiency Dashboard** with clearly labeled, illustrative pilot projections (not measured outcomes)
+- A **VoiceBot Follow-Up Workflow Demo** that is explicitly a local simulation, separate from any live call or patient-contact capability
+- A **Sahara CodeSwitch Africa Challenge Alignment** navigation view and [CHALLENGE_ALIGNMENT.md](CHALLENGE_ALIGNMENT.md) evidence map
+
+## Judge-ready views
+
+The primary navigation opens the impact dashboard, challenge alignment map,
+clinical modules, simulated follow-up workflow, and benchmark matrix directly.
+The impact dashboard includes the requested planning values—approximately
+5 minutes per patient, 200 minutes per clinician-day, 70% documentation burden
+reduction, and 15% daily patient-support capacity—as **illustrative pilot
+projections only**. The 200-minute projection assumes 40 consultations at five
+minutes each. None of these values are measured outcomes or validated clinical
+study findings.
+
+The **VoiceBot Follow-Up Workflow Demo** advances through discharge/intake,
+simulated reminder scheduling, simulated adherence check, and a fictional
+follow-up/adverse-reaction log. It does not make or schedule calls, contact
+patients, or send staff alerts. The existing post-care API and interactive
+voice session are separate application features; the state-machine demo itself
+is not wired to a verified live calling workflow.
+
+The **Sahara CodeSwitch Africa Challenge Alignment** view maps voice workflows,
+the four-model comparison, health-category focus, Responsible AI, and demo
+evidence to specific repository files. See [CHALLENGE_ALIGNMENT.md](CHALLENGE_ALIGNMENT.md)
+for the full mapping and limits.
+
+Trust indicators shown in the dashboard refer only to prototype controls; they
+are not production-readiness certification. The application is not ready for
+identifiable patient data until authentication/RBAC, auditability, retention
+and deletion controls, and production configuration are implemented and
+verified.
 
 ---
 

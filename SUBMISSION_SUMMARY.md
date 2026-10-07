@@ -19,14 +19,14 @@ care.
 
 The project includes a resumable six-adapter inference pipeline, an evaluator,
 visualization and reporting tools, benchmark governance documentation, and a
-single 100-case master manifest covering CS-01 through CS-100. The latest mock
-evaluation contains 100 outputs per adapter (600 case/model pairs total), but
-these are pipeline fixtures, not model-performance measurements. The corpus
-manifest currently contains source reference text and focus terms; it is not
-yet a fully verified 100-recording gold-standard benchmark. Audio availability,
-provenance and consent, audio-aligned reference verification, speaker
-assignments, and confirmation of code-switch categories remain prerequisites
-for a complete live benchmark.
+100-case manifest projected from the canonical verified Google Sheet. All 100
+source rows provide normalized transcripts marked `verified`; matching audio
+files and checksums are present. The legacy DOCX differs on 16 cases and the
+PDF on 19, so the sheet takes precedence. The latest mock evaluation contains
+100 outputs per adapter (600 case/model pairs), but these are pipeline fixtures,
+not model-performance measurements. Speaker assignments and code-switch
+categories need separate review; consent, de-identification, and hosted-provider
+approval remain unknown.
 
 We define a proposed Clinical Equity-Adjusted ASR Score (CEAS) to make
 recognition accuracy, worst-speaker robustness, and consistency across
@@ -34,7 +34,7 @@ code-switch categories visible together. CEAS is a project-proposed metric,
 conceptually inspired by fairness-adjusted ASR scoring work; it is not a
 validated clinical score, an exact reproduction of a published method, or a
 demographic fairness claim. It is not currently calculable because speaker
-labels are missing and code-switch categories are provisional.
+assignments remain pending and code-switch categories are provisional.
 
 The current mock run validates pipeline data flow only. Mock transcripts and
 simulated latency are not model-performance evidence; therefore, validated

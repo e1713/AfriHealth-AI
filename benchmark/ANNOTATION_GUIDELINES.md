@@ -21,8 +21,10 @@ training, date, and adjudication outcome in restricted project records.
    representation.
 5. Obtain independent annotations and adjudicate disagreements before labeling
    a reference gold-standard. Preserve annotator count and provenance.
-6. The supplied corpus sentences are source reference text, not independently
-   audio-verified transcripts unless audio review is recorded for that case.
+6. The canonical spreadsheet's `review_status=verified` supports the current
+  normalized references for CS-01–CS-100. Preserve its source-row evidence.
+  The older DOCX differs on 16 records and the PDF on 19; neither is canonical. Raw transcripts
+  are blank in the sheet; do not reconstruct them from normalized text.
 
 ## WER tokenization and normalization
 

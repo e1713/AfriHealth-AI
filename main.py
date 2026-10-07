@@ -888,6 +888,7 @@ import logging
 import re
 import wave
 import uuid
+import hashlib
 from datetime import datetime, timezone
 from html import escape
 from io import BytesIO
@@ -1909,19 +1910,73 @@ async def _run_live_benchmark_provider(name: str, provider, *args) -> dict:
         }
 
 
+def _has_documented_sample_approval(
+    consent_obtained: str,
+    consent_evidence_reference: str,
+    de_identified: str,
+    de_identification_evidence_reference: str,
+    hosted_inference_approved: str,
+    hosted_inference_approval_evidence_reference: str,
+    audio_sha256: str,
+    actual_audio_sha256: str,
+) -> bool:
+    return all(
+        value.strip().casefold() == "true" and bool(evidence.strip())
+        for value, evidence in (
+            (consent_obtained, consent_evidence_reference),
+            (de_identified, de_identification_evidence_reference),
+            (hosted_inference_approved, hosted_inference_approval_evidence_reference),
+        )
+    ) and audio_sha256.strip().casefold() == actual_audio_sha256
+
+
 @app.post("/api/v1/benchmark/live")
 async def live_benchmark(
     file: UploadFile = File(...),
     reference_transcript: str = Form(""),
     language_code: str = Form("am-ET"),
     providers: str = Form("intron"),
-    reference_mode: str = Form("verified"),
+    reference_mode: str = Form("unverified"),
+    reference_review_evidence: str = Form(""),
+    audio_sha256: str = Form(""),
+    consent_obtained: str = Form("unknown"),
+    consent_evidence_reference: str = Form(""),
+    de_identified: str = Form("unknown"),
+    de_identification_evidence_reference: str = Form(""),
+    hosted_inference_approved: str = Form("unknown"),
+    hosted_inference_approval_evidence_reference: str = Form(""),
 ):
     """Benchmark selected providers; Intron is the default active focus."""
     contents = await _read_limited_upload(file)
-    if reference_mode not in {"verified", "intron"}:
-        raise HTTPException(status_code=400, detail="reference_mode must be verified or intron")
+    actual_audio_sha256 = hashlib.sha256(contents).hexdigest()
+    if reference_mode not in {"verified", "unverified", "intron"}:
+        raise HTTPException(status_code=400, detail="reference_mode must be verified, unverified, or intron")
+    if reference_mode == "verified":
+        if not reference_transcript.strip() or not reference_review_evidence.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Verified scoring requires a reference transcript and review evidence reference",
+            )
+        if audio_sha256.strip().casefold() != actual_audio_sha256:
+            raise HTTPException(
+                status_code=400,
+                detail="Verified scoring requires the SHA-256 checksum of the uploaded audio",
+            )
     requested = {provider.strip().lower() for provider in providers.split(",") if provider.strip()}
+    if requested and not _has_documented_sample_approval(
+        consent_obtained,
+        consent_evidence_reference,
+        de_identified,
+        de_identification_evidence_reference,
+        hosted_inference_approved,
+        hosted_inference_approval_evidence_reference,
+        audio_sha256,
+        actual_audio_sha256,
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Hosted benchmark inference requires affirmative consent, de-identification, and provider approval with evidence references",
+        )
     if reference_mode == "intron":
         requested.add("intron")
     provider_tasks = []
@@ -1953,8 +2008,26 @@ async def live_benchmark(
         "benchmark_type": "live_provider_comparison",
         "language_code": language_code,
         "reference_transcript": scoring_reference,
-        "reference_source": "verified_transcript" if reference_transcript.strip() else "intron_provisional" if intron_reference else "none",
-        "scoring_status": "scored" if reference_transcript.strip() else "provisional_intron_reference" if intron_reference and reference_mode == "intron" else "transcript_only",
+        "reference_source": (
+            "audio_review_attestation"
+            if reference_transcript.strip() and reference_mode == "verified"
+            else "unverified_supplied_transcript"
+            if reference_transcript.strip()
+            else "intron_provisional"
+            if intron_reference
+            else "none"
+        ),
+        "reference_review_evidence": reference_review_evidence.strip() if reference_mode == "verified" else "",
+        "audio_sha256": hashlib.sha256(contents).hexdigest(),
+        "scoring_status": (
+            "scored_with_audio_review_attestation"
+            if reference_transcript.strip() and reference_mode == "verified"
+            else "provisional_unverified_reference"
+            if reference_transcript.strip()
+            else "provisional_intron_reference"
+            if intron_reference and reference_mode == "intron"
+            else "transcript_only"
+        ),
         "providers": sorted(requested),
         "results": results,
         "interpretation": "Measured sample comparison only; not a clinical performance claim.",

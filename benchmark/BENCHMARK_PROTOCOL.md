@@ -8,11 +8,19 @@ This is a research and engineering comparison of transcripts against
 case-specific references. It is not a diagnostic, treatment, or prescribing
 system evaluation.
 
-The sole active source is
-[`metadata/BENCHMARK_MANIFEST.csv`](metadata/BENCHMARK_MANIFEST.csv), which
-contains source reference text and focus terms for CS-01–CS-100. Availability
-of corresponding audio, speaker identities, and independent expert sign-off
-must be established before calling a 100-case run complete.
+The canonical source is
+[`metadata/GROUND_TRUTH_SOURCE.xlsx`](metadata/GROUND_TRUTH_SOURCE.xlsx), with a
+normalized [`CSV`](metadata/GROUND_TRUTH_SOURCE.csv) and an evaluation projection
+in [`metadata/BENCHMARK_MANIFEST.csv`](metadata/BENCHMARK_MANIFEST.csv). It has
+100 unique cases; all source rows say `review_status=verified`. Matching WAV
+files exist for all cases and the manifest contains cleaned-audio checksums.
+
+The manifest promotes transcript review based on the source's explicit verified
+status and row-level evidence. Consent, de-identification, and hosted-inference
+approval are `unknown`. Speaker assignments have source values but remain
+pending independent review; code-switch classes are provisional. The canonical
+sheet's normalized transcript differs from the legacy DOCX on 16 cases and the
+PDF on 19.
 
 The manifest's `code_switch_category` is a provisional estimate based on
 lexical tokens in the written transcript: at least 60% Ethiopic-script tokens

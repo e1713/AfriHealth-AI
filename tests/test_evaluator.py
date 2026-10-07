@@ -61,6 +61,11 @@ class EvaluatorIntegrationTests(unittest.TestCase):
                     "reference_transcript",
                     "focus_terms",
                     "reference_review_status",
+                    "reference_review_evidence",
+                    "audio_presence_status",
+                    "audio_presence_evidence_reference",
+                    "audio_checksum_evidence_reference",
+                    "audio_checksum_sha256",
                 ),
             )
             writer.writeheader()
@@ -70,6 +75,11 @@ class EvaluatorIntegrationTests(unittest.TestCase):
                     "reference_transcript": "Patient has fever and sepsis.",
                     "focus_terms": "fever; sepsis",
                     "reference_review_status": "source_corpus_text_not_independently_audio_verified",
+                    "reference_review_evidence": "",
+                    "audio_presence_status": "file_present_provenance_unverified",
+                    "audio_presence_evidence_reference": "",
+                    "audio_checksum_evidence_reference": "",
+                    "audio_checksum_sha256": "",
                 }
             )
 
@@ -146,6 +156,34 @@ class EvaluatorIntegrationTests(unittest.TestCase):
             self.assertEqual(sahara["critical_term_count"], 1)
             self.assertEqual(sahara["critical_term_miss_rate"], 1.0)
             self.assertEqual(sahara["mean_latency_seconds"], 1.25)
+
+    def test_verified_metrics_require_reference_and_audio_evidence(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            manifest, dictionary, outputs = self.create_inputs(root, status="200")
+            with manifest.open(encoding="utf-8", newline="") as handle:
+                reader = csv.DictReader(handle)
+                fields = reader.fieldnames
+                rows = list(reader)
+            rows[0].update(
+                {
+                    "reference_review_status": "verified_against_audio",
+                    "reference_review_evidence": "review://CS-01",
+                    "audio_presence_status": "verified_present",
+                    "audio_presence_evidence_reference": "sha256://CS-01",
+                    "audio_checksum_evidence_reference": "checksum://CS-01",
+                    "audio_checksum_sha256": "a" * 64,
+                }
+            )
+            with manifest.open("w", encoding="utf-8", newline="") as handle:
+                writer = csv.DictWriter(handle, fieldnames=fields)
+                writer.writeheader()
+                writer.writerows(rows)
+
+            inputs = load_inputs(manifest, dictionary, outputs)
+            results = {row["model_name"]: row for row in evaluate(inputs)}
+
+            self.assertEqual(results["Sahara"]["evaluation_status"], "live_metrics_verified_references")
 
     def test_evaluation_writes_six_model_rows(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

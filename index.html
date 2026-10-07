@@ -98,7 +98,7 @@
       <div class="space-y-3 text-xs">
         <div class="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-amber-100" role="note" aria-label="Benchmark evidence status">
           <div class="font-bold text-amber-200">Clinical benchmark evidence status</div>
-          <p class="mt-1 leading-relaxed">The authoritative manifest contains 100 cases (CS-01 to CS-100), but its source text and provisional labels are not audio-verified. Mock outputs are synthetic; performance claims require audio verification. Validated model metrics and CEAS are currently unavailable.</p>
+          <p class="mt-1 leading-relaxed">The canonical spreadsheet marks all 100 normalized references verified; 16 differences from the legacy DOCX were resolved in favor of that source. Speaker assignments and code-switch labels remain under review, governance approvals are unknown, and no live model metrics or CEAS are available.</p>
         </div>
         <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex min-w-0 items-center gap-3">
@@ -769,7 +769,7 @@
               </tr>
               <tr class="bg-slate-950/40 align-top">
                 <th scope="row" class="p-3 font-bold text-white">Three-or-more speech model comparison</th>
-                <td class="p-3 leading-relaxed">A six-adapter evaluation pipeline is wired to the 100-case master manifest. Current source transcripts are not independently audio-verified, and mock outputs are not accuracy evidence; no live comparison is represented as validated benchmark performance.</td>
+                <td class="p-3 leading-relaxed">A six-adapter pipeline uses 100 spreadsheet references marked verified and matching checksummed audio. Mock outputs are not accuracy evidence; no live comparison is represented as validated benchmark performance.</td>
                 <td class="p-3 leading-relaxed"><a class="text-cyan-200 underline underline-offset-2" href="BENCHMARK_RESULTS.md">BENCHMARK_RESULTS.md</a>; <a class="text-cyan-200 underline underline-offset-2" href="benchmark/metadata/BENCHMARK_MANIFEST.csv">100-case master manifest</a>; <code>inference_engine.py</code>; <code>evaluator.py</code>.</td>
               </tr>
               <tr class="bg-slate-900/60 align-top">
@@ -790,7 +790,7 @@
             </tbody>
           </table>
         </div>
-        <p class="mt-4 rounded-lg border border-amber-700 bg-amber-950 px-3 py-2 text-xs leading-relaxed text-amber-100">Evidence note: the 100-case master manifest contains source text, not independently audio-verified gold transcripts. Mock outputs are synthetic and not model-performance evidence. Do not present the VoiceBot simulation or projected impact values as measured or live patient outcomes.</p>
+        <p class="mt-4 rounded-lg border border-amber-700 bg-amber-950 px-3 py-2 text-xs leading-relaxed text-amber-100">Evidence note: the canonical spreadsheet marks all 100 normalized references verified. Speaker assignment and code-switch review remain open; mock outputs are synthetic and not model-performance evidence. Do not present the VoiceBot simulation or projected impact values as measured or live patient outcomes.</p>
         <div class="mt-5 flex flex-wrap gap-2">
           <button onclick="switchTab('impact')" class="rounded-lg border border-slate-600 bg-slate-950 px-4 py-2 text-xs font-bold text-slate-100 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">Impact dashboard</button>
           <button onclick="switchTab('benchmark')" class="rounded-lg border border-slate-600 bg-slate-950 px-4 py-2 text-xs font-bold text-slate-100 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300">Benchmark evidence</button>
@@ -824,16 +824,16 @@
           </div>
           <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-xs text-red-100">
             <h3 class="font-bold text-red-300 mb-2"><i class="fa-solid fa-user-doctor mr-1"></i> Clinical benchmark status</h3>
-            <p>The active clinical corpus is <code>benchmark/metadata/BENCHMARK_MANIFEST.csv</code> (CS-01 to CS-100). Source text and provisional labels require audio-aligned human verification; mock outputs are synthetic, and validated performance metrics are <strong>not available</strong> until audio verification is complete.</p>
+            <p>The active clinical corpus is <code>benchmark/metadata/GROUND_TRUTH_SOURCE.xlsx</code> with the manifest as its evaluation projection. All 100 source references are marked verified; speaker assignments and code-switch labels still require review. Mock outputs are synthetic, and validated live performance metrics are <strong>not available</strong>.</p>
           </div>
         </div>
         <section class="mt-4 bg-slate-950 p-4 rounded-xl border border-teal-500/30" aria-labelledby="manifest-benchmark-title">
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-3">
             <div>
               <h3 id="manifest-benchmark-title" class="text-sm font-bold text-white">100-Case Clinical Benchmark Pipeline</h3>
-              <p class="text-[11px] text-slate-400 mt-1">The CS-01 to CS-100 source text is provisional, mock outputs are synthetic, and performance claims require consented audio plus audio-aligned human verification. Mock runs report pipeline coverage only.</p>
+              <p class="text-[11px] text-slate-400 mt-1">The CS-01 to CS-100 normalized references are marked verified in the canonical spreadsheet. Consent and hosted-use approval remain unknown; mock outputs are synthetic and do not establish model performance.</p>
             </div>
-            <span class="text-[10px] font-mono text-amber-300">100 source-text cases · verification pending</span>
+            <span class="text-[10px] font-mono text-amber-300">100 verified references · live scores unavailable</span>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
             <div class="border-l-2 border-teal-400 pl-3">
@@ -926,7 +926,7 @@
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
             <div>
               <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-microphone-lines text-emerald-400 mr-2"></i>Live Intron Sahara v2.5 Benchmark</h3>
-              <p class="text-[11px] text-slate-500 mt-1">Upload or record an audio sample in Amharic-English to evaluate live Intron Sahara v2.5 ASR performance.</p>
+              <p class="text-[11px] text-slate-500 mt-1">Sample comparison is provisional by default. Verified scoring requires a human review evidence reference and matching audio checksum.</p>
             </div>
             <span id="live-benchmark-status" class="text-[10px] font-mono text-slate-500">Ready</span>
           </div>
@@ -934,7 +934,7 @@
             <div>
               <label for="live-benchmark-file" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sample audio</label>
               <input id="live-benchmark-file" type="file" accept="audio/*" onchange="handleLiveBenchmarkFileSelection()" class="mt-1 w-full text-xs text-slate-400 file:mr-3 file:rounded file:border-0 file:bg-slate-800 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-teal-300 hover:file:bg-slate-700">
-              <label for="live-gold-case" class="mt-3 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Manifest case (reference not audio-verified)</label>
+              <label for="live-gold-case" class="mt-3 block text-[10px] font-bold uppercase tracking-wider text-slate-400">Canonical reference (verify selected audio case)</label>
               <select id="live-gold-case" onchange="loadLiveGoldCase()" class="mt-1 w-full bg-slate-900 border border-slate-700 rounded px-2 py-2 text-xs text-slate-200">
                 <option value="">Select a case</option>
                 <option value="CS-10">CS-10</option>
@@ -950,6 +950,15 @@
                 </button>
                 <span id="live-benchmark-recording-status" class="text-[10px] text-slate-500">No recording</span>
               </div>
+              <fieldset class="mt-4 space-y-2 rounded border border-slate-800 p-3">
+                <legend class="px-1 text-[10px] font-bold uppercase text-slate-400">Hosted sample approvals</legend>
+                <label class="flex items-center gap-2 text-[11px] text-slate-300"><input id="live-consent-confirmed" type="checkbox"> Consent record confirmed</label>
+                <input id="live-consent-evidence" type="text" class="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-[11px] text-white" placeholder="Consent evidence reference">
+                <label class="flex items-center gap-2 text-[11px] text-slate-300"><input id="live-deid-confirmed" type="checkbox"> De-identification review confirmed</label>
+                <input id="live-deid-evidence" type="text" class="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-[11px] text-white" placeholder="De-identification evidence reference">
+                <label class="flex items-center gap-2 text-[11px] text-slate-300"><input id="live-hosted-approved" type="checkbox"> Hosted-provider use approved</label>
+                <input id="live-hosted-evidence" type="text" class="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-[11px] text-white" placeholder="Provider approval evidence reference">
+              </fieldset>
             </div>
             <div>
               <label for="live-transcript-box" class="text-[10px] font-bold uppercase tracking-wider text-emerald-300">LIVE AMHARIC-ENGLISH CODE-SWITCHED TRANSCRIPT</label>
@@ -1070,7 +1079,7 @@
             <span class="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-amber-100"><strong class="text-amber-300">Pending</strong><span class="text-[11px]">audio-aligned verification</span></span>
             <span class="inline-flex items-center gap-2 rounded-full border border-slate-500/30 bg-slate-500/10 px-3 py-1.5 text-slate-200"><strong class="text-slate-300">N/A</strong><span class="text-[11px]">validated model metrics</span></span>
           </div>
-          <p class="break-words text-[11px] text-slate-400">The master manifest contains source text, not independently audio-verified gold transcripts. Speaker labels are absent and code-switch categories are provisional; therefore accuracy and equity-adjusted results remain unavailable.</p>
+          <p class="break-words text-[11px] text-slate-400">The canonical spreadsheet marks all 100 normalized references verified. Five source speaker labels are pseudonymized, but case assignments remain pending review; code-switch categories are provisional. No live accuracy or equity-adjusted results are available.</p>
           <a href="BENCHMARK_RESULTS.md" class="inline-flex items-center gap-1 text-[11px] font-semibold text-cyan-300 hover:text-cyan-200">Review benchmark methodology and limitations <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
           <h4 class="font-bold text-white text-sm uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-1 mt-6">Readiness gates</h4>
           <p class="text-xs">Not ready for identifiable patient data: transcript retention/deletion controls, built-in clinician authentication and role-based access, and verified production gateway configuration remain open. Medication safety is not enforced end to end; medication details require independent clinician verification.</p>
@@ -3560,7 +3569,7 @@
         if (hypothesisField) hypothesisField.value = '';
         setLevenshteinCalculatorVisible(Boolean(reference));
         runLiveWerCalculation();
-        setLiveBenchmarkStatus(`${fixture.case_id} reference loaded from the manifest; it is not audio-verified. Run live ASR only with approved audio.`, 'text-[10px] font-mono text-sky-300');
+        setLiveBenchmarkStatus(`${fixture.case_id} canonical reference loaded; confirm the uploaded recording is this case. Hosted use requires documented approval.`, 'text-[10px] font-mono text-sky-300');
         return;
       }
       document.getElementById('live-gold-case').value = '';
@@ -3609,7 +3618,7 @@
       const hypothesisField = document.getElementById('calc-hypothesis');
       if (hypothesisField) hypothesisField.value = '';
       setLevenshteinCalculatorVisible(true);
-      setLiveBenchmarkStatus(`${caseId} source reference loaded. It is not independently audio-verified; no saved model output is available.`, 'text-[10px] font-mono text-amber-300');
+      setLiveBenchmarkStatus(`${caseId} verified source reference loaded; confirm the uploaded recording matches this case. No saved model output is available.`, 'text-[10px] font-mono text-amber-300');
     }
 
     function syncLiveTranscriptToCalculator(reference, transcript) {
@@ -3663,6 +3672,17 @@
         showToast('Upload or record a sample audio file first.', 'warning');
         return;
       }
+      const sampleApprovals = [
+        ['live-consent-confirmed', 'live-consent-evidence'],
+        ['live-deid-confirmed', 'live-deid-evidence'],
+        ['live-hosted-approved', 'live-hosted-evidence'],
+      ];
+      if (sampleApprovals.some(([checkboxId, evidenceId]) =>
+        !document.getElementById(checkboxId)?.checked || !document.getElementById(evidenceId)?.value.trim()
+      )) {
+        showToast('Document consent, de-identification, and hosted-provider approval before upload.', 'warning');
+        return;
+      }
 
       liveBenchmarkResults = [];
       if (transcriptBox) transcriptBox.value = '';
@@ -3688,10 +3708,21 @@
         referenceInput.dataset.goldCaseId = document.getElementById('benchmark-case-select')?.value || '';
       }
       const form = new FormData();
+      const audioBuffer = await audio.arrayBuffer();
+      const audioDigest = await crypto.subtle.digest('SHA-256', audioBuffer);
+      const audioSha256 = Array.from(new Uint8Array(audioDigest), (byte) => byte.toString(16).padStart(2, '0')).join('');
       form.append('file', audio, audio.name || 'benchmark-sample.webm');
       form.append('reference_transcript', reference);
       form.append('language_code', 'am-ET');
       form.append('providers', 'intron');
+      form.append('reference_mode', 'unverified');
+      form.append('audio_sha256', audioSha256);
+      form.append('consent_obtained', 'true');
+      form.append('consent_evidence_reference', document.getElementById('live-consent-evidence').value.trim());
+      form.append('de_identified', 'true');
+      form.append('de_identification_evidence_reference', document.getElementById('live-deid-evidence').value.trim());
+      form.append('hosted_inference_approved', 'true');
+      form.append('hosted_inference_approval_evidence_reference', document.getElementById('live-hosted-evidence').value.trim());
       setLiveBenchmarkStatus('Running Intron Sahara v2.5...', 'text-[10px] font-mono text-emerald-300');
       try {
         const response = await fetchApi(`${getApiOrigin()}/api/v1/benchmark/live`, { method: 'POST', body: form });
@@ -3713,7 +3744,12 @@
         }
         setLevenshteinCalculatorVisible(Boolean(scoringReference));
         renderLiveBenchmarkResults(liveBenchmarkResults, scoringReference);
-        setLiveBenchmarkStatus('Benchmark complete', 'text-[10px] font-mono text-emerald-300');
+        setLiveBenchmarkStatus(
+          result.scoring_status === 'provisional_unverified_reference'
+            ? 'Complete · reference unverified; scores provisional'
+            : 'Complete · transcript only',
+          'text-[10px] font-mono text-amber-300'
+        );
       } catch (error) {
         const message = error?.message || String(error);
         setLiveBenchmarkStatus(`Benchmark failed: ${message}`, 'text-[10px] font-mono text-red-300');

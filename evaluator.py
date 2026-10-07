@@ -232,10 +232,22 @@ def load_inputs(
 
 
 def _reference_verified(reference_row: dict[str, str]) -> bool:
-    if reference_row.get("reference_verified", "").strip().casefold() in TRUE_VALUES:
-        return True
     status = reference_row.get("reference_review_status", "").strip().casefold()
-    return status in {"verified", "expert_verified", "gold_standard", "adjudicated"}
+    evidence = reference_row.get("reference_review_evidence", "").strip()
+    audio_status = reference_row.get("audio_presence_status", "").strip().casefold()
+    audio_evidence = reference_row.get("audio_presence_evidence_reference", "").strip()
+    checksum_evidence = reference_row.get("audio_checksum_evidence_reference", "").strip()
+    audio_checksum = reference_row.get("audio_checksum_sha256", "").strip().casefold()
+    legacy_flag = reference_row.get("reference_verified", "").strip().casefold()
+    return (
+        status == "verified_against_audio"
+        and bool(evidence)
+        and audio_status == "verified_present"
+        and bool(audio_evidence)
+        and bool(checksum_evidence)
+        and re.fullmatch(r"[0-9a-f]{64}", audio_checksum) is not None
+        and legacy_flag not in {"false", "0", "no"}
+    )
 
 
 def _mean(values: Sequence[float]) -> float | None:

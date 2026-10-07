@@ -1,22 +1,25 @@
 # Benchmark Limitations
 
-- **Coverage:** The authoritative source manifest defines 100 text cases. A
-  complete 100-recording audio benchmark is not established by the manifest
-  alone, and the current mock run is not performance evidence.
-- **Reference quality:** The source contains reference utterances and focus
-  terms, but the accessible export does not document audio-aligned expert
-  verification, annotator agreement, or adjudication for every item. Treat
-  references as provided source text until those checks are recorded.
+- **Coverage:** The canonical Google Sheet has 100 unique cases and all matching
+  WAV filenames exist in `raw_audio/` and `cleaned_audio/`. The manifest stores
+  cleaned-audio SHA-256 checksums. Checksums and filenames do not establish
+  licensing, consent, or source provenance.
+- **Reference quality:** All 100 source rows carry `review_status=verified` and
+  populated normalized transcripts. The raw-transcript column is blank. The
+  older DOCX differs from this source on 16 cases and the PDF on 19; use the
+  sheet's normalized transcript as canonical. The repository does not contain separate
+  annotator-agreement records.
 - **Single active source:** `metadata/BENCHMARK_MANIFEST.csv` is the sole
   reference source for this benchmark. Historical reports from removed
   manifests must not be merged into current metrics or cited as current
   performance evidence.
-- **Speaker representation:** The project brief targets five speakers, but
-  speaker-to-case mapping and demographic/recording metadata were not provided
-  in the accessible corpus. No assignments are fabricated here.
-- **Domain and switch labels:** The source includes batch descriptions but not
-  dependable case-level medical-domain labels. Manifest switch categories are
-  provisional estimates from script share; not audio-grounded annotations.
+- **Speaker representation:** The source supplies five name-like speaker
+  labels and case mappings. Repository copies pseudonymize those labels; the
+  mapping is not retained. Speaker-to-case assignment review remains pending.
+- **Domain and switch labels:** Clinical domains and an Amharic-English
+  language-mix label are source-populated. Code-switch categories in the
+  manifest remain provisional script-share estimates, not token-level audio
+  annotations.
 - **Language scope:** Amharic-English clinical speech only. Results do not
   generalize to other languages, dialects, facilities, devices, or acoustic
   environments.
@@ -32,6 +35,8 @@
   Wav2Vec2 evidence uses an English-only checkpoint.
 - **No live Tier 2 evidence:** SpeechBrain and NeMo are proposed candidates,
   not measured models in current repository artifacts.
-- **Privacy/provenance:** Consent, de-identification, audio license, retention,
-  and provider transmission approvals must be verified per asset. Do not
-  publish recordings, identifiers, or full sensitive transcripts.
+- **Privacy/provenance:** Manifest consent, de-identification, and hosted-use
+  states are `unknown`; no per-case evidence references are present. Verify
+  consent, de-identification, audio license, retention, and provider approvals
+  per asset. Do not publish recordings, identifiers, or full sensitive
+  transcripts.

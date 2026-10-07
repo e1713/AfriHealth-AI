@@ -107,9 +107,10 @@ class DashboardContentTests(unittest.TestCase):
     def test_demo_fixtures_are_not_presented_as_gold_standard_results(self):
         self.assertNotIn("Gold Standard", self.html)
         self.assertIn("5 illustrative UI fixtures", self.html)
-        self.assertIn("100 cases (CS-01 to CS-100)", self.html)
+        self.assertIn("CS-01 to CS-100", self.html)
+        self.assertIn("canonical spreadsheet marks all 100 normalized references verified", self.html)
         self.assertIn("Mock outputs are synthetic", self.html)
-        self.assertIn("performance claims require audio verification", self.html)
+        self.assertIn("no live model metrics or CEAS are available", self.html)
 
     def test_readme_does_not_claim_unverified_accuracy_or_ceas_values(self):
         self.assertIn("BENCHMARK_RESULTS.md", self.readme)

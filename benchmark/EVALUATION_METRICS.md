@@ -128,9 +128,12 @@ clinical safety, or population-level generalization.
 
 ## Existing implementation distinction
 
-The current evaluation engine implements normalized token WER, focus-term
-recall, critical-term miss counts/rates, and latency from the 100-case master
-manifest and model outputs. These remain provisional when references are not
 audio-verified. It does not currently implement adjudicated clinical
+The current evaluation engine implements normalized token WER, focus-term
+recall, critical-term miss counts/rates, and latency from the verified source
+references and model outputs. The canonical source marks all 100 normalized
+references verified, but no live paired model outputs are available, and
+clinical target-term/entity criticality has not been independently
+re-adjudicated. It does not currently implement adjudicated clinical
 entity-span metrics, token-level code-switch accuracy, or CEAS. Do not imply
 otherwise.

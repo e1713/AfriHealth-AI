@@ -143,11 +143,17 @@ development or demonstration.
 
 ## Benchmarking
 
-The active benchmark source is the 100-case master manifest:
-[benchmark/metadata/BENCHMARK_MANIFEST.csv](benchmark/metadata/BENCHMARK_MANIFEST.csv).
-It contains source text for CS-01 through CS-100, not a verified collection of
-100 audio recordings. Speaker assignments are absent, and code-switch labels
-are provisional.
+The canonical benchmark source is the verified Google Sheet export at
+[benchmark/metadata/GROUND_TRUTH_SOURCE.xlsx](benchmark/metadata/GROUND_TRUTH_SOURCE.xlsx)
+and its normalized CSV companion. The 100 rows have unique CS-01 through CS-100
+IDs and `review_status=verified`; the manifest uses the source
+`normalized_transcript` values. It differs from the older DOCX on 16 cases and
+the PDF on 19; see [GROUND_TRUTH_AUDIT_REPORT.md](GROUND_TRUTH_AUDIT_REPORT.md).
+Matching audio files exist for all source filenames, and checksums are recorded.
+Speaker labels are pseudonymized; assignments remain pending separate review.
+Consent, de-identification, and hosted-inference approval remain `unknown`.
+The source provides clinical domains and an Amharic-English language-mix label;
+the finer code-switch categories remain provisional.
 
 The evaluator includes six adapter names: Sahara, Gemini, Whisper, Wav2Vec2,
 SpeechBrain, and NeMo. Mock mode tests data flow only; local baseline adapters
@@ -158,6 +164,15 @@ To validate the manifest and dictionary:
 ```bash
 python validate_metadata.py
 ```
+
+The validator requires evidence references for affirmative consent,
+de-identification, hosted-inference approval, audio verification, and reviewed
+annotations, plus a documented SHA-256 for verified audio. The spreadsheet's
+verified review status supports reference promotion but does not establish
+consent or provider approval. The hosted inference
+runner checks that the manifest checksum matches the exact cleaned WAV; the live
+sample endpoint likewise requires evidence-backed approvals and the uploaded
+audio checksum. Until those records are provided, hosted inference is blocked.
 
 To exercise the pipeline without live provider calls:
 
@@ -177,8 +192,8 @@ python generate_results_doc.py \
 Mock transcripts and simulated latency are pipeline fixtures, not ASR
 measurements. WER, clinical-term recall, critical-term miss rate, and CEAS
 remain unavailable for mock-only output. CEAS is a proposed project metric and
-cannot be calculated until speaker labels, confirmed code-switch annotations,
-and audio-verified references are available.
+cannot be calculated until speaker assignments and code-switch annotations are
+independently reviewed and a paired live evaluation is available.
 
 See [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) for the generated evaluation
 snapshot, [MODEL_RECOMMENDATION.md](MODEL_RECOMMENDATION.md) for the

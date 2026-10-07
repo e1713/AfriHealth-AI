@@ -6,24 +6,22 @@ entity schema, case manifest, and reporting templates.
 
 ## Source and evidence status
 
-The 100 case transcripts and focus terms in
-[`metadata/BENCHMARK_MANIFEST.csv`](metadata/BENCHMARK_MANIFEST.csv) were
-transcribed from the user-provided Google Docs plain-text export:
-[AfriHealth AI Benchmark Corpus, CS-01–CS-100](https://docs.google.com/document/d/1KwAs-2KAjv5gUEJwFk86JjrNQGoDcABE/export?format=txt).
-This provides source text but does not, by itself, establish independent
-expert verification, audio availability, speaker assignment, or domain
-annotation. The user also provided a [PDF reference on Google Drive](https://drive.google.com/file/d/13H07n7dPwI6nUx3nZ17cI-4RDM9RFHCM/view);
-its binary contents were not used to populate the manifest. The named DOCX
-was not present in the local checkout.
+The canonical source is the user-provided [Google Sheet](https://docs.google.com/spreadsheets/d/1IQOdmAQxuiU2MgAqCAQ91rG-8TIS3UB_/edit),
+exported to [XLSX](metadata/GROUND_TRUTH_SOURCE.xlsx) and a normalized
+[CSV](metadata/GROUND_TRUTH_SOURCE.csv). It contains 100 unique cases, populated
+normalized transcripts and medical entities, source speaker/domain fields, and
+`review_status=verified` for every case. The source raw-transcript column is
+blank. The manifest projects this source for evaluation. The legacy DOCX differs
+from the canonical normalized transcript on 16 cases and the PDF on 19; the
+sheet takes precedence.
 
-Speaker IDs and per-case medical domains are intentionally blank until
-supported by approved source metadata. Code-switch labels are provisional
-Unicode-script-share estimates: Ethiopic vs Latin lexical-token share, with
-60% thresholds for the two "mostly" categories; annotators must confirm them
-before analysis. The estimate does not determine whether Latin words are
-clinical terms and is not an audio-derived label.
-The 100-row manifest is a corpus mapping, not proof that 100 audio recordings
-are present or that the references are gold-standard transcripts.
+All 100 audio filenames match files in both `raw_audio/` and `cleaned_audio/`;
+the manifest stores cleaned-audio SHA-256 checksums. Five name-like source
+speaker labels are pseudonymized in repository exports; speaker assignment
+review remains pending. Domains are source-provided. Code-switch labels remain
+provisional Unicode-script-share estimates and are not token-level audio labels.
+Consent, de-identification, licensing, retention, and hosted-inference approval
+are not supplied by the sheet and remain unknown.
 
 ## Files
 
@@ -40,6 +38,12 @@ are present or that the references are gold-standard transcripts.
 - [RESULTS_TEMPLATE.md](RESULTS_TEMPLATE.md)
 - [MODEL_RECOMMENDATION_TEMPLATE.md](MODEL_RECOMMENDATION_TEMPLATE.md)
 - [reporting/PRESENTATION_SLIDES.md](reporting/PRESENTATION_SLIDES.md)
+- [GROUND_TRUTH_VERIFICATION_REPORT.md](../GROUND_TRUTH_VERIFICATION_REPORT.md)
+- [BENCHMARK_CERTIFICATION_REPORT.md](../BENCHMARK_CERTIFICATION_REPORT.md)
+- [AUDIO_ALIGNMENT_REPORT.md](../AUDIO_ALIGNMENT_REPORT.md)
+- [SPEAKER_DOMAIN_AUDIT.md](../SPEAKER_DOMAIN_AUDIT.md)
+- [CODESWITCH_READINESS_REPORT.md](../CODESWITCH_READINESS_REPORT.md)
+- [BENCHMARK_EXECUTION_READINESS.md](../BENCHMARK_EXECUTION_READINESS.md)
 
 ## Quick validation
 
@@ -50,6 +54,8 @@ python validate_metadata.py
 ```
 
 This validates the medical vocabulary and master manifest structure. It does not
-independently verify annotations in the benchmark manifest. The manifest's 100
-rows, IDs, provenance/status fields, and required transcript/focus-term values
-are covered by `tests/test_benchmark_docs.py`.
+independently verify the underlying spreadsheet or the truth of external
+evidence references. It rejects unsupported positive consent, de-identification,
+approval, or verification states and warns when required labels remain pending.
+Spreadsheet-to-manifest reconciliation is covered by
+`tests/test_benchmark_docs.py`.

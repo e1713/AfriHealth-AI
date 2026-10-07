@@ -40,16 +40,19 @@ def parse_cases(text):
     return cases
 
 def update_manifest(manifest_path, cases):
-    """Update BENCHMARK_MANIFEST.csv with reference transcripts and verified status."""
+    """Update source reference text and reset any prior review to pending."""
     rows = []
     with open(manifest_path, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
-        fieldnames = reader.fieldnames
+        fieldnames = list(reader.fieldnames or [])
+        if 'reference_review_evidence' not in fieldnames:
+            fieldnames.append('reference_review_evidence')
         for row in reader:
             case_id = row['case_id']
             if case_id in cases:
                 row['reference_transcript'] = cases[case_id]
-                row['reference_review_status'] = 'verified_against_audio'
+                row['reference_review_status'] = 'pending_review'
+                row['reference_review_evidence'] = ''
             rows.append(row)
     
     with open(manifest_path, 'w', newline='', encoding='utf-8') as f:
@@ -57,7 +60,7 @@ def update_manifest(manifest_path, cases):
         writer.writeheader()
         writer.writerows(rows)
     
-    return len([r for r in rows if r['reference_review_status'] == 'verified_against_audio'])
+    return len([case_id for case_id in cases if any(row['case_id'] == case_id for row in rows)])
 
 def main():
     docx_path = Path('transcripts/AfriHealth_AI_Benchmark_Corpus_CS01_CS100.docx')
@@ -80,7 +83,7 @@ def main():
     
     print("Updating manifest...", file=sys.stderr)
     updated = update_manifest(manifest_path, cases)
-    print(f"Updated {updated} rows with verified transcripts", file=sys.stderr)
+    print(f"Updated {updated} source transcripts; audio review remains pending", file=sys.stderr)
     
     return 0
 

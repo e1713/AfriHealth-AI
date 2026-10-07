@@ -35,10 +35,11 @@ The project keeps evidence types separate:
 1. **Fixture benchmark:** a reproducible software test using embedded
    hypotheses. It is not independent audio inference.
 2. **Clinical benchmark pipeline:** the single active source is
-   `benchmark/metadata/BENCHMARK_MANIFEST.csv`, with 100 source-text cases.
-   References are not yet audio-verified, speaker assignments are missing,
-   categories are provisional, and mock outputs are not accuracy evidence.
-   Current validated clinical metrics and CEAS are unavailable.
+   `benchmark/metadata/GROUND_TRUTH_SOURCE.xlsx` and its manifest projection,
+   with 100 source rows marked verified. The canonical normalized transcript
+   differs from the older DOCX on 16 cases and the PDF on 19. Speaker assignments remain pending
+   separate review, categories are provisional, and mock outputs are not
+   accuracy evidence. No live model metrics or CEAS are available.
 3. **AfriSwitch pilot:** general-purpose Amharic/Oromo code-switched audio
    used for exploratory ASR evaluation, not clinical validation.
 

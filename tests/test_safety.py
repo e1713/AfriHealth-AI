@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import hashlib
 import io
 import json
 import unittest
@@ -577,19 +578,85 @@ class SafetyTests(unittest.TestCase):
                     "Patient has fever and cough.",
                     "am-ET",
                     "intron",
-                    "verified",
+                    "unverified",
+                    "",
+                    hashlib.sha256(b"audio").hexdigest(),
+                    "true",
+                    "consent://test/CS-01",
+                    "true",
+                    "privacy://test/CS-01",
+                    "true",
+                    "approval://test/CS-01",
                 )
             )
         self.assertEqual(result["benchmark_type"], "live_provider_comparison")
         self.assertEqual(len(result["results"]), 1)
         self.assertEqual(result["results"][0]["model"], "Intron Sahara v2.5")
         self.assertEqual(result["results"][0]["status"], "unavailable")
+        self.assertEqual(result["scoring_status"], "provisional_unverified_reference")
 
     def test_live_benchmark_allows_transcript_only_mode(self):
         upload = UploadFile(file=io.BytesIO(b"audio"), filename="sample.wav")
         with patch.object(main, "INTRON_API_KEY", ""):
-            result = asyncio.run(main.live_benchmark(upload, "", "am-ET", "intron", "verified"))
+            result = asyncio.run(
+                main.live_benchmark(
+                    upload, "", "am-ET", "intron", "unverified", "", hashlib.sha256(b"audio").hexdigest(),
+                    "true", "consent://test/CS-01", "true", "privacy://test/CS-01",
+                    "true", "approval://test/CS-01",
+                )
+            )
         self.assertEqual(result["scoring_status"], "transcript_only")
+
+    def test_live_benchmark_requires_review_evidence_for_verified_score(self):
+        upload = UploadFile(file=io.BytesIO(b"audio"), filename="sample.wav")
+        with self.assertRaises(HTTPException) as context:
+            asyncio.run(
+                main.live_benchmark(
+                    upload,
+                    "Patient has fever.",
+                    "am-ET",
+                    "intron",
+                    "verified",
+                    "",
+                    "",
+                )
+            )
+        self.assertEqual(context.exception.status_code, 400)
+        self.assertIn("review evidence reference", context.exception.detail)
+
+    def test_live_benchmark_blocks_hosted_upload_without_governance_evidence(self):
+        upload = UploadFile(file=io.BytesIO(b"audio"), filename="sample.wav")
+        with self.assertRaises(HTTPException) as context:
+            asyncio.run(
+                main.live_benchmark(
+                    upload, "", "am-ET", "intron", "unverified", "", "",
+                    "unknown", "", "unknown", "", "unknown", "",
+                )
+            )
+        self.assertEqual(context.exception.status_code, 403)
+        self.assertIn("provider approval with evidence references", context.exception.detail)
+
+    def test_live_benchmark_blocks_mismatched_audio_checksum(self):
+        upload = UploadFile(file=io.BytesIO(b"audio"), filename="sample.wav")
+        with self.assertRaises(HTTPException) as context:
+            asyncio.run(
+                main.live_benchmark(
+                    upload,
+                    "",
+                    "am-ET",
+                    "intron",
+                    "unverified",
+                    "",
+                    "0" * 64,
+                    "true",
+                    "consent://test/CS-01",
+                    "true",
+                    "privacy://test/CS-01",
+                    "true",
+                    "approval://test/CS-01",
+                )
+            )
+        self.assertEqual(context.exception.status_code, 403)
 
     def test_ehr_commit_fails_closed_without_endpoint(self):
         payload = main.EHRCommitRequest(

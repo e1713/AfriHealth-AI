@@ -48,10 +48,10 @@ validates structured JSON and otherwise returns a manual-review fallback.
 
 Distinguish the in-app fixture matrix from the clinical benchmark pipeline.
 The fixture uses embedded hypotheses and is not independent audio evaluation.
-Show `BENCHMARK_RESULTS.md` and the 100-case master manifest. Say: “These are
-source reference texts, not yet independently verified against audio. The
-mock pipeline tests data flow only; no validated model accuracy or equity
-score is currently available.”
+Show the canonical spreadsheet and `BENCHMARK_RESULTS.md`. Say: “The source
+marks all 100 normalized references verified; the legacy DOCX differs on 16
+cases and the PDF on 19. The mock pipeline tests data flow only; no live model
+accuracy or equity score is currently available.”
 
 ## 2:10–2:35 — Safety and deployment
 

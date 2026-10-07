@@ -1,12 +1,13 @@
 """Upload explicitly approved benchmark recordings through the local Intron bridge."""
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
 import requests
 
-from inference_engine import load_manifest
+from inference_engine import has_documented_hosted_inference_approval, load_manifest
 
 
 def load_references(path: Path) -> dict[str, dict[str, str]]:
@@ -67,16 +68,14 @@ def main() -> None:
             "upload_status": "validated_only",
         }
         if args.upload:
-            approvals = (
-                row.get("consent_obtained", ""),
-                row.get("de_identified", ""),
-                row.get("hosted_inference_approved", ""),
-            )
-            if any(value.strip().casefold() not in {"true", "1", "yes"} for value in approvals):
+            if not has_documented_hosted_inference_approval(row):
                 raise ValueError(
                     f"Hosted inference blocked for {case_id}: consent, de-identification, "
-                    "and hosted inference approval must all be explicitly true."
+                    "and hosted inference approval must be true with evidence references."
                 )
+            actual_checksum = hashlib.sha256(audio_path.read_bytes()).hexdigest()
+            if actual_checksum != row.get("audio_checksum_sha256", "").strip().casefold():
+                raise ValueError(f"Hosted inference blocked for {case_id}: audio checksum does not match manifest")
             with audio_path.open("rb") as audio_file:
                 response = requests.post(
                     args.endpoint,

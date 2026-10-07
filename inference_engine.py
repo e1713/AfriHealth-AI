@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import csv
+import hashlib
 import json
 import os
 import random
@@ -24,6 +25,11 @@ from typing import Callable, Sequence, TextIO
 
 MOCK_TRANSCRIPT = (
     "MOCK TRANSCRIPT ONLY: Amharic-English clinical speech sample for pipeline testing."
+)
+HOSTED_APPROVAL_REQUIREMENTS = (
+    ("consent_obtained", "consent_evidence_reference"),
+    ("de_identified", "de_identification_evidence_reference"),
+    ("hosted_inference_approved", "hosted_inference_approval_evidence_reference"),
 )
 COMPARISON_COLUMNS = (
     "case_id",
@@ -46,6 +52,21 @@ class InferenceRecord:
     timestamp_utc: str
     error_type: str = ""
     error_message: str = ""
+
+
+def has_documented_hosted_inference_approval(row: dict[str, str]) -> bool:
+    """Require affirmative flags and evidence references before hosted inference."""
+    return all(
+        row.get(flag, "").strip().casefold() == "true"
+        and bool(row.get(evidence_field, "").strip())
+        for flag, evidence_field in HOSTED_APPROVAL_REQUIREMENTS
+    ) and (
+        row.get("audio_presence_status", "").strip().casefold() == "verified_present"
+        and bool(row.get("audio_presence_evidence_reference", "").strip())
+        and bool(row.get("audio_checksum_evidence_reference", "").strip())
+        and len(row.get("audio_checksum_sha256", "").strip()) == 64
+        and all(character in "0123456789abcdefABCDEF" for character in row["audio_checksum_sha256"].strip())
+    )
 
 
 class ClinicalASRModel(ABC):
@@ -328,16 +349,24 @@ class InferenceEngine:
             unauthorized = [
                 row["case_id"]
                 for row in rows
-                if row.get("consent_obtained", "").strip().lower() not in {"true", "1", "yes"}
-                or row.get("de_identified", "").strip().lower() not in {"true", "1", "yes"}
-                or row.get("hosted_inference_approved", "").strip().lower()
-                not in {"true", "1", "yes"}
+                if not has_documented_hosted_inference_approval(row)
             ]
             if unauthorized:
                 raise ValueError(
-                    "Hosted inference blocked: consent_obtained, de_identified, and "
-                    "hosted_inference_approved must all be explicitly true for every case. "
+                    "Hosted inference blocked: consent, de-identification, and hosted approval "
+                    "must be true with evidence references for every case. "
                     f"First blocked cases: {', '.join(unauthorized[:5])}"
+                )
+            checksum_mismatches = []
+            for row in rows:
+                audio_path = resolve_audio_path(self.cleaned_audio_dir, row["audio_filename"])
+                actual_checksum = hashlib.sha256(audio_path.read_bytes()).hexdigest()
+                if actual_checksum != row.get("audio_checksum_sha256", "").strip().casefold():
+                    checksum_mismatches.append(row["case_id"])
+            if checksum_mismatches:
+                raise ValueError(
+                    "Hosted inference blocked: cleaned audio checksum does not match the approved manifest for "
+                    + ", ".join(checksum_mismatches[:5])
                 )
             import main as gateway
 

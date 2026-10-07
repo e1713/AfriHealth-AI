@@ -12,7 +12,9 @@ It does not diagnose, prescribe, or replace clinical judgment.
 - Browser prototype: `index.html`
 - FastAPI integration and review gates: `main.py`
 - Setup, architecture, and Responsible AI documentation
-- The authoritative 100-case source-text manifest:
+- Canonical verified ground-truth export and evaluation manifest:
+  `benchmark/metadata/GROUND_TRUTH_SOURCE.xlsx`,
+  `benchmark/metadata/GROUND_TRUTH_SOURCE.csv`, and
   `benchmark/metadata/BENCHMARK_MANIFEST.csv`
 - Resumable inference and evaluation scripts: `inference_engine.py`,
   `evaluator.py`
@@ -22,11 +24,13 @@ It does not diagnose, prescribe, or replace clinical judgment.
 
 ## Evidence interpretation
 
-The manifest contains source reference text, not independently audio-verified
-gold transcripts. Speaker IDs are missing and code-switch category annotations
-are provisional. No validated clinical model-performance comparison or CEAS
-score is currently available. Mock transcripts and simulated latency verify
-pipeline behavior only and must not be presented as measured ASR results.
+The primary sheet marks all 100 normalized references `verified`; the active
+manifest records that evidence and matching audio checksums. The older DOCX
+differs on 16 cases and the PDF on 19; neither is canonical. Speaker labels are pseudonymized but
+their assignments remain pending separate review; code-switch categories are
+provisional. Consent, de-identification, and hosted-inference approval remain
+unknown. No live clinical model-performance comparison or CEAS score is
+available. Mock transcripts and simulated latency are not measured ASR results.
 
 The in-app five-case fixture is separate product-demo content, not benchmark
 evidence.
@@ -51,10 +55,9 @@ server-side keys:
 python inference_engine.py --env live --models sahara gemini
 ```
 
-The current manifest has consent, de-identification, and hosted-inference
-approval set to false. Live hosted inference will therefore be blocked until
-those fields are properly established. Several local model adapters remain
-placeholders.
+The current manifest records consent, de-identification, and hosted-inference
+approval as `unknown`. Live hosted inference remains blocked until those fields
+have evidence-backed approvals. Several local model adapters remain placeholders.
 
 ## Privacy and clinical review
 

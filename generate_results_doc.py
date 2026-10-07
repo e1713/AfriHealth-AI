@@ -135,12 +135,12 @@ def build_recommendation_section(rows: Sequence[dict[str, str]]) -> str:
             "",
             "No model is ranked or recommended for clinical use by this generated summary. "
             "A mock-only run provides no evidence about model accuracy or clinical suitability. "
-            "Live scores against references not independently verified against audio remain provisional.",
+            "The canonical spreadsheet marks the references verified, but no live paired model outputs are available.",
             "",
             "### Evidence required before selecting a model",
             "",
             "- Paired live outputs on the same audio cases with exact model/provider versions.",
-            "- Independently audio-verified and adjudicated references and target terms.",
+            "- Clinician-adjudicated target terms, criticality, and entities; preserve the canonical reference source.",
             "- Review of medication, dose, negation, and critical-term errors by qualified clinicians.",
             "- Hosted-data governance, privacy, latency, reliability, and deployment review.",
             "",

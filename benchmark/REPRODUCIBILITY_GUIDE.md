@@ -31,9 +31,11 @@ comparison without recording the resolved versions.
 
 1. Verify each canonical audio file and link it in
    [`metadata/BENCHMARK_MANIFEST.csv`](metadata/BENCHMARK_MANIFEST.csv).
-2. Independently verify transcript, focus terms, domain, speaker, code-switch
-   labels, critical terms, consent, and de-identification; resolve pending
-   fields before calling results complete.
+2. Use the verified spreadsheet's normalized transcript as the reference and
+   preserve its source-row evidence. Independently review speaker assignments,
+   code-switch labels, critical terms, consent, de-identification, provenance,
+   and provider approval; resolve pending fields before hosted inference or
+   subgroup scoring.
 3. Standardize audio using the repository's `validate_and_prep.py` only after
    reviewing the preservation implications. Its normalization/denoising
    switches are opt-in.
@@ -52,15 +54,22 @@ comparison without recording the resolved versions.
    ```
 
 5. Mock transcripts and randomized latency are synthetic, not model results.
-   For live hosted API inference, explicitly approve each manifest row by
-   setting `consent_obtained`, `de_identified`, and
-   `hosted_inference_approved` to `true`, then run only the configured APIs:
+   For live hosted API inference, set `consent_obtained`, `de_identified`, and
+   `hosted_inference_approved` to `true` only when each claim is supported by
+   an evidence reference in the corresponding manifest column. The validator
+   and inference engine reject unsupported positive claims. Do not treat a
+   value in `approvals.csv` as evidence unless its evidence-reference columns
+   cite auditable records. The case must also be `verified_present` with
+   `audio_presence_evidence_reference`, `audio_checksum_evidence_reference`,
+   and a SHA-256 matching the cleaned WAV that will be uploaded. Then run only
+   configured APIs:
 
    ```bash
    python inference_engine.py --env live --models sahara gemini
    ```
 
-   The manifest currently has these approval fields set to `false`. Whisper,
+   The manifest currently records these approval fields as `unknown`, with no
+   evidence references, so hosted inference is blocked. Whisper,
    Wav2Vec2, SpeechBrain, and NeMo are local adapter placeholders and are not
    yet runnable.
 
@@ -73,9 +82,10 @@ comparison without recording the resolved versions.
    `python generate_results_doc.py`. Raw hypotheses remain in approved
    restricted storage; keep failed cases visible.
 
-The single 100-case manifest is a source-text corpus. Do not claim a completed
-100-case model comparison until approved audio exists, every reference is
-audio-verified, and all required labels are adjudicated. Inference may still
+The source contains 100 cases marked verified and matching audio files exist.
+Do not claim a completed 100-case model comparison until governance approvals
+are documented, unresolved labels are adjudicated, and paired live inference
+is complete. Inference may still
 run on a partial set, but reports must disclose coverage and failures.
 
 ## Required run artifacts

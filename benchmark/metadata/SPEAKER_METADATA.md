@@ -2,18 +2,20 @@
 
 ## Policy
 
-The project brief describes a five-speaker corpus, but the accessible source
-corpus does not provide case-to-speaker assignments or validated speaker
-profiles. The identifiers below are reserved placeholders only. They do not
-assert that five distinct people have been verified in the audio.
+The canonical ground-truth sheet provides five speaker labels and case-level
+values. The repository exports replace those name-like labels with
+`Speaker-01` through `Speaker-05`; the identity mapping is deliberately not
+stored. The sheet's general `review_status=verified` supports transcript
+review, but does not separately attest speaker identity or every case
+assignment, so manifest `speaker_assignment_status` remains `pending_review`.
 
 | Pseudonymous ID | Case assignments | Language/dialect | Recording conditions | Status |
 | --- | --- | --- | --- | --- |
-| Speaker-01 | Not supplied | Not supplied | Not supplied | Unassigned placeholder |
-| Speaker-02 | Not supplied | Not supplied | Not supplied | Unassigned placeholder |
-| Speaker-03 | Not supplied | Not supplied | Not supplied | Unassigned placeholder |
-| Speaker-04 | Not supplied | Not supplied | Not supplied | Unassigned placeholder |
-| Speaker-05 | Not supplied | Not supplied | Not supplied | Unassigned placeholder |
+| Speaker-01 | Source mapping present; review pending | Not supplied | Not supplied | Pseudonymized source label |
+| Speaker-02 | Source mapping present; review pending | Not supplied | Not supplied | Pseudonymized source label |
+| Speaker-03 | Source mapping present; review pending | Not supplied | Not supplied | Pseudonymized source label |
+| Speaker-04 | Source mapping present; review pending | Not supplied | Not supplied | Pseudonymized source label |
+| Speaker-05 | Source mapping present; review pending | Not supplied | Not supplied | Pseudonymized source label |
 
 ## Collection requirements
 

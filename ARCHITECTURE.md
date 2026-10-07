@@ -106,7 +106,7 @@ The repository contains separate evidence types:
 
 | Evidence | Purpose | Interpretation |
 | --- | --- | --- |
-| `benchmark/metadata/BENCHMARK_MANIFEST.csv` | Sole active 100-case clinical reference source | Source text only; audio alignment and adjudication remain pending |
+| `benchmark/metadata/GROUND_TRUTH_SOURCE.xlsx` + manifest | Canonical verified 100-case transcript source and evaluation projection | Source rows mark normalized references verified; matching files/checksums are present; consent/provider approval unknown; speaker and code-switch review pending |
 | `inference_engine.py` + `evaluator.py` | Resumable ASR attempts and manifest-based metrics | Mock mode is synthetic; validated live comparison is not currently available |
 | Embedded application fixture | Reproducible UI/scoring demonstration | Not a population performance claim or benchmark result |
 | AfriSwitch pilot scripts | Separate general-purpose code-switched ASR experiment | Not clinical validation and not part of this clinical benchmark |
@@ -139,7 +139,13 @@ provider status, latency, WER, and CER. Missing provider keys are reported as
 unavailable; no scores are fabricated. If the UI selects the Intron output as
 the reference, the response is marked `provisional_intron_reference`; that
 mode is useful for model-to-model error comparison but is not independent
-gold-standard accuracy.
+gold-standard accuracy. The live endpoint defaults supplied references to
+unverified and requires a review-evidence reference plus a matching audio
+SHA-256 before labeling a score as attested. Any hosted provider upload also
+requires evidence-backed consent, de-identification, and provider approval.
+Manifest-driven inference verifies the approved cleaned-audio SHA-256 before
+upload. Checksums are present, but current consent/de-identification/provider
+approvals are unknown, so hosted inference remains blocked.
 
 The separate clinical validation audit form is intentionally not exposed in
 the public application navigation. The product demo focuses on the three care

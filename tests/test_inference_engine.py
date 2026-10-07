@@ -8,6 +8,7 @@ from inference_engine import (
     MOCK_TRANSCRIPT,
     InferenceEngine,
     MockASR,
+    has_documented_hosted_inference_approval,
     load_manifest,
     parse_args,
     read_inference_log,
@@ -187,9 +188,34 @@ class InferenceEngineTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "Hosted inference blocked"):
                 engine.run()
-
             self.assertFalse((root / "results" / "inference_log.jsonl").exists())
 
+    def test_hosted_inference_requires_evidence_references(self):
+        self.assertFalse(
+            has_documented_hosted_inference_approval(
+                {
+                    "consent_obtained": "true",
+                    "de_identified": "true",
+                    "hosted_inference_approved": "true",
+                }
+            )
+        )
+        self.assertTrue(
+            has_documented_hosted_inference_approval(
+                {
+                    "consent_obtained": "true",
+                    "consent_evidence_reference": "restricted://consent/CS-01",
+                    "de_identified": "true",
+                    "de_identification_evidence_reference": "review://CS-01",
+                    "hosted_inference_approved": "true",
+                    "hosted_inference_approval_evidence_reference": "approval://CS-01",
+                    "audio_presence_status": "verified_present",
+                    "audio_presence_evidence_reference": "provenance://CS-01",
+                    "audio_checksum_evidence_reference": "checksum://CS-01",
+                    "audio_checksum_sha256": "a" * 64,
+                }
+            )
+        )
 
 if __name__ == "__main__":
     unittest.main()

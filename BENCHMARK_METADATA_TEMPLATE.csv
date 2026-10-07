@@ -1,4 +1,2 @@
-sample_id,language_pair,consent_obtained,de_identified,audio_license_or_source,annotator_count,reference_verified,notes
-sample_001,English-Amharic Code-Switch,,,,,,
-sample_002,English-Amharic Code-Switch,,,,,,
-sample_003,English Clinical Standard,,,,,,
+case_id,audio_filename,audio_presence_status,audio_presence_evidence_reference,audio_checksum_sha256,audio_checksum_evidence_reference,language_pair,consent_obtained,consent_evidence_reference,de_identified,de_identification_evidence_reference,hosted_inference_approved,hosted_inference_approval_evidence_reference,reference_review_status,reference_review_evidence,reviewer,review_date,verification_method,verification_notes,dataset_version,prepared_by,speaker_id,speaker_assignment_status,speaker_assignment_evidence,medical_domain,code_switch_category,code_switch_annotation_status,code_switch_annotation_evidence,annotator_count,notes
+CS-01,CS-01.wav,file_present_provenance_unverified,,,,Amharic-English,unknown,,unknown,,unknown,,pending_review,,,,,,,v1.0,,,,,Mostly Amharic,provisional_script_share_estimate_requires_human_confirmation,,,

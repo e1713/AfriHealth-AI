@@ -14,6 +14,9 @@ clinical_validation/
 clinical_validation_upload_results.json
 Sahara-Clinical-Validation-Package.zip
 clinical_validation_model_report.json
+
+# Restricted governance evidence exports; commit references, not source records
+docs/evidence/*.csv
 results/inference_log.jsonl
 results/model_comparisons.csv
 results/final_evaluation_metrics.csv

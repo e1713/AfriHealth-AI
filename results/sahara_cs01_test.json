@@ -1,0 +1,29 @@
+{
+  "execution_status": "blocked",
+  "processing_status": "skipped",
+  "request_sent": false,
+  "case_id": "CS-01",
+  "model": "Sahara/Intron",
+  "model_version": null,
+  "prediction": null,
+  "latency_ms": null,
+  "response_payload": null,
+  "input": {
+    "manifest": "benchmark/metadata/BENCHMARK_MANIFEST.csv",
+    "audio_file": "cleaned_audio/CS-01.wav",
+    "audio_sha256_matches_manifest": true
+  },
+  "governance": {
+    "consent_obtained": "unknown",
+    "de_identified": "unknown",
+    "hosted_inference_approved": "unknown",
+    "consent_evidence_reference_present": false,
+    "de_identification_evidence_reference_present": false,
+    "hosted_inference_approval_evidence_reference_present": false
+  },
+  "blocking_issues": [
+    "Hosted inference requires affirmative, evidence-backed consent, de-identification, and provider approval for this case.",
+    "No INTRON_API_KEY or INTRON_SAHARA_API_KEY is configured in the ignored .env file."
+  ],
+  "note": "No provider request was made. Prediction, latency, response payload, and model version are null because no execution occurred."
+}

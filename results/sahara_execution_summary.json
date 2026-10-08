@@ -1,0 +1,18 @@
+{
+  "execution_status": "blocked",
+  "model": "Sahara/Intron",
+  "model_version": null,
+  "total_cases": 100,
+  "successful_cases": 0,
+  "failed_cases": 0,
+  "timeout_cases": 0,
+  "skipped_cases": 100,
+  "average_latency_ms": null,
+  "p95_latency_ms": null,
+  "blocking_issues": [
+    "Consent, de-identification, and hosted-inference approval are unknown for all 100 cases.",
+    "No usable INTRON_API_KEY or INTRON_SAHARA_API_KEY is configured; backend key-load check returned false.",
+    "A credential was present in tracked .env.example. The template was sanitized; rotate/revoke that credential before configuring a replacement in ignored .env."
+  ],
+  "note": "No provider requests were made. All prediction and latency fields remain blank; no outputs were simulated."
+}

@@ -27,10 +27,80 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Stage frontend-only site
+        shell: bash
+        run: |
+          mkdir -p _site/assets
+          cp index.html manifest.json sw.js offline-sync-worker.js pcm-processor.js _site/
+          cp assets/logo.svg _site/assets/
+
+      - name: Verify Pages allowlist
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          site = Path("_site")
+          expected = {
+              "index.html",
+              "manifest.json",
+              "sw.js",
+              "offline-sync-worker.js",
+              "pcm-processor.js",
+              "assets/logo.svg",
+          }
+          expected_directories = {"assets"}
+          blocked_directories = {
+              "raw_audio",
+              "cleaned_audio",
+              "benchmark",
+              "transcripts",
+              "docs",
+              "governance",
+          }
+          blocked_extensions = {".wav", ".csv", ".xlsx", ".xls", ".pdf", ".docx"}
+          if not site.is_dir():
+              raise SystemExit("Pages staging directory _site/ is missing")
+
+          paths = list(site.rglob("*"))
+          symlinks = [
+              path.relative_to(site).as_posix()
+              for path in paths
+              if path.is_symlink()
+          ]
+          blocked = [
+              path.relative_to(site).as_posix()
+              for path in paths
+              if path.is_dir() and path.name in blocked_directories
+          ]
+          blocked.extend(
+              path.relative_to(site).as_posix()
+              for path in paths
+              if path.is_file() and path.suffix.lower() in blocked_extensions
+          )
+          actual = {
+              path.relative_to(site).as_posix()
+              for path in paths
+              if path.is_file()
+          }
+          actual_directories = {
+              path.relative_to(site).as_posix()
+              for path in paths
+              if path.is_dir() and not path.is_symlink()
+          }
+          if blocked or symlinks or actual != expected or actual_directories != expected_directories:
+              print("Blocked paths:", sorted(blocked))
+              print("Symlinks:", sorted(symlinks))
+              print("Unexpected directories:", sorted(actual_directories - expected_directories))
+              print("Missing files:", sorted(expected - actual))
+              print("Unexpected files:", sorted(actual - expected))
+              raise SystemExit("Pages artifact violates the frontend allowlist")
+          PY
+
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment

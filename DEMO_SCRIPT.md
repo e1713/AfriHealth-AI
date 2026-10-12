@@ -15,9 +15,8 @@ for which consent and de-identification have been documented.
    implementation and evidence locations for voice workflows, health focus,
    model comparison, and Responsible AI.
 4. **0:40–1:00 — Benchmark and review gate:** Open the benchmark evidence,
-   show the 100-case master manifest and six-adapter pipeline, state that mock
-   results are not accuracy evidence and audio verification is pending, then
-   show the clinician review / FHIR gate.
+   name the four-model, 15-case saved-transcript comparison and its limitations,
+   then show the pending clinician review / FHIR gate.
 
 ## 0:00–0:20 — Problem and users
 
@@ -46,12 +45,22 @@ validates structured JSON and otherwise returns a manual-review fallback.
 
 ## 1:35–2:10 — Benchmark
 
-Distinguish the in-app fixture matrix from the clinical benchmark pipeline.
-The fixture uses embedded hypotheses and is not independent audio evaluation.
-Show the canonical spreadsheet and `BENCHMARK_RESULTS.md`. Say: “The source
-marks all 100 normalized references verified; the legacy DOCX differs on 16
-cases and the PDF on 19. The mock pipeline tests data flow only; no live model
-accuracy or equity score is currently available.”
+Distinguish the in-app fixture matrix from the offline comparative report. The
+in-app matrix uses embedded hypotheses and is not independent audio evaluation.
+Show `BENCHMARK_RESULTS.md` for the 15-case transcript comparison:
+
+| Model | Normalized WER | Target-term recall | M-WER |
+| --- | ---: | ---: | ---: |
+| Intron Sahara v2.5 | 34.91% | 57.78% | 42.22% |
+| OpenAI Whisper Tiny | 99.56% | 23.67% | 76.33% |
+| Meta Wav2Vec2 Base 960h (English) | 108.23% | 2.22% | 97.78% |
+| Google Gemini gemini-flash-latest | 11.46% | 93.33% | 6.67% |
+
+Say: “These scores are from saved transcripts on 15 simulated
+Amharic-English cases. Gemini scores best on this small set. The English-only
+Wav2Vec2 checkpoint is a limited baseline. M-WER is one minus target-term
+recall; neither metric is a fairness measure, and these results do not
+establish population-wide or clinical performance.”
 
 ## 2:10–2:35 — Safety and deployment
 

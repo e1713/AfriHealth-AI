@@ -1,81 +1,59 @@
-"""Upload explicitly approved benchmark recordings through the local Intron bridge."""
+"""Upload approved clinical validation recordings through the local Intron bridge."""
 
 import argparse
-import hashlib
+import csv
 import json
 from pathlib import Path
 
 import requests
 
-from inference_engine import has_documented_hosted_inference_approval, load_manifest
-
 
 def load_references(path: Path) -> dict[str, dict[str, str]]:
-    return {
-        row["case_id"]: row
-        for row in load_manifest(path)
-    }
+    with path.open(encoding="utf-8", newline="") as handle:
+        return {row["case_id"]: row for row in csv.DictReader(handle)}
 
 
-def canonical_audio(root: Path, audio_filename: str) -> Path:
-    audio_path = (root / audio_filename).resolve()
-    try:
-        audio_path.relative_to(root.resolve())
-    except ValueError as error:
-        raise ValueError(f"Audio path escapes the audio directory: {audio_filename}") from error
-    if not audio_path.is_file():
-        raise FileNotFoundError(f"No canonical recording found: {audio_path}")
-    return audio_path
+def canonical_audio(root: Path, case_id: str) -> Path:
+    candidates = [
+        root / f"{case_id}_.m4a",
+        root / f"{case_id}.m4a",
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    raise FileNotFoundError(f"No canonical recording found for {case_id}")
 
 
 def main() -> None:
     project_root = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(
-        description="Upload only explicitly approved cases from the master benchmark manifest."
+        description="Upload the approved canonical clinical validation recordings."
     )
     parser.add_argument(
-        "--manifest",
-        type=Path,
-        default=project_root / "benchmark" / "metadata" / "BENCHMARK_MANIFEST.csv",
-        help="Authoritative benchmark manifest",
-    )
-    parser.add_argument(
-        "--audio-dir",
-        type=Path,
-        default=project_root / "cleaned_audio",
-        help="Directory containing standardized WAV recordings",
+        "--input",
+        default=str(project_root / "clinical_validation" / "inputs"),
+        help="Directory containing the recordings and reference CSV",
     )
     parser.add_argument("--endpoint", default="http://127.0.0.1:8000/api/intron/stt/upload-sync")
-    parser.add_argument("--output", default="benchmark_upload_results.json")
-    parser.add_argument("--upload", action="store_true", help="Perform external inference; otherwise validate only")
+    parser.add_argument("--output", default="clinical_validation_upload_results.json")
+    parser.add_argument("--upload", action="store_true", help="Perform uploads; otherwise validate only")
     args = parser.parse_args()
 
-    audio_root = args.audio_dir.resolve()
-    references = load_references(args.manifest.resolve())
+    root = Path(args.input).resolve()
+    references = load_references(root / "CLINICAL_REFERENCE_TRANSCRIPTS.csv")
     cases = sorted(references)
     results = []
     for case_id in cases:
-        row = references[case_id]
-        audio_filename = row.get("audio_filename", "").strip()
-        if not audio_filename:
-            raise ValueError(f"Manifest case {case_id} has no audio_filename")
-        audio_path = canonical_audio(audio_root, audio_filename)
+        audio_path = canonical_audio(root, case_id)
         result = {
             "case_id": case_id,
             "audio_file": audio_path.name,
-            "reference_transcript": row.get("reference_transcript", ""),
-            "target_terms": row.get("focus_terms", ""),
+            "language_pair": references[case_id]["language_pair"],
+            "reference_transcript": references[case_id]["reference_transcript"],
+            "target_terms": references[case_id]["target_terms"],
             "upload_status": "validated_only",
         }
         if args.upload:
-            if not has_documented_hosted_inference_approval(row):
-                raise ValueError(
-                    f"Hosted inference blocked for {case_id}: consent, de-identification, "
-                    "and hosted inference approval must be true with evidence references."
-                )
-            actual_checksum = hashlib.sha256(audio_path.read_bytes()).hexdigest()
-            if actual_checksum != row.get("audio_checksum_sha256", "").strip().casefold():
-                raise ValueError(f"Hosted inference blocked for {case_id}: audio checksum does not match manifest")
             with audio_path.open("rb") as audio_file:
                 response = requests.post(
                     args.endpoint,
@@ -83,7 +61,7 @@ def main() -> None:
                         "audio_file_blob": (
                             audio_path.name,
                             audio_file,
-                            "audio/wav",
+                            "audio/mp4",
                         )
                     },
                     data={

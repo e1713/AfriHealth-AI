@@ -1,6 +1,5 @@
 import asyncio
 import base64
-import hashlib
 import io
 import json
 import unittest
@@ -84,6 +83,17 @@ class SafetyTests(unittest.TestCase):
         self.assertEqual(response.json()["data"]["audio_transcript"], "test transcript")
         proxy.assert_awaited_once()
 
+    def test_product_routes_remain_registered_without_benchmark_route(self):
+        routes = {route.path for route in main.app.routes}
+        self.assertNotIn("/api/v1/benchmark/live", routes)
+        self.assertTrue({
+            "/api/v1/transcribe",
+            "/api/v1/stt/intron",
+            "/api/v1/post-care/analyze",
+            "/api/v1/fhir/export",
+            "/api/v1/ehr/commit",
+        }.issubset(routes))
+
     def test_later_positive_maternal_symptom_overrides_earlier_negation(self):
         result = main._classify_maternal_acuity(
             "Patient denies heavy bleeding, but has heavy bleeding now."
@@ -107,119 +117,6 @@ class SafetyTests(unittest.TestCase):
             self.assertEqual(context.exception.status_code, 503)
         finally:
             main.INTRON_API_KEY = original_key
-
-    def test_gemini_api_key_is_sent_in_header_not_url(self):
-        captured = {}
-
-        class FakeResponse:
-            status_code = 200
-
-            def raise_for_status(self):
-                return None
-
-            def json(self):
-                return {"candidates": [{"content": {"parts": [{"text": "transcript"}]}}]}
-
-        class FakeAsyncClient:
-            async def __aenter__(self):
-                return self
-
-            async def __aexit__(self, exc_type, exc, traceback):
-                return None
-
-            async def post(self, url, *, headers=None, json=None):
-                captured.update({"url": url, "headers": headers, "body": json})
-                return FakeResponse()
-
-        original_keys = (main.GEMINI_API_KEY, main.GEMINI_API_KEY_1, main.GEMINI_API_KEY_2)
-        try:
-            main.GEMINI_API_KEY = "test-gemini-key"
-            main.GEMINI_API_KEY_1 = ""
-            main.GEMINI_API_KEY_2 = ""
-            with patch("main.httpx.AsyncClient", return_value=FakeAsyncClient()):
-                transcript = asyncio.run(main._benchmark_gemini(b"audio", "audio/wav"))
-        finally:
-            main.GEMINI_API_KEY, main.GEMINI_API_KEY_1, main.GEMINI_API_KEY_2 = original_keys
-
-        self.assertEqual(transcript, "transcript")
-        self.assertNotIn("test-gemini-key", captured["url"])
-        self.assertEqual(captured["headers"]["x-goog-api-key"], "test-gemini-key")
-
-    def test_gemini_rotates_to_next_key_after_429(self):
-        used_keys = []
-
-        class FakeResponse:
-            def __init__(self, status_code, transcript=""):
-                self.status_code = status_code
-                self.transcript = transcript
-
-            def raise_for_status(self):
-                if self.status_code >= 400:
-                    request = main.httpx.Request("POST", "https://generativelanguage.googleapis.com")
-                    response = main.httpx.Response(self.status_code, request=request)
-                    raise main.httpx.HTTPStatusError("rate limited", request=request, response=response)
-
-            def json(self):
-                return {"candidates": [{"content": {"parts": [{"text": self.transcript}]}}]}
-
-        class FakeAsyncClient:
-            async def __aenter__(self):
-                return self
-
-            async def __aexit__(self, exc_type, exc, traceback):
-                return None
-
-            async def post(self, url, *, headers=None, json=None):
-                used_keys.append(headers["x-goog-api-key"])
-                if len(used_keys) == 1:
-                    return FakeResponse(429)
-                return FakeResponse(200, "fallback transcript")
-
-        original_keys = (main.GEMINI_API_KEY, main.GEMINI_API_KEY_1, main.GEMINI_API_KEY_2)
-        try:
-            main.GEMINI_API_KEY = "key-slot-one"
-            main.GEMINI_API_KEY_1 = "key-slot-two"
-            main.GEMINI_API_KEY_2 = ""
-            with patch("main.httpx.AsyncClient", return_value=FakeAsyncClient()):
-                transcript = asyncio.run(main._benchmark_gemini(b"audio", "audio/wav"))
-        finally:
-            main.GEMINI_API_KEY, main.GEMINI_API_KEY_1, main.GEMINI_API_KEY_2 = original_keys
-
-        self.assertEqual(transcript, "fallback transcript")
-        self.assertEqual(used_keys, ["key-slot-one", "key-slot-two"])
-
-    def test_gemini_exhausted_key_pool_marks_429_non_retryable(self):
-        class FakeResponse:
-            status_code = 429
-
-            def raise_for_status(self):
-                request = main.httpx.Request("POST", "https://generativelanguage.googleapis.com")
-                response = main.httpx.Response(429, request=request)
-                raise main.httpx.HTTPStatusError("rate limited", request=request, response=response)
-
-        class FakeAsyncClient:
-            async def __aenter__(self):
-                return self
-
-            async def __aexit__(self, exc_type, exc, traceback):
-                return None
-
-            async def post(self, url, *, headers=None, json=None):
-                return FakeResponse()
-
-        original_keys = (main.GEMINI_API_KEY, main.GEMINI_API_KEY_1, main.GEMINI_API_KEY_2)
-        try:
-            main.GEMINI_API_KEY = "key-slot-one"
-            main.GEMINI_API_KEY_1 = "key-slot-two"
-            main.GEMINI_API_KEY_2 = ""
-            with patch("main.httpx.AsyncClient", return_value=FakeAsyncClient()):
-                with self.assertRaises(main.GeminiKeysRateLimitedError) as context:
-                    asyncio.run(main._benchmark_gemini(b"audio", "audio/wav"))
-        finally:
-            main.GEMINI_API_KEY, main.GEMINI_API_KEY_1, main.GEMINI_API_KEY_2 = original_keys
-
-        self.assertEqual(context.exception.response.status_code, 429)
-        self.assertTrue(context.exception.stop_retries)
 
     def test_upload_limit_is_enforced(self):
         upload = UploadFile(
@@ -568,95 +465,6 @@ class SafetyTests(unittest.TestCase):
         with self.assertRaises(HTTPException) as context:
             asyncio.run(main.commit_to_ehr(payload))
         self.assertEqual(context.exception.status_code, 400)
-
-    def test_live_benchmark_reports_unconfigured_providers(self):
-        upload = UploadFile(file=io.BytesIO(b"audio"), filename="sample.wav")
-        with patch.object(main, "INTRON_API_KEY", ""):
-            result = asyncio.run(
-                main.live_benchmark(
-                    upload,
-                    "Patient has fever and cough.",
-                    "am-ET",
-                    "intron",
-                    "unverified",
-                    "",
-                    hashlib.sha256(b"audio").hexdigest(),
-                    "true",
-                    "consent://test/CS-01",
-                    "true",
-                    "privacy://test/CS-01",
-                    "true",
-                    "approval://test/CS-01",
-                )
-            )
-        self.assertEqual(result["benchmark_type"], "live_provider_comparison")
-        self.assertEqual(len(result["results"]), 1)
-        self.assertEqual(result["results"][0]["model"], "Intron Sahara v2.5")
-        self.assertEqual(result["results"][0]["status"], "unavailable")
-        self.assertEqual(result["scoring_status"], "provisional_unverified_reference")
-
-    def test_live_benchmark_allows_transcript_only_mode(self):
-        upload = UploadFile(file=io.BytesIO(b"audio"), filename="sample.wav")
-        with patch.object(main, "INTRON_API_KEY", ""):
-            result = asyncio.run(
-                main.live_benchmark(
-                    upload, "", "am-ET", "intron", "unverified", "", hashlib.sha256(b"audio").hexdigest(),
-                    "true", "consent://test/CS-01", "true", "privacy://test/CS-01",
-                    "true", "approval://test/CS-01",
-                )
-            )
-        self.assertEqual(result["scoring_status"], "transcript_only")
-
-    def test_live_benchmark_requires_review_evidence_for_verified_score(self):
-        upload = UploadFile(file=io.BytesIO(b"audio"), filename="sample.wav")
-        with self.assertRaises(HTTPException) as context:
-            asyncio.run(
-                main.live_benchmark(
-                    upload,
-                    "Patient has fever.",
-                    "am-ET",
-                    "intron",
-                    "verified",
-                    "",
-                    "",
-                )
-            )
-        self.assertEqual(context.exception.status_code, 400)
-        self.assertIn("review evidence reference", context.exception.detail)
-
-    def test_live_benchmark_blocks_hosted_upload_without_governance_evidence(self):
-        upload = UploadFile(file=io.BytesIO(b"audio"), filename="sample.wav")
-        with self.assertRaises(HTTPException) as context:
-            asyncio.run(
-                main.live_benchmark(
-                    upload, "", "am-ET", "intron", "unverified", "", "",
-                    "unknown", "", "unknown", "", "unknown", "",
-                )
-            )
-        self.assertEqual(context.exception.status_code, 403)
-        self.assertIn("provider approval with evidence references", context.exception.detail)
-
-    def test_live_benchmark_blocks_mismatched_audio_checksum(self):
-        upload = UploadFile(file=io.BytesIO(b"audio"), filename="sample.wav")
-        with self.assertRaises(HTTPException) as context:
-            asyncio.run(
-                main.live_benchmark(
-                    upload,
-                    "",
-                    "am-ET",
-                    "intron",
-                    "unverified",
-                    "",
-                    "0" * 64,
-                    "true",
-                    "consent://test/CS-01",
-                    "true",
-                    "privacy://test/CS-01",
-                    "true",
-                    "approval://test/CS-01",
-                )
-            )
-        self.assertEqual(context.exception.status_code, 403)
 
     def test_ehr_commit_fails_closed_without_endpoint(self):
         payload = main.EHRCommitRequest(

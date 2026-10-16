@@ -28,26 +28,13 @@ The prototype demonstrates follow-up conversation patterns and escalation
 signals. It does not autonomously contact patients, diagnose complications, or
 dispatch care.
 
-## Evidence strategy
+## Product verification
 
-The project keeps four evidence layers separate:
-
-1. **Fixture benchmark:** a reproducible software test using embedded
-   hypotheses. It is not independent audio inference.
-2. **15-case transcript comparison:** saved outputs from Intron Sahara v2.5,
-   Whisper Tiny, English-only Wav2Vec2 Base 960h, and Gemini are scored against
-   verified Amharic-English references using normalized WER, alias-aware
-   target-term recall, and M-WER. See `BENCHMARK_RESULTS.md`; these simulated-set
-   scores are not demographic fairness or population-performance evidence.
-3. **AfriSwitch pilot:** real general-purpose Amharic/Oromo code-switched audio
-   used for exploratory ASR evaluation, not clinical validation.
-4. **Clinical review baseline:** 15 reviewed Amharic-English recordings with
-   56.38% mean WER, 44.33% target-term recall, and critical-term misses in six
-   cases. This is evidence for clinician review, not autonomous care.
-
-Clinical validation materials are maintained as private evaluation and
-governance artifacts. They are not presented as a patient-facing product
-module or a claim of clinical approval.
+Product verification focuses on preserving the clinical application
+workflows: audio capture and transcription, triage, EHR intake, FHIR export,
+post-care follow-up, persistence, and deployment. Automated tests and manual
+workflow checks verify software behavior; they do not establish clinical
+safety, efficacy, or regulatory approval.
 
 ## Safety and privacy
 
@@ -73,9 +60,8 @@ approval or autonomous-care authorization.
 ## Delivery priorities
 
 1. Keep the recording, playback, and explicit upload workflow reliable.
-2. Replace fixture comparisons with independently generated model outputs before
-   making performance claims.
-3. Expand language-specific evaluation with consented, de-identified data.
+2. Expand focused regression coverage across the product APIs and frontend.
+3. Verify PWA behavior and offline recovery on target browsers and devices.
 4. Deploy the static frontend separately from the Python backend, with exact
    production CORS origins and server-side secrets.
 5. Require clinical review and documented sign-off before operational use.

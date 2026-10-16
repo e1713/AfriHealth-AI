@@ -25,12 +25,6 @@
 # import base64
 # import websockets
 
-# # Benchmark-only dependencies (Sahara vs. Whisper WER/CER/triage comparison).
-# # These are heavier ML deps than the rest of the gateway needs, so they're
-# # imported lazily inside the benchmark helpers below rather than at module
-# # load time -- keeps `/health` and normal transcription fast to boot even on
-# # an instance that doesn't have torch/transformers installed.
-
 # # Initialize logger
 # logging.basicConfig(level=logging.INFO)
 # logger = logging.getLogger("afrihealth_gateway")
@@ -135,7 +129,7 @@
 #     The sync-upload endpoint (proven working via the mic-recording feature)
 #     expects short codes like "am", "en", "yo", "ha" via use_language_asr_input
 #     -- not BCP-47 style tags like "am-ET". Everywhere else in this gateway
-#     (the REST /api/v1/transcribe route, the benchmark route) still takes the
+#     (the REST /api/v1/transcribe route) still takes the
 #     BCP-47-ish "am-ET" form for backward compatibility with the frontend, so
 #     we normalize here rather than pushing this concern out to every caller.
 #     """
@@ -657,216 +651,6 @@
 #         raise HTTPException(status_code=502, detail="Could not retrieve generated Intron audio.")
 
 
-# # ---------------------------------------------------------------------------
-# # Sahara v2.5 vs. Whisper Medium benchmark
-# #
-# # Ports the Colab comparison notebook (WER/CER via jiwer + a keyword-based
-# # triage classifier) into the gateway as a real endpoint, so the frontend's
-# # "Benchmark Matrix" tab can show actual measured numbers on operatorsupplied
-# # audio + reference transcripts, instead of only the embedded fixture rows.
-# #
-# # Methodology follows the Intron AfriHealth MultiBench approach (normalized
-# # WER/CER via jiwer, per-language breakdown, keyword-based triage as a
-# # clinician-attention flag rather than an autonomous decision):
-# # https://github.com/intron-innovation/Intron-Multimodal-Benchmarking
-# #
-# # Heavy ML deps (torch, torchaudio, transformers, jiwer) are only imported
-# # when this endpoint is first hit, and the Whisper pipeline is cached after
-# # first load so repeat calls don't reload the model.
-# # ---------------------------------------------------------------------------
-
-# WHISPER_MODEL_ID = os.getenv("WHISPER_BENCHMARK_MODEL", "openai/whisper-medium")
-# _whisper_pipeline = None  # lazy-loaded singleton
-
-
-# def _get_whisper_pipeline():
-#     global _whisper_pipeline
-#     if _whisper_pipeline is None:
-#         from transformers import pipeline  # imported lazily, see note above
-#         logger.info(f"Loading Whisper benchmark model '{WHISPER_MODEL_ID}' (first call only)...")
-#         _whisper_pipeline = pipeline("automatic-speech-recognition", model=WHISPER_MODEL_ID)
-#     return _whisper_pipeline
-
-
-# def _transcribe_with_whisper(audio_path: str) -> str:
-#     """Resamples audio to 16kHz (Whisper's expected rate) and transcribes it."""
-#     import numpy as np
-#     import soundfile as sf
-#     import torch
-#     import torchaudio
-
-#     # Read directly with soundfile (libsndfile) -- avoids torchaudio.load()
-#     # entirely, which on newer torchaudio always routes through the
-#     # torchcodec/FFmpeg backend regardless of the `backend=` kwarg.
-#     data, sample_rate = sf.read(audio_path, dtype="float32", always_2d=True)
-#     # soundfile gives (frames, channels); torchaudio expects (channels, frames)
-#     waveform = torch.from_numpy(data.T)
-
-#     if sample_rate != 16000:
-#         resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
-#         waveform = resampler(waveform)
-#         sample_rate = 16000
-
-#     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-#         resampled_path = tmp.name
-#     try:
-#         torchaudio.save(resampled_path, waveform, sample_rate)
-#         whisper = _get_whisper_pipeline()
-#         result = whisper(resampled_path)
-#         return result["text"]
-#     finally:
-#         if os.path.exists(resampled_path):
-#             os.remove(resampled_path)
-
-
-# def _compute_wer_cer(reference: str, hypothesis: str) -> dict:
-#     from jiwer import wer, cer
-#     return {
-#         "wer": wer(reference, hypothesis),
-#         "cer": cer(reference, hypothesis),
-#     }
-
-
-# # Keyword-based triage heuristic, ported directly from the benchmark
-# # notebook. This is a coarse text-matching signal only -- it exists to flag
-# # transcripts for clinician attention, not to make an autonomous triage
-# # decision. It must not be used to gate or replace clinical review.
-# EMERGENCY_TERMS = [
-#     "severe difficulty breathing",
-#     "unconscious",
-#     "severe bleeding",
-#     "seizure",
-#     "cannot breathe",
-# ]
-
-# URGENT_TERMS = [
-#     "high fever",
-#     "chest pain",
-#     "dehydration",
-#     "persistent vomiting",
-#     "difficulty breathing",
-# ]
-
-
-# def triage_classifier(text: str) -> str:
-#     text = (text or "").lower()
-
-#     for term in EMERGENCY_TERMS:
-#         if term in text:
-#             return "EMERGENCY"
-
-#     for term in URGENT_TERMS:
-#         if term in text:
-#             return "URGENT"
-
-#     return "ROUTINE"
-
-
-# @app.post("/api/v1/benchmark")
-# async def benchmark_asr(
-#     file: UploadFile = File(...),
-#     reference_transcript: str = Form(...),
-#     language_code: str = Form("am-ET"),
-# ):
-#     """
-#     Runs a single audio sample through both Intron Sahara v2.5 and Whisper
-#     Medium, scores each against a supplied reference transcript with
-#     WER/CER, and runs the keyword triage heuristic on both outputs.
-
-#     This is a real, on-demand comparison (not the embedded frontend
-#     fixture rows) -- intended for building up the gold-standard evidence
-#     set, not as a substitute for the clinician-reviewed validation summary.
-#     """
-#     contents = await file.read()
-#     if len(contents) > 25 * 1024 * 1024:
-#         raise HTTPException(status_code=413, detail="Audio file size exceeds maximum limit of 25MB")
-
-#     # 1. Sahara (Intron) transcript -- reuses the same call path as /api/v1/transcribe
-#     sahara_started = time.perf_counter()
-#     try:
-#         sahara_result = await _call_intron_transcribe(
-#             contents, file.filename, file.content_type, language_code
-#         )
-#     except HTTPException:
-#         raise
-#     except Exception as e:
-#         logger.exception("Intron benchmark transcription failed")
-#         raise HTTPException(
-#             status_code=502,
-#             detail=f"Intron benchmark transcription failed: {type(e).__name__}: {e}",
-#         )
-#     sahara_latency_ms = round((time.perf_counter() - sahara_started) * 1000, 2)
-#     sahara_transcript = sahara_result.get("transcript", "")
-#     if not isinstance(sahara_transcript, str):
-#         sahara_transcript = str(sahara_transcript)
-
-#     # 2. Whisper Medium transcript -- needs a real file on disk for torchaudio
-#     suffix = os.path.splitext(file.filename or "")[1] or ".wav"
-#     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-#         tmp.write(contents)
-#         raw_audio_path = tmp.name
-
-#     try:
-#         try:
-#             whisper_started = time.perf_counter()
-#             whisper_transcript = await asyncio.to_thread(_transcribe_with_whisper, raw_audio_path)
-#             whisper_latency_ms = round((time.perf_counter() - whisper_started) * 1000, 2)
-#         except ImportError as e:
-#             raise HTTPException(
-#                 status_code=503,
-#                 detail=(
-#                     "Whisper benchmark dependencies not installed on this instance "
-#                     f"(torch/torchaudio/transformers). Missing: {e}"
-#                 ),
-#             )
-#         except Exception as e:
-#             logger.exception("Whisper benchmark failed")
-#             raise HTTPException(
-#                 status_code=503,
-#                 detail=f"Whisper benchmark processing failed: {type(e).__name__}: {e}",
-#             )
-#     finally:
-#         if os.path.exists(raw_audio_path):
-#             os.remove(raw_audio_path)
-
-#     # 3. Score both against the reference transcript
-#     sahara_scores = _compute_wer_cer(reference_transcript, sahara_transcript)
-#     whisper_scores = _compute_wer_cer(reference_transcript, whisper_transcript)
-
-#     results = [
-#         {
-#             "model": "Intron Sahara v2.5",
-#             "transcript": sahara_transcript,
-#             "WER": sahara_scores["wer"],
-#             "CER": sahara_scores["cer"],
-#             "WER_percent": round(sahara_scores["wer"] * 100, 2),
-#             "CER_percent": round(sahara_scores["cer"] * 100, 2),
-#             "triage": triage_classifier(sahara_transcript),
-#             "latency_ms": sahara_latency_ms,
-#             "mode": sahara_result["mode"],
-#         },
-#         {
-#             "model": "OpenAI Whisper Medium",
-#             "transcript": whisper_transcript,
-#             "WER": whisper_scores["wer"],
-#             "CER": whisper_scores["cer"],
-#             "WER_percent": round(whisper_scores["wer"] * 100, 2),
-#             "CER_percent": round(whisper_scores["cer"] * 100, 2),
-#             "triage": triage_classifier(whisper_transcript),
-#             "latency_ms": whisper_latency_ms,
-#             "mode": "live",
-#         },
-#     ]
-
-#     return {
-#         "status": "success",
-#         "benchmark_type": "live_local_validation",
-#         "reference_transcript": reference_transcript,
-#         "results": results,
-#         "triage_agreement": results[0]["triage"] == results[1]["triage"],
-#     }
-
-
 # # Wrap the fully configured ASGI app so CORS also covers framework-level
 # # exception responses generated outside the route handlers.
 # app = CORSMiddleware(
@@ -888,7 +672,6 @@ import logging
 import re
 import wave
 import uuid
-import hashlib
 from datetime import datetime, timezone
 from html import escape
 from io import BytesIO
@@ -936,7 +719,6 @@ RATE_LIMIT_MAX_REQUESTS = 20
 RATE_LIMITED_PATH_PREFIXES = (
     "/api/v1/transcribe",
     "/api/v1/stt/intron",
-    "/api/v1/benchmark/live",
     "/api/v1/post-care/",
     "/api/intron/stt/upload-sync",
     "/api/intron/tts/",
@@ -1028,12 +810,6 @@ app.add_middleware(
 INTRON_API_KEY = get_intron_api_key() or ""
 EHR_FHIR_ENDPOINT = os.getenv("EHR_FHIR_ENDPOINT") or ""
 EHR_API_KEY = os.getenv("EHR_API_KEY") or ""
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or ""
-OPENAI_TRANSCRIBE_MODEL = os.getenv("OPENAI_TRANSCRIBE_MODEL", "gpt-4o-mini-transcribe")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or ""
-GEMINI_API_KEY_1 = os.getenv("GEMINI_API_KEY_1") or ""
-GEMINI_API_KEY_2 = os.getenv("GEMINI_API_KEY_2") or ""
-GEMINI_TRANSCRIBE_MODEL = os.getenv("GEMINI_TRANSCRIBE_MODEL", "gemini-flash-latest")
 INTRON_TTS_VOICE_LANGUAGE = os.getenv("INTRON_TTS_VOICE_LANGUAGE", "am")
 INTRON_TTS_VOICE_ACCENT = os.getenv("INTRON_TTS_VOICE_ACCENT", "amharic")
 INTRON_TTS_VOICE_GENDER = os.getenv("INTRON_TTS_VOICE_GENDER", "female")
@@ -1044,9 +820,7 @@ def _intron_auth_header() -> str:
     return key if key.lower().startswith("bearer ") else f"Bearer {key}"
 
 
-def get_gemini_api_keys() -> list[str]:
-    keys = (GEMINI_API_KEY, GEMINI_API_KEY_1, GEMINI_API_KEY_2)
-    return list(dict.fromkeys(key.strip() for key in keys if key and key.strip()))
+
 
 
 async def _read_limited_upload(upload: UploadFile) -> bytes:
@@ -1754,37 +1528,6 @@ async def readyz():
     return {"status": "ready"}
 
 
-def _benchmark_tokens(value: str) -> list[str]:
-    return re.findall(r"[\w\u1200-\u137f]+", (value or "").lower(), re.UNICODE)
-
-
-def _benchmark_edit_distance(expected: list[str], actual: list[str]) -> int:
-    previous = list(range(len(actual) + 1))
-    for row, expected_token in enumerate(expected, start=1):
-        current = [row]
-        for column, actual_token in enumerate(actual, start=1):
-            current.append(
-                min(
-                    current[-1] + 1,
-                    previous[column] + 1,
-                    previous[column - 1] + (expected_token != actual_token),
-                )
-            )
-        previous = current
-    return previous[-1]
-
-
-def _benchmark_scores(reference: str, hypothesis: str) -> dict:
-    reference_tokens = _benchmark_tokens(reference)
-    hypothesis_tokens = _benchmark_tokens(hypothesis)
-    reference_chars = list("".join(reference_tokens))
-    hypothesis_chars = list("".join(hypothesis_tokens))
-    return {
-        "WER": round(_benchmark_edit_distance(reference_tokens, hypothesis_tokens) / max(1, len(reference_tokens)), 4),
-        "CER": round(_benchmark_edit_distance(reference_chars, hypothesis_chars) / max(1, len(reference_chars)), 4),
-    }
-
-
 def _validate_wav_duration(contents: bytes) -> None:
     try:
         with wave.open(BytesIO(contents), "rb") as audio:
@@ -1827,211 +1570,6 @@ async def _post_intron_sync_upload(
         response.raise_for_status()
         return response.json()
 
-
-async def _benchmark_intron(contents: bytes, filename: str, content_type: str, language_code: str) -> str:
-    if not INTRON_API_KEY:
-        raise RuntimeError("INTRON_API_KEY is not configured")
-    response = await _post_intron_sync_upload(contents, filename, content_type, language_code)
-    data = response.get("data", {}) if isinstance(response, dict) else {}
-    return str(data.get("audio_transcript") or data.get("transcript") or "")
-
-
-async def _benchmark_openai(contents: bytes, filename: str, content_type: str) -> str:
-    if not OPENAI_API_KEY:
-        raise RuntimeError("OPENAI_API_KEY is not configured")
-    async with httpx.AsyncClient(timeout=130.0) as client:
-        response = await client.post(
-            "https://api.openai.com/v1/audio/transcriptions",
-            headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
-            data={"model": OPENAI_TRANSCRIBE_MODEL, "language": "am"},
-            files={"file": (filename, contents, content_type or "audio/wav")},
-        )
-        response.raise_for_status()
-        return str(response.json().get("text", ""))
-
-
-class GeminiKeysRateLimitedError(RuntimeError):
-    stop_retries = True
-
-    def __init__(self, response: httpx.Response):
-        self.response = response
-        super().__init__("All configured Gemini keys returned HTTP 429")
-
-
-async def _benchmark_gemini(contents: bytes, content_type: str) -> str:
-    api_keys = get_gemini_api_keys()
-    if not api_keys:
-        raise RuntimeError("GEMINI_API_KEY is not configured")
-    import base64 as _base64
-
-    endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_TRANSCRIBE_MODEL}:generateContent"
-    body = {
-        "contents": [{"parts": [
-            {"text": "Transcribe this clinical Amharic-English code-switched audio verbatim. Return only the transcript."},
-            {"inline_data": {"mime_type": content_type or "audio/wav", "data": _base64.b64encode(contents).decode("ascii")}},
-        ]}]
-    }
-    async with httpx.AsyncClient(timeout=130.0) as client:
-        for index, api_key in enumerate(api_keys):
-            response = await client.post(endpoint, headers={"x-goog-api-key": api_key}, json=body)
-            if response.status_code == 429 and index + 1 < len(api_keys):
-                logger.warning(
-                    "Gemini key slot %s was rate-limited; trying configured key slot %s",
-                    index + 1,
-                    index + 2,
-                )
-                continue
-            if response.status_code == 429:
-                raise GeminiKeysRateLimitedError(response)
-            response.raise_for_status()
-            candidates = response.json().get("candidates", [])
-            parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
-            return " ".join(str(part.get("text", "")) for part in parts).strip()
-    raise RuntimeError("Gemini key rotation exited without a response")
-
-
-async def _run_live_benchmark_provider(name: str, provider, *args) -> dict:
-    started = time.perf_counter()
-    try:
-        transcript = await provider(*args)
-        return {
-            "model": name,
-            "status": "complete",
-            "transcript": transcript,
-            "latency_ms": round((time.perf_counter() - started) * 1000, 2),
-        }
-    except Exception as exc:
-        return {
-            "model": name,
-            "status": "unavailable",
-            "transcript": "",
-            "latency_ms": round((time.perf_counter() - started) * 1000, 2),
-            "error": str(exc),
-        }
-
-
-def _has_documented_sample_approval(
-    consent_obtained: str,
-    consent_evidence_reference: str,
-    de_identified: str,
-    de_identification_evidence_reference: str,
-    hosted_inference_approved: str,
-    hosted_inference_approval_evidence_reference: str,
-    audio_sha256: str,
-    actual_audio_sha256: str,
-) -> bool:
-    return all(
-        value.strip().casefold() == "true" and bool(evidence.strip())
-        for value, evidence in (
-            (consent_obtained, consent_evidence_reference),
-            (de_identified, de_identification_evidence_reference),
-            (hosted_inference_approved, hosted_inference_approval_evidence_reference),
-        )
-    ) and audio_sha256.strip().casefold() == actual_audio_sha256
-
-
-@app.post("/api/v1/benchmark/live")
-async def live_benchmark(
-    file: UploadFile = File(...),
-    reference_transcript: str = Form(""),
-    language_code: str = Form("am-ET"),
-    providers: str = Form("intron"),
-    reference_mode: str = Form("unverified"),
-    reference_review_evidence: str = Form(""),
-    audio_sha256: str = Form(""),
-    consent_obtained: str = Form("unknown"),
-    consent_evidence_reference: str = Form(""),
-    de_identified: str = Form("unknown"),
-    de_identification_evidence_reference: str = Form(""),
-    hosted_inference_approved: str = Form("unknown"),
-    hosted_inference_approval_evidence_reference: str = Form(""),
-):
-    """Benchmark selected providers; Intron is the default active focus."""
-    contents = await _read_limited_upload(file)
-    actual_audio_sha256 = hashlib.sha256(contents).hexdigest()
-    if reference_mode not in {"verified", "unverified", "intron"}:
-        raise HTTPException(status_code=400, detail="reference_mode must be verified, unverified, or intron")
-    if reference_mode == "verified":
-        if not reference_transcript.strip() or not reference_review_evidence.strip():
-            raise HTTPException(
-                status_code=400,
-                detail="Verified scoring requires a reference transcript and review evidence reference",
-            )
-        if audio_sha256.strip().casefold() != actual_audio_sha256:
-            raise HTTPException(
-                status_code=400,
-                detail="Verified scoring requires the SHA-256 checksum of the uploaded audio",
-            )
-    requested = {provider.strip().lower() for provider in providers.split(",") if provider.strip()}
-    if requested and not _has_documented_sample_approval(
-        consent_obtained,
-        consent_evidence_reference,
-        de_identified,
-        de_identification_evidence_reference,
-        hosted_inference_approved,
-        hosted_inference_approval_evidence_reference,
-        audio_sha256,
-        actual_audio_sha256,
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail="Hosted benchmark inference requires affirmative consent, de-identification, and provider approval with evidence references",
-        )
-    if reference_mode == "intron":
-        requested.add("intron")
-    provider_tasks = []
-    if "intron" in requested:
-        provider_tasks.append(_run_live_benchmark_provider(
-            "Intron Sahara v2.5", _benchmark_intron, contents, file.filename or "sample.wav", file.content_type or "audio/wav", language_code
-        ))
-    if "openai" in requested:
-        provider_tasks.append(_run_live_benchmark_provider(
-            f"OpenAI {OPENAI_TRANSCRIBE_MODEL}", _benchmark_openai, contents, file.filename or "sample.wav", file.content_type or "audio/wav"
-        ))
-    if "gemini" in requested:
-        provider_tasks.append(_run_live_benchmark_provider(
-            f"Google Gemini {GEMINI_TRANSCRIBE_MODEL}", _benchmark_gemini, contents, file.content_type or "audio/wav"
-        ))
-    if not provider_tasks:
-        raise HTTPException(status_code=400, detail="Select at least one supported benchmark provider")
-    results = await asyncio.gather(*provider_tasks)
-    intron_reference = next(
-        (result["transcript"] for result in results if result["model"] == "Intron Sahara v2.5" and result["transcript"]),
-        "",
-    )
-    scoring_reference = reference_transcript.strip() or (intron_reference if reference_mode == "intron" else "")
-    for result in results:
-        if scoring_reference and result["transcript"]:
-            result.update(_benchmark_scores(scoring_reference, result["transcript"]))
-    return {
-        "status": "success",
-        "benchmark_type": "live_provider_comparison",
-        "language_code": language_code,
-        "reference_transcript": scoring_reference,
-        "reference_source": (
-            "audio_review_attestation"
-            if reference_transcript.strip() and reference_mode == "verified"
-            else "unverified_supplied_transcript"
-            if reference_transcript.strip()
-            else "intron_provisional"
-            if intron_reference
-            else "none"
-        ),
-        "reference_review_evidence": reference_review_evidence.strip() if reference_mode == "verified" else "",
-        "audio_sha256": hashlib.sha256(contents).hexdigest(),
-        "scoring_status": (
-            "scored_with_audio_review_attestation"
-            if reference_transcript.strip() and reference_mode == "verified"
-            else "provisional_unverified_reference"
-            if reference_transcript.strip()
-            else "provisional_intron_reference"
-            if intron_reference and reference_mode == "intron"
-            else "transcript_only"
-        ),
-        "providers": sorted(requested),
-        "results": results,
-        "interpretation": "Measured sample comparison only; not a clinical performance claim.",
-    }
 
 
 @app.post("/api/v1/transcribe")

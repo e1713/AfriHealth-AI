@@ -13,10 +13,9 @@ for which consent and de-identification have been documented.
    adverse-reaction log. State that no patient is called or contacted.
 3. **0:25–0:40 — Challenge Alignment:** Open the mapping view to show the
    implementation and evidence locations for voice workflows, health focus,
-   model comparison, and Responsible AI.
-4. **0:40–1:00 — Benchmark and review gate:** Open the benchmark evidence,
-   name the four-model, 15-case saved-transcript comparison and its limitations,
-   then show the pending clinician review / FHIR gate.
+   and Responsible AI.
+4. **0:40–1:00 — Review gate:** Show the pending clinician review and FHIR
+   export gate.
 
 ## 0:00–0:20 — Problem and users
 
@@ -43,26 +42,7 @@ to show the post-care voice workflow. Do not claim that plain transcript input
 is automatically converted into a SOAP note; the clinical text API currently
 validates structured JSON and otherwise returns a manual-review fallback.
 
-## 1:35–2:10 — Benchmark
-
-Distinguish the in-app fixture matrix from the offline comparative report. The
-in-app matrix uses embedded hypotheses and is not independent audio evaluation.
-Show `BENCHMARK_RESULTS.md` for the 15-case transcript comparison:
-
-| Model | Normalized WER | Target-term recall | M-WER |
-| --- | ---: | ---: | ---: |
-| Intron Sahara v2.5 | 34.91% | 57.78% | 42.22% |
-| OpenAI Whisper Tiny | 99.56% | 23.67% | 76.33% |
-| Meta Wav2Vec2 Base 960h (English) | 108.23% | 2.22% | 97.78% |
-| Google Gemini gemini-flash-latest | 11.46% | 93.33% | 6.67% |
-
-Say: “These scores are from saved transcripts on 15 simulated
-Amharic-English cases. Gemini scores best on this small set. The English-only
-Wav2Vec2 checkpoint is a limited baseline. M-WER is one minus target-term
-recall; neither metric is a fairness measure, and these results do not
-establish population-wide or clinical performance.”
-
-## 2:10–2:35 — Safety and deployment
+## 1:35–2:00 — Safety and deployment
 
 Show the Responsible AI note. Mention consent, de-identification,
 human-in-the-loop review, and server-side API-key storage. Do not display or

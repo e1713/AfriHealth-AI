@@ -67,7 +67,7 @@ class DashboardContentTests(unittest.TestCase):
         for state in (
             "Patient Discharged / Intake Completed",
             "Post-Treatment Reminder Scheduled",
-            "VoiceBot Adherence Check Triggered (Simulation Workflow)",
+            "VoiceBot Adherence Check Triggered",
             "Follow-Up Status &amp; Flagged Adverse Reactions Log",
         ):
             with self.subTest(state=state):
@@ -75,11 +75,10 @@ class DashboardContentTests(unittest.TestCase):
         self.assertIn("does not schedule or place a real call", self.html)
         self.assertIn("Workflow Simulation — Example adverse-reaction flag", self.html)
 
-    def test_challenge_alignment_and_readme_document_the_evidence_map(self):
+    def test_challenge_alignment_and_readme_document_product_workflows(self):
         self.assertIn("Sahara CodeSwitch Africa Challenge Alignment", self.html)
         for requirement in (
             "Voice downstream clinical workflows",
-            "Three-or-more speech model comparisons",
             "Healthcare category focus",
             "Responsible AI and human review",
         ):
@@ -87,6 +86,9 @@ class DashboardContentTests(unittest.TestCase):
                 self.assertIn(requirement, self.alignment)
         self.assertIn("CHALLENGE_ALIGNMENT.md", self.readme)
         self.assertIn("VoiceBot Follow-Up Workflow Demo", self.readme)
+        self.assertNotIn("tab-benchmark", self.html)
+        self.assertNotIn("/api/v1/benchmark/live", self.html)
+        self.assertNotIn("benchmark", self.alignment.lower())
 
 
 if __name__ == "__main__":

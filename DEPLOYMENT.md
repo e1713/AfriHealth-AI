@@ -1,23 +1,37 @@
 # AfriHealth AI deployment and operations
 
-This prototype has two deployment surfaces:
+## Official production architecture
+
+The official production deployment architecture is Cloudflare Pages for the
+static frontend and Railway for the FastAPI backend. This states the target
+architecture; it does not independently confirm which deployment is currently
+live. Confirm the active deployment and its owner before any host or traffic
+change.
+
+Production speech and voice functionality uses the Intron API, with Intron
+Sahara v2.5 as the primary ASR model and Intron STT/SST capabilities used where
+required. Other AI providers are not production dependencies.
+
+## Deployment surfaces
+
+The application has two deployment surfaces:
 
 1. a static browser frontend (`index.html`, JavaScript, and assets); and
 2. a server-side API bridge (`main.py`) that keeps the Intron credential private
    and proxies speech requests.
 
-The frontend may be hosted on Cloudflare Pages. The FastAPI service must run on
-an HTTPS-capable host that supports WebSockets. Do not deploy the API key in
-the static frontend.
+In the target architecture, the frontend is hosted on Cloudflare Pages and the
+FastAPI service runs on Railway. Do not deploy the API key in the static
+frontend.
 
-## Recommended architecture
+## Architecture
 
 ```text
 Browser
   |
   | HTTPS / WSS
   v
-Cloudflare Pages       Separate FastAPI service
+Cloudflare Pages       Railway FastAPI service
 static frontend  --->  /health
                        /api/intron/stt/upload-sync
                        /api/intron/tts/generate
@@ -107,7 +121,7 @@ and use:
 
 If the deployment platform requires a command, use a no-op command such as
 `echo "static site"` rather than running a development server. Do not upload
-the private `clinical_validation/` directory or any local audio artifacts.
+private clinical records or local audio artifacts.
 
 Set the API origin in the deployed page before the application script loads:
 

@@ -1,5 +1,15 @@
 # Responsible AI Framework: Sahara Healthcare Suite
 
+## Production AI and language scope
+
+Production speech and voice functionality uses the Intron API, with Intron
+Sahara v2.5 as the primary ASR model and Intron STT/SST capabilities used where
+required. Other AI providers are not application dependencies.
+
+The current production language scope is Amharic-English code-switching.
+Tigrinya-English and Oromo-English are future roadmap languages only; neither
+is currently production-supported.
+
 ## 1. Safety & Clinical Oversight
 * *Human-in-the-Loop:* All AI-generated SOAP notes and triage summaries require explicit clinician review and signature prior to EMR integration.
 * *Non-Diagnostic Scope:* The system functions strictly as a administrative transcription and clinical decision-support tool, not an autonomous diagnostic agent.
@@ -17,8 +27,8 @@
   represent the current prototype as preventing unsafe medication suggestions.
 
 ## 3. Equity & Linguistic Accessibility
-* *Current language scope:* v1.0 targets Amharic-English code-switched conversations. Afaan Oromoo-English is Phase 2 and Tigrinya-English is Phase 3; neither is currently enabled or established as production-supported.
-* *Evaluation limits:* The four-model report covers 15 simulated Amharic-English cases and uses normalized WER, alias-aware target-term recall, and M-WER. It does not report demographic-group fairness, hallucination rate, or streaming segment loss. The report must not be used to claim that disparities between demographic or language groups have been measured.
+* *Current language scope:* Production scope is Amharic-English code-switched conversations. Tigrinya-English and Oromo-English are future roadmap languages only; neither is currently enabled or established as production-supported.
+* *Evaluation limits:* The product has not established independent clinical safety, efficacy, or demographic-group fairness. Do not infer population-level performance or absence of harm from the prototype.
 * *Low-resource deployment:* The browser includes offline-recovery features, but reliability across mobile devices and unstable networks has not been clinically or operationally validated; test the target devices and connectivity before deployment.
 
 ## 4. Operational limitations
@@ -27,6 +37,6 @@ Generated transcripts, extracted entities, triage labels, ICD-10 suggestions,
 and prescriptions are suggestions for clinician review. They must not be
 presented as a diagnosis or medication order without a qualified clinician
 checking the source audio, transcript, patient context, allergies, and local
-clinical guidelines. Benchmark scores should include the sample count, language
-composition, data provenance, consent status, and known limitations; a small
-fixture must not be generalized to a population claim.
+clinical guidelines. Product testing does not substitute for clinical
+validation, and prototype behavior must not be generalized to a population
+claim.

@@ -4,20 +4,37 @@
 
 AfriHealth AI is a browser-based clinical voice documentation and
 decision-support prototype for community health workers and clinicians. The
-v1.0 active scope is Amharic-English code-switching. Afaan Oromoo-English
-is a Phase 2 roadmap item and Tigrinya-English is Phase 3; neither is enabled
-in the active language selector.
+current production language scope is Amharic-English code-switching.
+Tigrinya-English and Oromo-English are future roadmap languages only; neither
+is current production scope.
 The system produces draft transcripts and clinician-review artifacts; it is
 not an autonomous diagnostic or prescribing service.
 
-## 2. Runtime components
+## 2. Production provider, model, and deployment
+
+Production speech and voice functionality uses the Intron API, with Intron
+Sahara v2.5 as the primary ASR model and Intron STT/SST capabilities used where
+required. Other AI providers are not application dependencies.
+
+The official production deployment architecture is a Cloudflare Pages static
+frontend and a Railway-hosted FastAPI backend. This documents the target
+architecture and does not verify which deployment is currently live.
+
+Current module boundaries remain distinct: Frontline Triage uses Intron speech
+services with local triage logic; Voice EHR Intake uses Intron transcription
+and currently validates structured SOAP JSON or falls back to manual review,
+not model-generated SOAP prose; POST-CARE includes a local workflow simulation
+and a separate Intron-backed follow-up API path. A local simulation is not a
+live patient-contact workflow.
+
+## 3. Runtime components
 
 ```text
 Browser (index.html)
   |-- microphone PCM capture and local WAV review
   |-- WebSocket client for live STT
   |-- REST client for saved-recording STT upload
-  |-- triage, EHR intake, follow-up, benchmark, and audit views
+  |-- triage, EHR intake, and follow-up views
   |
   +--> FastAPI service (main.py :8000)
           |-- server-side Intron API-key boundary
@@ -29,7 +46,7 @@ Browser (index.html)
           |-- clinical artifact and medication safety gate
           |-- async SQLAlchemy persistence adapter (PostgreSQL in production; SQLite locally)
           |
-          +--> Intron Sahara STT/TTS APIs
+          +--> Intron API (Sahara v2.5 primary ASR; STT/SST where required)
           +--> Configured FHIR/EHR endpoint (optional)
 
 Optional local static server (server.js or npm start :3000)
@@ -37,11 +54,13 @@ Optional local static server (server.js or npm start :3000)
   +-- optional legacy Intron proxy route
 ```
 
-The browser must not receive or store the Intron API key. Production
-deployments should expose only the FastAPI service through an allowlisted
-origin and configure `ALLOWED_ORIGINS`.
+The browser must not receive or store the Intron API key. Under the official
+target architecture, the frontend is hosted on Cloudflare Pages and the
+FastAPI backend on Railway. Production deployments should expose only the
+FastAPI service through an allowlisted origin and configure `ALLOWED_ORIGINS`.
+The active deployment state must be verified separately.
 
-## 3. Main request flows
+## 4. Main request flows
 
 ### Live transcription
 
@@ -100,27 +119,7 @@ structured SOAP input is not independently verified and must not be treated as
 inference metadata. Frontend heuristics must not be presented as model
 confidence.
 
-## 4. Evidence and evaluation layers
-
-The repository contains separate evidence types:
-
-| Evidence | Purpose | Interpretation |
-| --- | --- | --- |
-| `benchmark_suite.py` fixture | Reproducible UI/scoring demonstration | Not a population performance claim |
-| AfriSwitch pilot scripts | General code-switched ASR import/inference | Not clinical validation |
-| `clinical_validation_report.json` | Aggregate result from 15 reviewed simulated clinical recordings | Benchmark and error-analysis baseline; not real-patient evidence |
-| Review protocols and safety documentation | Human review, safety scenarios, SOAP scoring | Maintained outside the public demo flow |
-
-Do not combine fixture metrics, AfriSwitch results, and the clinical
-validation baseline into one model ranking.
-
-`clinical_validation_evaluator.py` scores provider results using the same
-simulated reference cases and emits only aggregate metrics plus critical-term
-miss counts. The recordings may be reused for benchmarking, error analysis,
-and terminology improvement, but the evaluator does not train a model or
-support autonomous clinical decisions.
-
-### Stream session metadata
+## 5. Stream session metadata
 
 Each live stream receives a session ID and clinic ID, which are stored in
 PostgreSQL using Railway's `DATABASE_URL`; local development defaults to an
@@ -130,24 +129,7 @@ Raw audio is processed in memory and is not stored by this layer. Session
 metadata has no expiry or deletion policy. The schema is created automatically
 at service startup.
 
-### Live benchmark comparison
-
-Module 4 keeps the fixture matrix separate from live measurements. A reviewed
-audio sample and verified Amharic-English reference transcript can be sent to
-`/api/v1/benchmark/live`, which benchmarks Intron Sahara v2.5 by default and
-can later compare OpenAI and Gemini when explicitly selected. It returns
-provider status, latency, WER, and CER. Missing provider keys are reported as
-unavailable; no scores are fabricated. If the UI selects the Intron output as
-the reference, the response is marked `provisional_intron_reference`; that
-mode is useful for model-to-model error comparison but is not independent
-gold-standard accuracy.
-
-The separate clinical validation audit form is intentionally not exposed in
-the public application navigation. The product demo focuses on the three care
-modules and benchmark matrix; review protocols remain available for controlled
-evaluation and future clinical governance.
-
-## 5. Security and privacy boundaries
+## 6. Security and privacy boundaries
 
 - Keep `INTRON_API_KEY` in a server environment variable.
 - Never place credentials in `index.html`, commits, screenshots, or demo
@@ -171,15 +153,14 @@ separate, caller-supplied FHIR `encounter_id`. The repository has no patient or
 clinician tables and no built-in clinician accounts or role-based access
 control. `REQUIRE_PROXY_AUTH` enables only a trusted identity-header check.
 
-## 6. Known limitations
+## 7. Known limitations
 
 - The current frontend uses a lightweight browser capture path and requires a
   compatible microphone/browser for live recording.
-- The current release targets English-Amharic code-switching. Oromo is not
-  established as production-supported; provider and checkpoint limitations
-  still apply.
-- Clinical validation currently reports a baseline, not a safety or efficacy
-  claim.
+- The current production scope is Amharic-English code-switching. Oromo-English
+  and Tigrinya-English are future roadmap languages only and are not
+  production-supported.
+- No independent clinical safety or efficacy claim has been established.
 - No demo video is included in this repository. The written
   [DEMO_SCRIPT.md](./DEMO_SCRIPT.md) is provided for a future recording or
   live judging session.

@@ -27,6 +27,5 @@ def get_intron_api_key() -> Optional[str]:
 
 
 INTRON_API_KEY = get_intron_api_key()
-OPENAI_API_KEY = get_optional_env("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = get_optional_env("ANTHROPIC_API_KEY")
 ALLOWED_ORIGINS = get_allowed_origins()

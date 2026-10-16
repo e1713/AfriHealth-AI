@@ -17,15 +17,20 @@ A clinician-reviewed Amharic-English code-switched clinical documentation platfo
 
 **Video Walkthrough:** https://youtu.be/47ldOyJxyPE?si=B4X5WVlztZzwGktZ
 
-**Deployment Infrastructure:** Cloudflare Pages (Serverless / Global Edge Network)
+**Official production deployment architecture:** Cloudflare Pages (frontend) +
+Railway (backend API). This is the target architecture; the currently active
+deployment state must be verified separately.
+
+**Production speech AI:** Intron API, with Intron Sahara v2.5 as the primary ASR
+model.
 
 ---
 
 ## Overview
 
-Sahara Healthcare Suite v1.0 is a clinician-facing documentation platform focused on Amharic-English code-switched clinical conversations. Afaan Oromoo-English is a Phase 2 roadmap item; Tigrinya-English is Phase 3. It captures audio, transcribes clinical speech, and supports review workflows for SOAP drafts, triage, coding, benchmarking, and FHIR-compatible exports.
+Sahara Healthcare Suite v1.0 is a clinician-facing documentation platform focused on Amharic-English code-switched clinical conversations. Tigrinya-English and Oromo-English are future roadmap languages only; neither is current production scope. It captures audio, transcribes clinical speech, and supports review workflows for SOAP drafts, triage, coding, and FHIR-compatible exports.
 
-The system is built around a static frontend and a secure FastAPI gateway that keeps sensitive credentials, such as the Intron API key, out of the browser while enabling real-time clinical processing at edge scale.
+The official production deployment architecture is a Cloudflare Pages static frontend with a Railway-hosted FastAPI gateway. Production speech and voice functionality uses the Intron API; Intron Sahara v2.5 is the primary ASR model. The gateway keeps credentials, such as the Intron API key, out of the browser. These architecture statements do not independently verify the currently active deployment.
 
 ---
 
@@ -48,7 +53,6 @@ The system is built around a static frontend and a secure FastAPI gateway that k
 - Editable SOAP clinical-reference draft panel and structured SOAP validation
 - FHIR-compatible export and EHR commit actions gated on explicit clinician review
 - Optional EHR submission when configured by deployment
-- Intron-focused live audio benchmark with transcript-only or reference-scored WER/CER
 - PostgreSQL stream persistence in production with a local SQLite development fallback
 - Safety-oriented design with physician verification requirements
 - One-click **Clinical Impact & Efficiency Dashboard** with clearly labeled, illustrative pilot projections (not measured outcomes)
@@ -58,7 +62,7 @@ The system is built around a static frontend and a secure FastAPI gateway that k
 ## Judge-ready views
 
 The primary navigation opens the impact dashboard, challenge alignment map,
-clinical modules, simulated follow-up workflow, and benchmark matrix directly.
+clinical modules, and simulated follow-up workflow directly.
 The impact dashboard includes the requested planning values—approximately
 5 minutes per patient, 200 minutes per clinician-day, 70% documentation burden
 reduction, and 15% daily patient-support capacity—as **illustrative pilot
@@ -74,9 +78,9 @@ voice session are separate application features; the state-machine demo itself
 is not wired to a verified live calling workflow.
 
 The **Sahara CodeSwitch Africa Challenge Alignment** view maps voice workflows,
-the four-model comparison, health-category focus, Responsible AI, and demo
-evidence to specific repository files. See [CHALLENGE_ALIGNMENT.md](CHALLENGE_ALIGNMENT.md)
-for the full mapping and limits.
+health-category focus, Responsible AI, and demo evidence to specific
+repository files. See [CHALLENGE_ALIGNMENT.md](CHALLENGE_ALIGNMENT.md) for the
+full mapping and limits.
 
 Trust indicators shown in the dashboard refer only to prototype controls; they
 are not production-readiness certification. The application is not ready for
@@ -86,18 +90,6 @@ verified.
 
 ---
 
-## Evidence and benchmark status
-
-The repository separates fixture demonstrations from measured validation:
-
-- The Module 4 fixture matrix uses embedded hypotheses and is not an audio benchmark or production model ranking.
-- [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) reports a separate four-model transcript comparison scored on the unchanged 15-case Amharic-English manifest. It includes normalized WER, alias-aware annotated target-term recall, and M-WER for Intron, Whisper Tiny, English-only Wav2Vec2, and Gemini.
-- The live benchmark accepts one reviewed Amharic-English sample and reports Intron Sahara v2.5 latency, transcript, WER, and CER.
-- WER/CER require a verified reference transcript. A provisional Intron-reference mode is available for model-to-model comparison, but it is not independent gold-standard accuracy.
-- The clinical validation report covers 15 reviewed simulated cases and reports a 56.38% mean WER, 44.33% target-term recall, and six cases with critical-term misses. These results require clinician review and do not support autonomous care.
-
-The four-model report scores saved transcripts, not fresh inference during report generation. Its custom target-term recall is not a demographic fairness metric; no hallucination-rate or streaming segment-loss result is reported. OpenAI's optional hosted baseline has no complete outputs in the recorded run and is excluded.
-
 ---
 
 ## Architecture
@@ -106,7 +98,9 @@ This repository is structured as a hybrid web application:
 
 - Frontend: static browser interface served from the repository root
 - Backend: FastAPI service in `main.py`
-- Deployment model: frontend on Cloudflare Pages, API on a secure HTTPS host such as Railway or another server runtime
+- Official production deployment architecture: frontend on Cloudflare Pages and API on Railway. The active deployment must be verified independently.
+- Production speech provider/model: Intron API / Intron Sahara v2.5
+- Current production language scope: Amharic-English code-switching; Tigrinya-English and Oromo-English are future roadmap languages only
 
 Typical flow:
 
@@ -115,7 +109,6 @@ Typical flow:
 3. The backend authenticates to the Intron API using `INTRON_API_KEY`.
 4. The system returns transcript, clinical analysis, and optional structured outputs.
 5. Module 2 exposes an editable SOAP draft and requires clinician sign-off before FHIR export or EHR commit.
-6. Module 4 can send a reviewed sample to `/api/v1/benchmark/live` for Intron-focused scoring.
 
 ---
 
@@ -124,7 +117,7 @@ Typical flow:
 - Python 3.x
 - FastAPI
 - JavaScript / static frontend assets
-- Intron AI transcription service
+- Intron API with Intron Sahara v2.5 as the primary ASR model
 - FHIR-compatible export workflow
 - Cloudflare Pages-friendly static deployment
 
@@ -141,9 +134,7 @@ Typical flow:
 ├── requirements.txt         # Python dependencies
 ├── .env.example             # Example environment configuration
 ├── config.py                # Configuration helpers
-├── benchmark_suite.py       # Fixture benchmark and model comparison utilities
 ├── edge_persistence.py      # Async PostgreSQL/SQLite stream metadata adapter
-├── clinical_validation_*    # Validation and reporting scripts
 ├── tests/                   # Safety and validation tests
 ├── README.md                # Project documentation
 ├── DEPLOYMENT.md            # Deployment guidance
@@ -194,15 +185,10 @@ REQUIRE_PROXY_AUTH=false
 EHR_FHIR_ENDPOINT=
 EHR_API_KEY=
 DATABASE_URL=sqlite+aiosqlite:///./edge_sync.sqlite3
-OPENAI_API_KEY=
-OPENAI_TRANSCRIBE_MODEL=gpt-4o-mini-transcribe
-GEMINI_API_KEY=
-GEMINI_TRANSCRIBE_MODEL=gemini-2.0-flash
 ```
 
-The FastAPI app loads `.env` automatically for local development. OpenAI and
-Gemini are optional comparison providers. Keep all provider keys on the
-backend; never add them to `index.html`.
+The FastAPI app loads `.env` automatically for local development. Keep provider
+keys on the backend; never add them to `index.html`.
 
 ### 3. Install Python dependencies
 
@@ -210,9 +196,7 @@ backend; never add them to `index.html`.
 python -m pip install -r requirements.txt
 ```
 
-This installs only the lightweight API runtime. For the optional local AfriSwitch
-audio import and ASR benchmark tools, install `requirements-benchmark.txt` as
-well; that set includes large machine-learning dependencies.
+This installs the API runtime and its product dependencies.
 
 ### 4. Start the FastAPI backend
 
@@ -254,7 +238,7 @@ This project is designed as a clinician-support workflow, not an autonomous clin
 
 ## Clinical safety features
 
-- **Persistent UI disclaimer:** Clinical transcript, triage, extracted-entity, SOAP, ICD-10, post-care, benchmark-transcript, and FHIR surfaces display: “Clinical Workflow Assistant — Pending Clinician Approval. Generated transcripts, SOAP notes, and codes are clinical reference suggestions for clinician verification only. Not an autonomous diagnosis or prescription.”
+- **Persistent UI disclaimer:** Clinical transcript, triage, extracted-entity, SOAP, ICD-10, post-care, and FHIR surfaces display: “Clinical Workflow Assistant — Pending Clinician Approval. Generated transcripts, SOAP notes, and codes are clinical reference suggestions for clinician verification only. Not an autonomous diagnosis or prescription.”
 - **Reusable UI elements:** `ClinicalSafetyBanner`, `HumanReviewStatusBadge`, and `ConfidenceTierCard` are implemented as native custom elements in the static frontend and reused across the clinical result surfaces.
 - **Human review status:** Clinical results are labeled **Pending Verification** until review is completed. The EHR workflow requires the reviewer to confirm that the source transcript and draft were reviewed, then explicitly select **Verify & Sign Off**. Changes to the draft revoke the current approval and require review again.
 - **FHIR/EHR protection:** FHIR export, clinical-summary export, and EHR commit controls are disabled until approval; the page identifies the gate as **Review Required before FHIR Commit**. Approval and committing are separate actions. The `/api/v1/fhir/export` and `/api/v1/ehr/commit` endpoints also reject requests without the `clinician_signed_off` assertion.
@@ -277,7 +261,7 @@ For full deployment guidance, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ---
 
-## Validation and benchmarking
+## Validation
 
 Run the focused regression suite with:
 
@@ -285,14 +269,6 @@ Run the focused regression suite with:
 python -m unittest tests.test_safety tests.test_edge_persistence -v
 python -m py_compile main.py edge_persistence.py
 ```
-
-The live benchmark supports two reference modes:
-
-1. `verified`: paste an approved reference transcript to calculate independent WER/CER.
-2. `intron`: use the Intron transcript as a provisional reference for comparing another configured provider.
-
-Both modes are evaluation aids, not standalone clinical validation. Use
-simulated or de-identified recordings and require clinician review.
 
 ---
 

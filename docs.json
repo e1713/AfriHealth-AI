@@ -1,0 +1,62 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "AfriHealth AI Documentation",
+  "description": "Product, architecture, operations, and governance documentation for AfriHealth AI.",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Governance",
+        "pages": [
+          "docs/governance/AFH-GOV-REG-001-documentation-governance-registry",
+          "docs/governance/README",
+          "governance-evidence/README",
+          "RESPONSIBLE_AI"
+        ]
+      },
+      {
+        "group": "Policies",
+        "pages": [
+          "docs/policies/README"
+        ]
+      },
+      {
+        "group": "Clinical",
+        "pages": [
+          "docs/clinical/README"
+        ]
+      },
+      {
+        "group": "Benchmark",
+        "pages": [
+          "docs/benchmark/README"
+        ]
+      },
+      {
+        "group": "Architecture",
+        "pages": [
+          "ARCHITECTURE",
+          "docs/architecture/README"
+        ]
+      },
+      {
+        "group": "Product Governance",
+        "pages": [
+          "docs/product-governance/README"
+        ]
+      },
+      {
+        "group": "Decisions",
+        "pages": [
+          "docs/decisions/README"
+        ]
+      },
+      {
+        "group": "Roadmap",
+        "pages": [
+          "docs/roadmap/README"
+        ]
+      }
+    ]
+  }
+}
